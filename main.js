@@ -2,18 +2,18 @@
 
 // ---------- Mock Data ----------
 const LISTINGS = [
-  { id: 1, name: 'Birkin 30 Togo', brand: 'Hermès', category: 'bags', price: 450, available: true, condition: 'Pristine', rating: 4.9, reviews: 28, img: 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=800&q=80', desc: 'An icon of haute couture craftsmanship. Hand-stitched in supple Togo calfskin with palladium hardware. Reserved for the discerning few.' },
-  { id: 2, name: 'Daytona Cosmograph', brand: 'Rolex', category: 'watches', price: 380, available: true, condition: 'Mint', rating: 5.0, reviews: 41, img: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&q=80', desc: 'The legendary chronograph in stainless steel with black dial. A motorsport heritage piece treasured by collectors worldwide.' },
-  { id: 3, name: 'Diamond Tennis Bracelet', brand: 'Cartier', category: 'jewellery', price: 290, available: true, condition: 'Excellent', rating: 4.8, reviews: 19, img: 'https://images.unsplash.com/photo-1611652022419-a9419f74343d?w=800&q=80', desc: 'Brilliant-cut diamonds set in 18k white gold. Total carat weight 5.0ct. A timeless statement of refinement.' },
-  { id: 4, name: 'Lady Dior Medium', brand: 'Dior', category: 'bags', price: 220, available: true, condition: 'Pristine', rating: 4.9, reviews: 33, img: 'https://images.unsplash.com/photo-1566150905458-1bf1fc113f0d?w=800&q=80', desc: 'The signature cannage quilted lambskin handbag. Sophisticated geometry meets feminine grace.' },
-  { id: 5, name: 'Royal Oak 41mm', brand: 'Audemars Piguet', category: 'watches', price: 520, available: false, condition: 'Mint', rating: 5.0, reviews: 22, img: 'https://images.unsplash.com/photo-1622434641406-a158123450f9?w=800&q=80', desc: 'The octagonal bezel that redefined luxury sport watches. Self-winding manufacture calibre 4302.' },
-  { id: 6, name: 'Saddle Pearl Earrings', brand: 'Mikimoto', category: 'jewellery', price: 145, available: true, condition: 'Excellent', rating: 4.7, reviews: 15, img: 'https://images.unsplash.com/photo-1535632787350-4e68ef0ac584?w=800&q=80', desc: 'Akoya cultured pearls of exceptional lustre, set in 18k yellow gold. Quietly luminous.' },
-  { id: 7, name: 'Classic Flap Medium', brand: 'Chanel', category: 'bags', price: 310, available: true, condition: 'Pristine', rating: 5.0, reviews: 47, img: 'https://images.unsplash.com/photo-1591348278863-a8fb3887e2aa?w=800&q=80', desc: 'Caviar leather with gold-tone CC clasp. The handbag every wardrobe aspires toward.' },
-  { id: 8, name: 'Loafer in Calfskin', brand: 'Gucci', category: 'shoes', price: 95, available: true, condition: 'Excellent', rating: 4.6, reviews: 12, img: 'https://images.unsplash.com/photo-1614252369475-531eba835eb1?w=800&q=80', desc: 'The horsebit loafer rendered in glove-soft black calfskin. Italian craftsmanship since 1953.' },
-  { id: 9, name: 'Submariner Date', brand: 'Rolex', category: 'watches', price: 340, available: true, condition: 'Pristine', rating: 4.9, reviews: 36, img: 'https://images.unsplash.com/photo-1547996160-81dfa63595aa?w=800&q=80', desc: 'Oystersteel diving instrument with black ceramic Cerachrom bezel. Water resistant to 300 metres.' },
-  { id: 10, name: 'Capucines BB', brand: 'Louis Vuitton', category: 'bags', price: 260, available: true, condition: 'Mint', rating: 4.8, reviews: 21, img: 'https://images.unsplash.com/photo-1601369850391-3d3c4d827c98?w=800&q=80', desc: 'Hand-finished Taurillon leather with the iconic LV signature flower. Effortless, architectural elegance.' },
-  { id: 11, name: 'Panthère Ring', brand: 'Cartier', category: 'jewellery', price: 175, available: false, condition: 'Pristine', rating: 5.0, reviews: 14, img: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=800&q=80', desc: '18k yellow gold with tsavorite garnet eyes and onyx spots. The maison\'s legendary feline reborn on the finger.' },
-  { id: 12, name: 'Heeled Mule Crystal', brand: 'Manolo Blahnik', category: 'shoes', price: 110, available: true, condition: 'Excellent', rating: 4.7, reviews: 18, img: 'https://images.unsplash.com/photo-1596944946297-11d6b2f64ec9?w=800&q=80', desc: 'Crystal-embellished satin upper on a slim 90mm heel. Couture footwork for occasion wear.' }
+  { id: 1, name: 'Birkin 30 Togo', brand: 'Hermès', category: 'bags', price: 9000, available: true, condition: 'Pristine', rating: 4.9, reviews: 28, img: 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=800&q=80', desc: 'An icon of haute couture craftsmanship. Hand-stitched in supple Togo calfskin with palladium hardware. Reserved for the discerning few.' },
+  { id: 2, name: 'Daytona Cosmograph', brand: 'Rolex', category: 'watches', price: 7500, available: true, condition: 'Mint', rating: 5.0, reviews: 41, img: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&q=80', desc: 'The legendary chronograph in stainless steel with black dial. A motorsport heritage piece treasured by collectors worldwide.' },
+  { id: 3, name: 'Diamond Tennis Bracelet', brand: 'Cartier', category: 'jewellery', price: 5800, available: true, condition: 'Excellent', rating: 4.8, reviews: 19, img: 'https://images.unsplash.com/photo-1611652022419-a9419f74343d?w=800&q=80', desc: 'Brilliant-cut diamonds set in 18k white gold. Total carat weight 5.0ct. A timeless statement of refinement.' },
+  { id: 4, name: 'Lady Dior Medium', brand: 'Dior', category: 'bags', price: 4400, available: true, condition: 'Pristine', rating: 4.9, reviews: 33, img: 'https://images.unsplash.com/photo-1566150905458-1bf1fc113f0d?w=800&q=80', desc: 'The signature cannage quilted lambskin handbag. Sophisticated geometry meets feminine grace.' },
+  { id: 5, name: 'Royal Oak 41mm', brand: 'Audemars Piguet', category: 'watches', price: 10500, available: false, condition: 'Mint', rating: 5.0, reviews: 22, img: 'https://images.unsplash.com/photo-1622434641406-a158123450f9?w=800&q=80', desc: 'The octagonal bezel that redefined luxury sport watches. Self-winding manufacture calibre 4302.' },
+  { id: 6, name: 'Saddle Pearl Earrings', brand: 'Mikimoto', category: 'jewellery', price: 2900, available: true, condition: 'Excellent', rating: 4.7, reviews: 15, img: 'https://images.unsplash.com/photo-1535632787350-4e68ef0ac584?w=800&q=80', desc: 'Akoya cultured pearls of exceptional lustre, set in 18k yellow gold. Quietly luminous.' },
+  { id: 7, name: 'Classic Flap Medium', brand: 'Chanel', category: 'bags', price: 6200, available: true, condition: 'Pristine', rating: 5.0, reviews: 47, img: 'https://images.unsplash.com/photo-1591348278863-a8fb3887e2aa?w=800&q=80', desc: 'Caviar leather with gold-tone CC clasp. The handbag every wardrobe aspires toward.' },
+  { id: 8, name: 'Loafer in Calfskin', brand: 'Gucci', category: 'shoes', price: 1900, available: true, condition: 'Excellent', rating: 4.6, reviews: 12, img: 'https://images.unsplash.com/photo-1614252369475-531eba835eb1?w=800&q=80', desc: 'The horsebit loafer rendered in glove-soft black calfskin. Italian craftsmanship since 1953.' },
+  { id: 9, name: 'Submariner Date', brand: 'Rolex', category: 'watches', price: 6800, available: true, condition: 'Pristine', rating: 4.9, reviews: 36, img: 'https://images.unsplash.com/photo-1547996160-81dfa63595aa?w=800&q=80', desc: 'Oystersteel diving instrument with black ceramic Cerachrom bezel. Water resistant to 300 metres.' },
+  { id: 10, name: 'Capucines BB', brand: 'Louis Vuitton', category: 'bags', price: 5200, available: true, condition: 'Mint', rating: 4.8, reviews: 21, img: 'https://images.unsplash.com/photo-1601369850391-3d3c4d827c98?w=800&q=80', desc: 'Hand-finished Taurillon leather with the iconic LV signature flower. Effortless, architectural elegance.' },
+  { id: 11, name: 'Panthère Ring', brand: 'Cartier', category: 'jewellery', price: 3500, available: false, condition: 'Pristine', rating: 5.0, reviews: 14, img: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=800&q=80', desc: '18k yellow gold with tsavorite garnet eyes and onyx spots. The maison\'s legendary feline reborn on the finger.' },
+  { id: 12, name: 'Heeled Mule Crystal', brand: 'Manolo Blahnik', category: 'shoes', price: 2200, available: true, condition: 'Excellent', rating: 4.7, reviews: 18, img: 'https://images.unsplash.com/photo-1596944946297-11d6b2f64ec9?w=800&q=80', desc: 'Crystal-embellished satin upper on a slim 90mm heel. Couture footwork for occasion wear.' }
 ];
 
 const LISTERS = [
@@ -27,7 +27,7 @@ const LISTERS = [
 const $ = (s, p = document) => p.querySelector(s);
 const $$ = (s, p = document) => Array.from(p.querySelectorAll(s));
 
-const formatPrice = (n) => `£${n.toLocaleString()}`;
+const formatPrice = (n) => `R${n.toLocaleString()}`;
 
 const getQueryParam = (name) => new URLSearchParams(location.search).get(name);
 
@@ -90,7 +90,7 @@ function initBrowse() {
     categories: new Set(),
     brands: new Set(),
     minPrice: 0,
-    maxPrice: 1000,
+    maxPrice: 1000000,
     sort: 'featured'
   };
 
@@ -135,7 +135,7 @@ function initBrowse() {
   const maxIn = $('#price-max');
   [minIn, maxIn].forEach(el => el && el.addEventListener('input', () => {
     state.minPrice = parseFloat(minIn.value) || 0;
-    state.maxPrice = parseFloat(maxIn.value) || 10000;
+    state.maxPrice = parseFloat(maxIn.value) || 1000000;
     applyFilters();
   }));
 
@@ -166,9 +166,10 @@ function initListing() {
 
   document.title = `${item.brand} ${item.name} — DnD Lux`;
 
-  // Build extra gallery thumbs (reuse other listing images for variety)
   const otherImgs = LISTINGS.filter(x => x.id !== item.id).slice(0, 3).map(x => x.img);
   const allImgs = [item.img, ...otherImgs];
+
+  const INSURANCE = 500;
 
   wrap.innerHTML = `
     <div class="gallery">
@@ -201,7 +202,7 @@ function initListing() {
 
       <ul class="feature-list">
         <li><i class="fas fa-check"></i>Authenticated by independent specialists</li>
-        <li><i class="fas fa-check"></i>Insured during the rental period up to £25,000</li>
+        <li><i class="fas fa-check"></i>Insured during the rental period up to R500,000</li>
         <li><i class="fas fa-check"></i>White-glove delivery and return service</li>
         <li><i class="fas fa-check"></i>Professional cleaning included</li>
       </ul>
@@ -233,8 +234,8 @@ function initListing() {
         <div class="cost-summary">
           <div class="cost-row"><span>${formatPrice(item.price)} × <span id="days-display">3</span> days</span><span id="subtotal">${formatPrice(item.price*3)}</span></div>
           <div class="cost-row"><span>Service fee</span><span id="service-fee">${formatPrice(Math.round(item.price*3*0.08))}</span></div>
-          <div class="cost-row"><span>Insurance</span><span>£25</span></div>
-          <div class="cost-row total"><span>Total</span><span id="total">${formatPrice(item.price*3 + Math.round(item.price*3*0.08) + 25)}</span></div>
+          <div class="cost-row"><span>Insurance</span><span>${formatPrice(INSURANCE)}</span></div>
+          <div class="cost-row total"><span>Total</span><span id="total">${formatPrice(item.price*3 + Math.round(item.price*3*0.08) + INSURANCE)}</span></div>
         </div>
 
         <button class="btn btn-primary btn-block" ${item.available ? '' : 'disabled style="opacity:0.5;cursor:not-allowed"'}>
@@ -255,27 +256,24 @@ function initListing() {
     </div>
   `;
 
-  // Thumb switching
   $$('.thumb').forEach(t => t.addEventListener('click', () => {
     $$('.thumb').forEach(x => x.classList.remove('active'));
     t.classList.add('active');
     $('#main-img').src = t.dataset.src;
   }));
 
-  // Cost calculator
   const daysSel = $('#days-sel');
   daysSel.addEventListener('change', () => {
     const d = parseInt(daysSel.value, 10);
     const sub = item.price * d;
     const fee = Math.round(sub * 0.08);
-    const total = sub + fee + 25;
+    const total = sub + fee + INSURANCE;
     $('#days-display').textContent = d;
     $('#subtotal').textContent = formatPrice(sub);
     $('#service-fee').textContent = formatPrice(fee);
     $('#total').textContent = formatPrice(total);
   });
 
-  // Similar items
   const similarGrid = $('#similar-grid');
   if (similarGrid) {
     const similar = LISTINGS.filter(x => x.category === item.category && x.id !== item.id).slice(0, 4);
@@ -307,6 +305,54 @@ function initHowItWorks() {
   });
 }
 
+// ---------- List-a-Piece form ----------
+function initListForm() {
+  const form = $('#list-form');
+  if (!form) return;
+
+  const priceIn = $('#est-price');
+  const earnHint = $('#earn-hint');
+  if (priceIn && earnHint) {
+    priceIn.addEventListener('input', () => {
+      const v = parseFloat(priceIn.value) || 0;
+      const annual = Math.round(v * 0.75 * 30);
+      earnHint.textContent = v > 0
+        ? `Estimated owner earnings: ${formatPrice(annual)} per year (assuming 30 rental days × 75% share).`
+        : 'Enter a daily rate to see estimated earnings.';
+    });
+  }
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const success = $('#list-success');
+    form.style.display = 'none';
+    success.style.display = 'block';
+    success.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  });
+
+  const fileIn = $('#photos');
+  const fileLabel = $('#file-label');
+  if (fileIn && fileLabel) {
+    fileIn.addEventListener('change', () => {
+      const n = fileIn.files.length;
+      fileLabel.textContent = n ? `${n} image${n > 1 ? 's' : ''} selected` : 'Drop or browse images (max 8)';
+    });
+  }
+}
+
+// ---------- Concierge form ----------
+function initConcierge() {
+  const form = $('#concierge-form');
+  if (!form) return;
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const success = $('#concierge-success');
+    form.style.display = 'none';
+    success.style.display = 'block';
+    success.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  });
+}
+
 // ---------- Subtle reveal on scroll ----------
 function initReveal() {
   if (!('IntersectionObserver' in window)) return;
@@ -328,12 +374,13 @@ function initReveal() {
   });
 }
 
-// ---------- Init ----------
 document.addEventListener('DOMContentLoaded', () => {
   initNav();
   initHome();
   initBrowse();
   initListing();
   initHowItWorks();
+  initListForm();
+  initConcierge();
   setTimeout(initReveal, 50);
 });
