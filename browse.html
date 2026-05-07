@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Browse the Archive — DnD Lux</title>
+  <meta name="description" content="Browse authenticated bags, watches, jewellery and shoes available for short-term rental.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="brand">DnD<span>·</span>Lux</a>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="browse.html">Browse</a></li>
+      <li><a href="how-it-works.html">How It Works</a></li>
+      <li><a href="#">Concierge</a></li>
+    </ul>
+    <div class="nav-cta">
+      <a href="#" class="btn btn-ghost">Sign In</a>
+      <a href="#" class="btn btn-primary">List a Piece</a>
+      <button class="nav-toggle" aria-label="Menu"><i class="fas fa-bars"></i></button>
+    </div>
+  </div>
+</nav>
+
+<header class="page-header">
+  <div class="container">
+    <div class="breadcrumb">
+      <a href="index.html">Home</a><i class="fas fa-chevron-right"></i>
+      <span style="color:var(--text-muted)">Browse</span>
+    </div>
+    <div class="eyebrow">The archive</div>
+    <h1>Pieces currently in residence</h1>
+    <p>Every item authenticated, professionally photographed and insured up to £25,000. Members' discretion observed throughout.</p>
+  </div>
+</header>
+
+<div class="container">
+  <div class="browse-layout">
+
+    <aside class="filters">
+      <div class="filter-group">
+        <h4>Category</h4>
+        <ul class="filter-options">
+          <li><label><input type="checkbox" name="category" value="bags"> Handbags <span class="filter-count">4</span></label></li>
+          <li><label><input type="checkbox" name="category" value="watches"> Watches <span class="filter-count">3</span></label></li>
+          <li><label><input type="checkbox" name="category" value="jewellery"> Jewellery <span class="filter-count">3</span></label></li>
+          <li><label><input type="checkbox" name="category" value="shoes"> Shoes <span class="filter-count">2</span></label></li>
+        </ul>
+      </div>
+
+      <div class="filter-group">
+        <h4>Price per day (£)</h4>
+        <div class="price-range">
+          <input type="number" id="price-min" placeholder="Min" min="0">
+          <input type="number" id="price-max" placeholder="Max" min="0">
+        </div>
+      </div>
+
+      <div class="filter-group">
+        <h4>Maison</h4>
+        <ul class="filter-options">
+          <li><label><input type="checkbox" name="brand" value="Hermès"> Hermès</label></li>
+          <li><label><input type="checkbox" name="brand" value="Rolex"> Rolex</label></li>
+          <li><label><input type="checkbox" name="brand" value="Chanel"> Chanel</label></li>
+          <li><label><input type="checkbox" name="brand" value="Cartier"> Cartier</label></li>
+          <li><label><input type="checkbox" name="brand" value="Dior"> Dior</label></li>
+          <li><label><input type="checkbox" name="brand" value="Audemars Piguet"> Audemars Piguet</label></li>
+          <li><label><input type="checkbox" name="brand" value="Louis Vuitton"> Louis Vuitton</label></li>
+          <li><label><input type="checkbox" name="brand" value="Mikimoto"> Mikimoto</label></li>
+          <li><label><input type="checkbox" name="brand" value="Gucci"> Gucci</label></li>
+          <li><label><input type="checkbox" name="brand" value="Manolo Blahnik"> Manolo Blahnik</label></li>
+        </ul>
+      </div>
+
+      <div class="filter-group">
+        <h4>Availability</h4>
+        <ul class="filter-options">
+          <li><label><input type="checkbox"> Available now</label></li>
+          <li><label><input type="checkbox"> Available next week</label></li>
+        </ul>
+      </div>
+    </aside>
+
+    <main>
+      <div class="results-bar">
+        <div class="results-count" id="results-count">Showing <strong>12</strong> of 12 pieces</div>
+        <select class="sort-select" id="sort-select">
+          <option value="featured">Sort: Featured</option>
+          <option value="price-asc">Price: low to high</option>
+          <option value="price-desc">Price: high to low</option>
+          <option value="rating">Highest rated</option>
+        </select>
+      </div>
+
+      <div class="listings-grid" id="browse-grid"></div>
+    </main>
+
+  </div>
+</div>
+
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a href="index.html" class="brand">DnD<span>·</span>Lux</a>
+        <p>A members' marketplace for authenticated, insured luxury rentals. Founded by collectors, run by curators.</p>
+      </div>
+      <div class="footer-col">
+        <h5>Discover</h5>
+        <ul>
+          <li><a href="browse.html?category=bags">Handbags</a></li>
+          <li><a href="browse.html?category=watches">Watches</a></li>
+          <li><a href="browse.html?category=jewellery">Jewellery</a></li>
+          <li><a href="browse.html?category=shoes">Shoes</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h5>Marketplace</h5>
+        <ul>
+          <li><a href="how-it-works.html">How it works</a></li>
+          <li><a href="how-it-works.html">For listers</a></li>
+          <li><a href="#">Authentication</a></li>
+          <li><a href="#">Concierge</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h5>Company</h5>
+        <ul>
+          <li><a href="#">About</a></li>
+          <li><a href="#">Press</a></li>
+          <li><a href="#">Contact</a></li>
+          <li><a href="#">Careers</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 DnD Lux Ltd. All rights reserved.</span>
+      <div class="socials">
+        <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+        <a href="#" aria-label="X"><i class="fab fa-x-twitter"></i></a>
+        <a href="#" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+        <a href="#" aria-label="Pinterest"><i class="fab fa-pinterest-p"></i></a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script src="main.js"></script>
+</body>
+</html>

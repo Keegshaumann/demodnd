@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Listing — DnD Lux</title>
+  <meta name="description" content="View piece details, availability and booking on DnD Lux.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="brand">DnD<span>·</span>Lux</a>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="browse.html">Browse</a></li>
+      <li><a href="how-it-works.html">How It Works</a></li>
+      <li><a href="#">Concierge</a></li>
+    </ul>
+    <div class="nav-cta">
+      <a href="#" class="btn btn-ghost">Sign In</a>
+      <a href="#" class="btn btn-primary">List a Piece</a>
+      <button class="nav-toggle" aria-label="Menu"><i class="fas fa-bars"></i></button>
+    </div>
+  </div>
+</nav>
+
+<div class="container">
+  <div class="listing-detail" id="listing-detail"></div>
+</div>
+
+<section style="border-top:1px solid var(--border);background:var(--bg-elevated)">
+  <div class="container">
+    <div class="section-head">
+      <div>
+        <div class="eyebrow">You may also consider</div>
+        <h2>Similar pieces</h2>
+      </div>
+      <a href="browse.html" class="btn btn-outline">View archive <i class="fas fa-arrow-right"></i></a>
+    </div>
+    <div class="listings-grid" id="similar-grid"></div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a href="index.html" class="brand">DnD<span>·</span>Lux</a>
+        <p>A members' marketplace for authenticated, insured luxury rentals. Founded by collectors, run by curators.</p>
+      </div>
+      <div class="footer-col">
+        <h5>Discover</h5>
+        <ul>
+          <li><a href="browse.html?category=bags">Handbags</a></li>
+          <li><a href="browse.html?category=watches">Watches</a></li>
+          <li><a href="browse.html?category=jewellery">Jewellery</a></li>
+          <li><a href="browse.html?category=shoes">Shoes</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h5>Marketplace</h5>
+        <ul>
+          <li><a href="how-it-works.html">How it works</a></li>
+          <li><a href="how-it-works.html">For listers</a></li>
+          <li><a href="#">Authentication</a></li>
+          <li><a href="#">Concierge</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h5>Company</h5>
+        <ul>
+          <li><a href="#">About</a></li>
+          <li><a href="#">Press</a></li>
+          <li><a href="#">Contact</a></li>
+          <li><a href="#">Careers</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 DnD Lux Ltd. All rights reserved.</span>
+      <div class="socials">
+        <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+        <a href="#" aria-label="X"><i class="fab fa-x-twitter"></i></a>
+        <a href="#" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+        <a href="#" aria-label="Pinterest"><i class="fab fa-pinterest-p"></i></a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script src="main.js"></script>
+</body>
+</html>
