@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Concierge — DnD Lux</title>
-  <meta name="description" content="Speak directly with our concierge team about bookings, sourcing or listings.">
+  <title>Concierge — D&D Luxury</title>
+  <meta name="description" content="Speak directly with our concierge team about purchases, sourcing, rentals or listings.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -15,16 +15,19 @@
 
 <nav class="nav">
   <div class="nav-inner">
-    <a href="index.html" class="brand">DnD<span>·</span>Lux</a>
+    <a href="index.html" class="brand">
+      <img src="https://dndlux.com/cdn/shop/files/dnd_logo_svg_new.svg?v=1770897170&width=600" alt="D&D Luxury" class="logo-img">
+    </a>
     <ul class="nav-links">
       <li><a href="index.html">Home</a></li>
-      <li><a href="browse.html">Browse</a></li>
+      <li><a href="browse.html">Buy</a></li>
+      <li><a href="browse.html?mode=rent">Rent</a></li>
       <li><a href="how-it-works.html">How It Works</a></li>
       <li><a href="concierge.html">Concierge</a></li>
     </ul>
     <div class="nav-cta">
       <a href="#" class="btn btn-ghost">Sign In</a>
-      <a href="list.html" class="btn btn-primary">List a Piece</a>
+      <a href="list.html" class="btn btn-primary btn-sm">Sell or Rent Out</a>
       <button class="nav-toggle" aria-label="Menu"><i class="fas fa-bars"></i></button>
     </div>
   </div>
@@ -34,11 +37,11 @@
   <div class="container">
     <div class="breadcrumb">
       <a href="index.html">Home</a><i class="fas fa-chevron-right"></i>
-      <span style="color:var(--text-muted)">Concierge</span>
+      <span class="muted">Concierge</span>
     </div>
     <div class="eyebrow">A direct line</div>
     <h1>Speak with our concierge.</h1>
-    <p>Sourcing a particular piece. A last-minute booking. A question about your listing. We respond personally — usually within the hour.</p>
+    <p>Sourcing a particular piece. A finance question. A last-minute rental. We respond personally — usually within the hour.</p>
   </div>
 </header>
 
@@ -65,7 +68,7 @@
     </div>
   </div>
 
-  <div class="list-layout" id="concierge-form-anchor">
+  <div class="list-layout">
 
     <div>
       <form id="concierge-form" class="form-card">
@@ -88,8 +91,9 @@
             <select name="reason">
               <option>General enquiry</option>
               <option>Source a specific piece</option>
-              <option>Booking assistance</option>
-              <option>Listing question</option>
+              <option>Purchase / finance question</option>
+              <option>Rental booking assistance</option>
+              <option>Selling / listing question</option>
               <option>Press</option>
               <option>Partnership</option>
             </select>
@@ -112,7 +116,7 @@
         <i class="fas fa-circle-check"></i>
         <h3>Message received.</h3>
         <p>A member of our concierge team will respond personally within one business day. For urgent matters, please call us directly.</p>
-        <a href="browse.html" class="btn btn-outline">Return to the archive</a>
+        <a href="browse.html" class="btn btn-outline">Return to the collection</a>
       </div>
     </div>
 
@@ -120,9 +124,9 @@
       <h3>What we can help with</h3>
       <p>Our concierge team are collectors and curators in their own right. They take quiet pride in handling the unusual.</p>
       <ul class="benefit-list">
-        <li><i class="fas fa-magnifying-glass"></i><span>Sourcing pieces not currently in the archive — discreetly, on commission.</span></li>
-        <li><i class="fas fa-clock"></i><span>Same-day bookings within Cape Town and Johannesburg, by arrangement.</span></li>
-        <li><i class="fas fa-plane"></i><span>Cross-border deliveries with customs handled end-to-end.</span></li>
+        <li><i class="fas fa-magnifying-glass"></i><span>Sourcing pieces not currently in the collection — discreetly, on commission.</span></li>
+        <li><i class="fas fa-credit-card"></i><span>Finance applications and bespoke payment plans on higher-value pieces.</span></li>
+        <li><i class="fas fa-clock"></i><span>Same-day rentals within Cape Town and Johannesburg, by arrangement.</span></li>
         <li><i class="fas fa-people-group"></i><span>Group styling for weddings, galas and editorial shoots.</span></li>
         <li><i class="fas fa-handshake"></i><span>Private viewings of higher-value pieces by appointment.</span></li>
       </ul>
@@ -131,28 +135,31 @@
   </div>
 </div>
 
-<footer style="margin-top:60px">
+<footer style="margin-top:80px">
   <div class="container">
     <div class="footer-grid">
       <div class="footer-brand">
-        <a href="index.html" class="brand">DnD<span>·</span>Lux</a>
-        <p>A members' marketplace for authenticated, insured luxury rentals. Founded by collectors, run by curators.</p>
+        <a href="index.html" class="brand">
+          <img src="https://dndlux.com/cdn/shop/files/dnd_logo_svg_new.svg?v=1770897170&width=600" alt="D&D Luxury" class="logo-img">
+        </a>
+        <p>South Africa's authenticated luxury marketplace. Buy, sell or rent timeless pieces — handled with the discretion they deserve.</p>
       </div>
       <div class="footer-col">
-        <h5>Discover</h5>
+        <h5>Shop</h5>
         <ul>
           <li><a href="browse.html?category=bags">Handbags</a></li>
           <li><a href="browse.html?category=watches">Watches</a></li>
           <li><a href="browse.html?category=jewellery">Jewellery</a></li>
           <li><a href="browse.html?category=shoes">Shoes</a></li>
+          <li><a href="browse.html?mode=rent">Rentals</a></li>
         </ul>
       </div>
       <div class="footer-col">
         <h5>Marketplace</h5>
         <ul>
           <li><a href="how-it-works.html">How it works</a></li>
-          <li><a href="list.html">For listers</a></li>
-          <li><a href="#">Authentication</a></li>
+          <li><a href="list.html">Sell with us</a></li>
+          <li><a href="list.html">Rent out a piece</a></li>
           <li><a href="concierge.html">Concierge</a></li>
         </ul>
       </div>
@@ -167,7 +174,7 @@
       </div>
     </div>
     <div class="footer-bottom">
-      <span>© 2026 DnD Lux Ltd. All rights reserved.</span>
+      <span>© 2026 D&D Luxury (Pty) Ltd. All rights reserved.</span>
       <div class="socials">
         <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
         <a href="#" aria-label="X"><i class="fab fa-x-twitter"></i></a>
