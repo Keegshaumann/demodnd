@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>DnD Lux — The Quiet Marketplace for Borrowed Luxury</title>
-  <meta name="description" content="A peer-to-peer marketplace for authenticated luxury — bags, watches and jewellery, rented by appointment.">
+  <title>D&D Luxury — South Africa's Authenticated Luxury Marketplace</title>
+  <meta name="description" content="Buy or rent authenticated luxury — Hermès, Rolex, Cartier, Chanel and more — with full provenance, insurance and concierge handling.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -15,16 +15,19 @@
 
 <nav class="nav">
   <div class="nav-inner">
-    <a href="index.html" class="brand">DnD<span>·</span>Lux</a>
+    <a href="index.html" class="brand">
+      <img src="https://dndlux.com/cdn/shop/files/dnd_logo_svg_new.svg?v=1770897170&width=600" alt="D&D Luxury" class="logo-img">
+    </a>
     <ul class="nav-links">
       <li><a href="index.html">Home</a></li>
-      <li><a href="browse.html">Browse</a></li>
+      <li><a href="browse.html">Buy</a></li>
+      <li><a href="browse.html?mode=rent">Rent</a></li>
       <li><a href="how-it-works.html">How It Works</a></li>
       <li><a href="concierge.html">Concierge</a></li>
     </ul>
     <div class="nav-cta">
       <a href="#" class="btn btn-ghost">Sign In</a>
-      <a href="list.html" class="btn btn-primary">List a Piece</a>
+      <a href="list.html" class="btn btn-primary btn-sm">Sell or Rent Out</a>
       <button class="nav-toggle" aria-label="Menu"><i class="fas fa-bars"></i></button>
     </div>
   </div>
@@ -32,93 +35,114 @@
 
 <header class="hero">
   <div class="container">
-    <div class="hero-content">
-      <div class="eyebrow">Peer-to-peer · Authenticated · Insured</div>
-      <h1>Borrowed icons.<br><em>Quietly worn.</em></h1>
-      <p class="hero-tagline">A members' marketplace where rare luxury lives with new keepers — for an evening, a fortnight, a season. Hermès, Rolex, Cartier and beyond, lent by their owners and kept impeccable by us.</p>
+    <div class="hero-content reveal">
+      <div class="eyebrow">Authenticated · Insured · South African</div>
+      <h1>The country's quietest<br>address for <em>true luxury.</em></h1>
+      <p class="hero-tagline">Buy authenticated icons from Hermès, Rolex, Cartier, Chanel and beyond — or rent for the occasion. Every piece independently verified, fully insured, delivered by hand.</p>
+
       <div class="hero-cta">
-        <a href="browse.html" class="btn btn-primary">Browse Items <i class="fas fa-arrow-right"></i></a>
-        <a href="list.html" class="btn btn-outline">List Your Piece</a>
+        <a href="browse.html" class="btn btn-primary">Shop the Collection <i class="fas fa-arrow-right"></i></a>
+        <a href="browse.html?mode=rent" class="btn btn-outline">Rent for the Occasion</a>
+      </div>
+
+      <div class="hero-meta-strip">
+        <div class="hero-meta-cell"><strong>500+</strong><small>Pieces in stock</small></div>
+        <div class="hero-meta-cell"><strong>100%</strong><small>Authenticated</small></div>
+        <div class="hero-meta-cell"><strong>R500K</strong><small>Insured per item</small></div>
+        <div class="hero-meta-cell"><strong>4.96<span style="color:var(--gold);font-size:18px;margin-left:4px">★</span></strong><small>Member rating</small></div>
       </div>
     </div>
-  </div>
-  <div class="hero-meta">
-    <div class="hero-meta-item"><span>500+</span><small>Verified Pieces</small></div>
-    <div class="hero-meta-item"><span>R500K</span><small>Per-Item Cover</small></div>
   </div>
 </header>
 
-<section>
+<section class="houses-strip">
   <div class="container">
-    <div class="section-head">
-      <div>
-        <div class="eyebrow">Featured this week</div>
-        <h2>Pieces in residence</h2>
-      </div>
-      <p>A curated edit of the rarest items currently in our care — chosen by hand, ready to travel.</p>
-    </div>
-    <div class="listings-grid" id="featured-grid"></div>
-    <div style="text-align:center;margin-top:48px">
-      <a href="browse.html" class="btn btn-outline">See the full archive <i class="fas fa-arrow-right"></i></a>
+    <div class="houses-row">
+      <span>Hermès</span>
+      <span>Rolex</span>
+      <span>Cartier</span>
+      <span>Chanel</span>
+      <span>Audemars Piguet</span>
+      <span>Louis Vuitton</span>
+      <span>Dior</span>
+      <span>Patek Philippe</span>
     </div>
   </div>
 </section>
 
-<section class="how-section">
+<section class="reveal">
   <div class="container">
-    <div class="section-head" style="justify-content:center;text-align:center;flex-direction:column;align-items:center">
-      <div class="eyebrow">A simple ritual</div>
-      <h2>How DnD Lux works</h2>
-      <p style="text-align:center">Two sides of the same quiet exchange — meticulously orchestrated by our concierge team.</p>
+    <div class="section-head">
+      <div class="section-head-block">
+        <div class="eyebrow">Featured this week</div>
+        <h2>Pieces in residence.</h2>
+      </div>
+      <p>A curated edit of the rarest items currently in our care — chosen by hand, ready for collection or rental.</p>
+    </div>
+    <div class="listings-grid" id="featured-grid"></div>
+    <div style="text-align:center;margin-top:64px">
+      <a href="browse.html" class="btn btn-outline">View the full archive <i class="fas fa-arrow-right"></i></a>
+    </div>
+  </div>
+</section>
+
+<section class="how-section reveal">
+  <div class="container">
+    <div class="section-head center">
+      <div>
+        <div class="eyebrow">Two ways to wear</div>
+        <h2>Own it forever, or borrow it briefly.</h2>
+        <p>Same authentication, same insurance, same considered handling. The choice of how long is yours.</p>
+      </div>
     </div>
 
     <div class="how-grid">
       <div class="how-col">
-        <h3><i class="fas fa-gem"></i>For renters</h3>
+        <h3><i class="fas fa-gem"></i>To buy</h3>
         <div class="step">
           <div class="step-num">1</div>
           <div class="step-body">
-            <h4>Discover the piece</h4>
-            <p>Browse hand-picked listings. Every item is photographed, condition-graded and authenticated before it appears.</p>
+            <h4>Browse the archive</h4>
+            <p>Every item authenticated in person, photographed in our studio, condition-graded by independent specialists.</p>
           </div>
         </div>
         <div class="step">
           <div class="step-num">2</div>
           <div class="step-body">
-            <h4>Reserve your dates</h4>
-            <p>Choose your window. We coordinate delivery — by hand, in protective casing, anywhere within our service zones.</p>
+            <h4>Reserve or finance</h4>
+            <p>Pay in full, place a holding deposit, or apply for finance over 12 to 36 months. White-glove delivery within South Africa is included.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <h4>Take ownership</h4>
+            <p>Receive the piece by hand, with original packaging and full provenance documents. 14-day return on any authentication discrepancy.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="how-col">
+        <h3><i class="fas fa-key"></i>To rent</h3>
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <h4>Choose your dates</h4>
+            <p>Reserve any rentable piece for an evening, a fortnight, or a season. Same authentication, fully insured throughout.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <h4>We deliver, by hand</h4>
+            <p>Our courier brings the piece in protective casing. Cape Town and Johannesburg same-day; nationwide within 48 hours.</p>
           </div>
         </div>
         <div class="step">
           <div class="step-num">3</div>
           <div class="step-body">
             <h4>Wear it. Return it.</h4>
-            <p>Enjoy the piece for your occasion. We collect, professionally clean and return it to its owner. Insured throughout.</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="how-col">
-        <h3><i class="fas fa-key"></i>For listers</h3>
-        <div class="step">
-          <div class="step-num">1</div>
-          <div class="step-body">
-            <h4>Submit your piece</h4>
-            <p>Upload images and provenance. Our specialists authenticate, photograph and grade the item — at no cost.</p>
-          </div>
-        </div>
-        <div class="step">
-          <div class="step-num">2</div>
-          <div class="step-body">
-            <h4>We list, vet and book</h4>
-            <p>Your piece appears in the archive. We screen every renter — no profiles without verified ID and references.</p>
-          </div>
-        </div>
-        <div class="step">
-          <div class="step-num">3</div>
-          <div class="step-body">
-            <h4>Earn discreetly</h4>
-            <p>Receive 75% of each rental fee. Pieces typically earn 8–14% of their value annually with negligible wear.</p>
+            <p>We collect, professionally clean and return it to its owner. Should you fall in love, the rental fee credits towards purchase.</p>
           </div>
         </div>
       </div>
@@ -126,16 +150,16 @@
   </div>
 </section>
 
-<section class="stats-section">
+<section class="stats-section reveal">
   <div class="container">
     <div class="stats-grid">
       <div>
         <span class="stat-num">500+</span>
-        <div class="stat-label">Verified items</div>
+        <div class="stat-label">Pieces in stock</div>
       </div>
       <div>
         <span class="stat-num">200+</span>
-        <div class="stat-label">Trusted listers</div>
+        <div class="stat-label">Verified sellers</div>
       </div>
       <div>
         <span class="stat-num">100%</span>
@@ -149,14 +173,14 @@
   </div>
 </section>
 
-<section class="cta-section">
+<section class="cta-section reveal">
   <div class="container">
     <div class="eyebrow">Membership by application</div>
     <h2>Quietly join the archive.</h2>
-    <p>Listing a piece or borrowing one begins with a short conversation. Tell us a little about yourself.</p>
+    <p>Buy your first piece, list one of your own, or speak to our concierge about something specific. The conversation begins here.</p>
     <div class="cta-buttons">
-      <a href="browse.html" class="btn btn-primary">Apply to Borrow</a>
-      <a href="list.html" class="btn btn-outline">List a Piece</a>
+      <a href="browse.html" class="btn btn-primary">Shop the Collection</a>
+      <a href="list.html" class="btn btn-outline">Sell or Rent Out a Piece</a>
     </div>
   </div>
 </section>
@@ -165,24 +189,27 @@
   <div class="container">
     <div class="footer-grid">
       <div class="footer-brand">
-        <a href="index.html" class="brand">DnD<span>·</span>Lux</a>
-        <p>A members' marketplace for authenticated, insured luxury rentals. Founded by collectors, run by curators.</p>
+        <a href="index.html" class="brand">
+          <img src="https://dndlux.com/cdn/shop/files/dnd_logo_svg_new.svg?v=1770897170&width=600" alt="D&D Luxury" class="logo-img">
+        </a>
+        <p>South Africa's authenticated luxury marketplace. Buy, sell or rent timeless pieces — handled with the discretion they deserve.</p>
       </div>
       <div class="footer-col">
-        <h5>Discover</h5>
+        <h5>Shop</h5>
         <ul>
           <li><a href="browse.html?category=bags">Handbags</a></li>
           <li><a href="browse.html?category=watches">Watches</a></li>
           <li><a href="browse.html?category=jewellery">Jewellery</a></li>
           <li><a href="browse.html?category=shoes">Shoes</a></li>
+          <li><a href="browse.html?mode=rent">Rentals</a></li>
         </ul>
       </div>
       <div class="footer-col">
         <h5>Marketplace</h5>
         <ul>
           <li><a href="how-it-works.html">How it works</a></li>
-          <li><a href="list.html">For listers</a></li>
-          <li><a href="#">Authentication</a></li>
+          <li><a href="list.html">Sell with us</a></li>
+          <li><a href="list.html">Rent out a piece</a></li>
           <li><a href="concierge.html">Concierge</a></li>
         </ul>
       </div>
@@ -197,7 +224,7 @@
       </div>
     </div>
     <div class="footer-bottom">
-      <span>© 2026 DnD Lux Ltd. All rights reserved.</span>
+      <span>© 2026 D&D Luxury (Pty) Ltd. All rights reserved.</span>
       <div class="socials">
         <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
         <a href="#" aria-label="X"><i class="fab fa-x-twitter"></i></a>

@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>List a Piece — DnD Lux</title>
-  <meta name="description" content="Submit a luxury item for authentication and listing on DnD Lux.">
+  <title>Sell or Rent Out a Piece — D&D Luxury</title>
+  <meta name="description" content="Submit a luxury item for authentication, sale or rental on D&D Luxury.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -15,16 +15,19 @@
 
 <nav class="nav">
   <div class="nav-inner">
-    <a href="index.html" class="brand">DnD<span>·</span>Lux</a>
+    <a href="index.html" class="brand">
+      <img src="https://dndlux.com/cdn/shop/files/dnd_logo_svg_new.svg?v=1770897170&width=600" alt="D&D Luxury" class="logo-img">
+    </a>
     <ul class="nav-links">
       <li><a href="index.html">Home</a></li>
-      <li><a href="browse.html">Browse</a></li>
+      <li><a href="browse.html">Buy</a></li>
+      <li><a href="browse.html?mode=rent">Rent</a></li>
       <li><a href="how-it-works.html">How It Works</a></li>
       <li><a href="concierge.html">Concierge</a></li>
     </ul>
     <div class="nav-cta">
       <a href="#" class="btn btn-ghost">Sign In</a>
-      <a href="list.html" class="btn btn-primary">List a Piece</a>
+      <a href="list.html" class="btn btn-primary btn-sm">Sell or Rent Out</a>
       <button class="nav-toggle" aria-label="Menu"><i class="fas fa-bars"></i></button>
     </div>
   </div>
@@ -34,11 +37,11 @@
   <div class="container">
     <div class="breadcrumb">
       <a href="index.html">Home</a><i class="fas fa-chevron-right"></i>
-      <span style="color:var(--text-muted)">List a Piece</span>
+      <span class="muted">Sell or Rent Out</span>
     </div>
-    <div class="eyebrow">For listers</div>
+    <div class="eyebrow">For sellers and listers</div>
     <h1>Submit a piece for the archive.</h1>
-    <p>Tell us about the item. We will respond within two working days with an authentication appointment, an earnings projection and next steps.</p>
+    <p>Tell us about the item — sell it outright, rent it out by the day, or both. We will respond within two working days with an authentication appointment, valuation and earnings projection.</p>
   </div>
 </header>
 
@@ -80,6 +83,14 @@
 
         <h3 class="form-section-title">About the piece</h3>
         <div class="form-grid">
+          <div class="field full">
+            <label>How would you like to list it?</label>
+            <select name="intent" required>
+              <option value="sell">Sell outright</option>
+              <option value="rent">Rent out only</option>
+              <option value="both">Both — sell or rent</option>
+            </select>
+          </div>
           <div class="field">
             <label>Category</label>
             <select name="category" required>
@@ -113,13 +124,13 @@
             <input type="number" name="year" placeholder="e.g. 2022" min="1950" max="2026">
           </div>
           <div class="field">
-            <label>Estimated retail value (R)</label>
+            <label>Asking price (R)</label>
             <input type="number" name="retail" placeholder="e.g. 250000" min="0">
           </div>
           <div class="field full">
-            <label>Suggested rental rate per day (R)</label>
+            <label>Suggested rental rate per day, optional (R)</label>
             <input type="number" id="est-price" name="rate" placeholder="e.g. 4500" min="0">
-            <span class="field-hint" id="earn-hint">Enter a daily rate to see estimated earnings.</span>
+            <span class="field-hint" id="earn-hint">Enter a daily rate to see estimated rental earnings.</span>
           </div>
           <div class="field full">
             <label>Description (optional)</label>
@@ -136,7 +147,7 @@
 
         <label class="consent-row">
           <input type="checkbox" required>
-          <span>I confirm I am the rightful owner of this piece and accept the <a href="#">Lister Terms</a> and authentication protocol.</span>
+          <span>I confirm I am the rightful owner of this piece and accept the <a href="#">Seller &amp; Lister Terms</a> and authentication protocol.</span>
         </label>
 
         <button type="submit" class="btn btn-primary btn-block">Submit for review <i class="fas fa-arrow-right"></i></button>
@@ -145,19 +156,19 @@
       <div id="list-success" class="success-state">
         <i class="fas fa-circle-check"></i>
         <h3>Thank you. Submission received.</h3>
-        <p>A member of our acquisitions team will be in touch within two working days to schedule authentication and confirm your earnings projection.</p>
-        <a href="browse.html" class="btn btn-outline">Browse the archive</a>
+        <p>A member of our acquisitions team will be in touch within two working days to schedule authentication, confirm valuation and outline next steps.</p>
+        <a href="browse.html" class="btn btn-outline">Browse the collection</a>
       </div>
     </div>
 
     <aside class="list-aside">
-      <h3>Why list with DnD Lux</h3>
+      <h3>Why list with D&D Luxury</h3>
       <p>We treat each item as our own — kept impeccable, insured throughout, returned to its owner without compromise.</p>
       <ul class="benefit-list">
-        <li><i class="fas fa-shield-halved"></i><span>Insurance up to R500,000 per item, every rental, every transit.</span></li>
+        <li><i class="fas fa-shield-halved"></i><span>Insurance up to R500,000 per item, every transaction, every transit.</span></li>
         <li><i class="fas fa-magnifying-glass"></i><span>In-person authentication and condition grading at no cost.</span></li>
-        <li><i class="fas fa-id-card"></i><span>Every renter is verified — ID, address and references.</span></li>
-        <li><i class="fas fa-coins"></i><span>You keep 75% of each rental fee, paid weekly.</span></li>
+        <li><i class="fas fa-id-card"></i><span>Every buyer and renter is verified — ID, address and references.</span></li>
+        <li><i class="fas fa-coins"></i><span>Sellers keep 80% of sale price; listers keep 75% of each rental fee.</span></li>
         <li><i class="fas fa-eye-slash"></i><span>Discretion as standard. Your name is never shown publicly.</span></li>
       </ul>
     </aside>
@@ -169,24 +180,27 @@
   <div class="container">
     <div class="footer-grid">
       <div class="footer-brand">
-        <a href="index.html" class="brand">DnD<span>·</span>Lux</a>
-        <p>A members' marketplace for authenticated, insured luxury rentals. Founded by collectors, run by curators.</p>
+        <a href="index.html" class="brand">
+          <img src="https://dndlux.com/cdn/shop/files/dnd_logo_svg_new.svg?v=1770897170&width=600" alt="D&D Luxury" class="logo-img">
+        </a>
+        <p>South Africa's authenticated luxury marketplace. Buy, sell or rent timeless pieces — handled with the discretion they deserve.</p>
       </div>
       <div class="footer-col">
-        <h5>Discover</h5>
+        <h5>Shop</h5>
         <ul>
           <li><a href="browse.html?category=bags">Handbags</a></li>
           <li><a href="browse.html?category=watches">Watches</a></li>
           <li><a href="browse.html?category=jewellery">Jewellery</a></li>
           <li><a href="browse.html?category=shoes">Shoes</a></li>
+          <li><a href="browse.html?mode=rent">Rentals</a></li>
         </ul>
       </div>
       <div class="footer-col">
         <h5>Marketplace</h5>
         <ul>
           <li><a href="how-it-works.html">How it works</a></li>
-          <li><a href="list.html">For listers</a></li>
-          <li><a href="#">Authentication</a></li>
+          <li><a href="list.html">Sell with us</a></li>
+          <li><a href="list.html">Rent out a piece</a></li>
           <li><a href="concierge.html">Concierge</a></li>
         </ul>
       </div>
@@ -201,7 +215,7 @@
       </div>
     </div>
     <div class="footer-bottom">
-      <span>© 2026 DnD Lux Ltd. All rights reserved.</span>
+      <span>© 2026 D&D Luxury (Pty) Ltd. All rights reserved.</span>
       <div class="socials">
         <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
         <a href="#" aria-label="X"><i class="fab fa-x-twitter"></i></a>

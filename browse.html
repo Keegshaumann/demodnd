@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Browse the Archive — DnD Lux</title>
-  <meta name="description" content="Browse authenticated bags, watches, jewellery and shoes available for short-term rental.">
+  <title>Shop the Collection — D&D Luxury</title>
+  <meta name="description" content="Browse authenticated bags, watches, jewellery and shoes available to buy or rent.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -15,16 +15,19 @@
 
 <nav class="nav">
   <div class="nav-inner">
-    <a href="index.html" class="brand">DnD<span>·</span>Lux</a>
+    <a href="index.html" class="brand">
+      <img src="https://dndlux.com/cdn/shop/files/dnd_logo_svg_new.svg?v=1770897170&width=600" alt="D&D Luxury" class="logo-img">
+    </a>
     <ul class="nav-links">
       <li><a href="index.html">Home</a></li>
-      <li><a href="browse.html">Browse</a></li>
+      <li><a href="browse.html">Buy</a></li>
+      <li><a href="browse.html?mode=rent">Rent</a></li>
       <li><a href="how-it-works.html">How It Works</a></li>
       <li><a href="concierge.html">Concierge</a></li>
     </ul>
     <div class="nav-cta">
       <a href="#" class="btn btn-ghost">Sign In</a>
-      <a href="list.html" class="btn btn-primary">List a Piece</a>
+      <a href="list.html" class="btn btn-primary btn-sm">Sell or Rent Out</a>
       <button class="nav-toggle" aria-label="Menu"><i class="fas fa-bars"></i></button>
     </div>
   </div>
@@ -34,11 +37,16 @@
   <div class="container">
     <div class="breadcrumb">
       <a href="index.html">Home</a><i class="fas fa-chevron-right"></i>
-      <span style="color:var(--text-muted)">Browse</span>
+      <span class="muted">Shop</span>
     </div>
-    <div class="eyebrow">The archive</div>
-    <h1>Pieces currently in residence</h1>
-    <p>Every item authenticated, professionally photographed and insured up to R500,000. Members' discretion observed throughout.</p>
+    <div class="eyebrow">The collection</div>
+    <h1>Pieces in residence.</h1>
+    <p>Every item authenticated, photographed and insured up to R500,000. Available to purchase outright or rent for the occasion.</p>
+
+    <div class="mode-toggle" role="tablist" aria-label="Buy or rent">
+      <button data-mode="buy" type="button">Buy</button>
+      <button data-mode="rent" type="button">Rent</button>
+    </div>
   </div>
 </header>
 
@@ -57,7 +65,7 @@
       </div>
 
       <div class="filter-group">
-        <h4>Price per day (R)</h4>
+        <h4 id="price-filter-label">Purchase price (R)</h4>
         <div class="price-range">
           <input type="number" id="price-min" placeholder="Min" min="0">
           <input type="number" id="price-max" placeholder="Max" min="0">
@@ -81,17 +89,20 @@
       </div>
 
       <div class="filter-group">
-        <h4>Availability</h4>
+        <h4>Condition</h4>
         <ul class="filter-options">
-          <li><label><input type="checkbox"> Available now</label></li>
-          <li><label><input type="checkbox"> Available next week</label></li>
+          <li><label><input type="checkbox"> Pristine</label></li>
+          <li><label><input type="checkbox"> Mint</label></li>
+          <li><label><input type="checkbox"> Excellent</label></li>
         </ul>
       </div>
     </aside>
 
     <main>
       <div class="results-bar">
-        <div class="results-count" id="results-count">Showing <strong>12</strong> of 12 pieces</div>
+        <div class="results-bar-left">
+          <div class="results-count" id="results-count"><strong>12</strong> of 12 pieces</div>
+        </div>
         <select class="sort-select" id="sort-select">
           <option value="featured">Sort: Featured</option>
           <option value="price-asc">Price: low to high</option>
@@ -110,24 +121,27 @@
   <div class="container">
     <div class="footer-grid">
       <div class="footer-brand">
-        <a href="index.html" class="brand">DnD<span>·</span>Lux</a>
-        <p>A members' marketplace for authenticated, insured luxury rentals. Founded by collectors, run by curators.</p>
+        <a href="index.html" class="brand">
+          <img src="https://dndlux.com/cdn/shop/files/dnd_logo_svg_new.svg?v=1770897170&width=600" alt="D&D Luxury" class="logo-img">
+        </a>
+        <p>South Africa's authenticated luxury marketplace. Buy, sell or rent timeless pieces — handled with the discretion they deserve.</p>
       </div>
       <div class="footer-col">
-        <h5>Discover</h5>
+        <h5>Shop</h5>
         <ul>
           <li><a href="browse.html?category=bags">Handbags</a></li>
           <li><a href="browse.html?category=watches">Watches</a></li>
           <li><a href="browse.html?category=jewellery">Jewellery</a></li>
           <li><a href="browse.html?category=shoes">Shoes</a></li>
+          <li><a href="browse.html?mode=rent">Rentals</a></li>
         </ul>
       </div>
       <div class="footer-col">
         <h5>Marketplace</h5>
         <ul>
           <li><a href="how-it-works.html">How it works</a></li>
-          <li><a href="list.html">For listers</a></li>
-          <li><a href="#">Authentication</a></li>
+          <li><a href="list.html">Sell with us</a></li>
+          <li><a href="list.html">Rent out a piece</a></li>
           <li><a href="concierge.html">Concierge</a></li>
         </ul>
       </div>
@@ -142,7 +156,7 @@
       </div>
     </div>
     <div class="footer-bottom">
-      <span>© 2026 DnD Lux Ltd. All rights reserved.</span>
+      <span>© 2026 D&D Luxury (Pty) Ltd. All rights reserved.</span>
       <div class="socials">
         <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
         <a href="#" aria-label="X"><i class="fab fa-x-twitter"></i></a>
@@ -153,6 +167,11 @@
   </div>
 </footer>
 
+<script>
+  // honour ?mode=rent before main.js renders
+  const urlMode = new URLSearchParams(location.search).get('mode');
+  if (urlMode === 'rent' || urlMode === 'buy') localStorage.setItem('dnd-mode', urlMode);
+</script>
 <script src="main.js"></script>
 </body>
 </html>

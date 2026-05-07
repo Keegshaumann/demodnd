@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Listing — DnD Lux</title>
-  <meta name="description" content="View piece details, availability and booking on DnD Lux.">
+  <title>Listing — D&D Luxury</title>
+  <meta name="description" content="View piece details, purchase or rent on D&D Luxury.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -15,16 +15,19 @@
 
 <nav class="nav">
   <div class="nav-inner">
-    <a href="index.html" class="brand">DnD<span>·</span>Lux</a>
+    <a href="index.html" class="brand">
+      <img src="https://dndlux.com/cdn/shop/files/dnd_logo_svg_new.svg?v=1770897170&width=600" alt="D&D Luxury" class="logo-img">
+    </a>
     <ul class="nav-links">
       <li><a href="index.html">Home</a></li>
-      <li><a href="browse.html">Browse</a></li>
+      <li><a href="browse.html">Buy</a></li>
+      <li><a href="browse.html?mode=rent">Rent</a></li>
       <li><a href="how-it-works.html">How It Works</a></li>
       <li><a href="concierge.html">Concierge</a></li>
     </ul>
     <div class="nav-cta">
       <a href="#" class="btn btn-ghost">Sign In</a>
-      <a href="list.html" class="btn btn-primary">List a Piece</a>
+      <a href="list.html" class="btn btn-primary btn-sm">Sell or Rent Out</a>
       <button class="nav-toggle" aria-label="Menu"><i class="fas fa-bars"></i></button>
     </div>
   </div>
@@ -34,14 +37,14 @@
   <div class="listing-detail" id="listing-detail"></div>
 </div>
 
-<section style="border-top:1px solid var(--border);background:var(--bg-elevated)">
+<section class="tight" style="border-top:1px solid var(--border-soft);background:var(--bg-elevated)">
   <div class="container">
     <div class="section-head">
-      <div>
+      <div class="section-head-block">
         <div class="eyebrow">You may also consider</div>
-        <h2>Similar pieces</h2>
+        <h2>Similar pieces.</h2>
       </div>
-      <a href="browse.html" class="btn btn-outline">View archive <i class="fas fa-arrow-right"></i></a>
+      <a href="browse.html" class="btn btn-outline">View collection <i class="fas fa-arrow-right"></i></a>
     </div>
     <div class="listings-grid" id="similar-grid"></div>
   </div>
@@ -51,24 +54,27 @@
   <div class="container">
     <div class="footer-grid">
       <div class="footer-brand">
-        <a href="index.html" class="brand">DnD<span>·</span>Lux</a>
-        <p>A members' marketplace for authenticated, insured luxury rentals. Founded by collectors, run by curators.</p>
+        <a href="index.html" class="brand">
+          <img src="https://dndlux.com/cdn/shop/files/dnd_logo_svg_new.svg?v=1770897170&width=600" alt="D&D Luxury" class="logo-img">
+        </a>
+        <p>South Africa's authenticated luxury marketplace. Buy, sell or rent timeless pieces — handled with the discretion they deserve.</p>
       </div>
       <div class="footer-col">
-        <h5>Discover</h5>
+        <h5>Shop</h5>
         <ul>
           <li><a href="browse.html?category=bags">Handbags</a></li>
           <li><a href="browse.html?category=watches">Watches</a></li>
           <li><a href="browse.html?category=jewellery">Jewellery</a></li>
           <li><a href="browse.html?category=shoes">Shoes</a></li>
+          <li><a href="browse.html?mode=rent">Rentals</a></li>
         </ul>
       </div>
       <div class="footer-col">
         <h5>Marketplace</h5>
         <ul>
           <li><a href="how-it-works.html">How it works</a></li>
-          <li><a href="list.html">For listers</a></li>
-          <li><a href="#">Authentication</a></li>
+          <li><a href="list.html">Sell with us</a></li>
+          <li><a href="list.html">Rent out a piece</a></li>
           <li><a href="concierge.html">Concierge</a></li>
         </ul>
       </div>
@@ -83,7 +89,7 @@
       </div>
     </div>
     <div class="footer-bottom">
-      <span>© 2026 DnD Lux Ltd. All rights reserved.</span>
+      <span>© 2026 D&D Luxury (Pty) Ltd. All rights reserved.</span>
       <div class="socials">
         <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
         <a href="#" aria-label="X"><i class="fab fa-x-twitter"></i></a>

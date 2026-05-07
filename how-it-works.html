@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>How It Works — DnD Lux</title>
-  <meta name="description" content="A step-by-step guide to renting and listing luxury items on DnD Lux.">
+  <title>How It Works — D&D Luxury</title>
+  <meta name="description" content="A step-by-step guide to buying, selling and renting luxury items on D&D Luxury.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -15,16 +15,19 @@
 
 <nav class="nav">
   <div class="nav-inner">
-    <a href="index.html" class="brand">DnD<span>·</span>Lux</a>
+    <a href="index.html" class="brand">
+      <img src="https://dndlux.com/cdn/shop/files/dnd_logo_svg_new.svg?v=1770897170&width=600" alt="D&D Luxury" class="logo-img">
+    </a>
     <ul class="nav-links">
       <li><a href="index.html">Home</a></li>
-      <li><a href="browse.html">Browse</a></li>
+      <li><a href="browse.html">Buy</a></li>
+      <li><a href="browse.html?mode=rent">Rent</a></li>
       <li><a href="how-it-works.html">How It Works</a></li>
       <li><a href="concierge.html">Concierge</a></li>
     </ul>
     <div class="nav-cta">
       <a href="#" class="btn btn-ghost">Sign In</a>
-      <a href="list.html" class="btn btn-primary">List a Piece</a>
+      <a href="list.html" class="btn btn-primary btn-sm">Sell or Rent Out</a>
       <button class="nav-toggle" aria-label="Menu"><i class="fas fa-bars"></i></button>
     </div>
   </div>
@@ -34,11 +37,11 @@
   <div class="container">
     <div class="breadcrumb">
       <a href="index.html">Home</a><i class="fas fa-chevron-right"></i>
-      <span style="color:var(--text-muted)">How It Works</span>
+      <span class="muted">How It Works</span>
     </div>
     <div class="eyebrow">A members' protocol</div>
-    <h1>The quiet exchange, end to end.</h1>
-    <p>Every transaction on DnD Lux follows the same considered choreography — whether you are borrowing for a single evening or listing a piece you rarely wear.</p>
+    <h1>The quiet exchange,<br>end to end.</h1>
+    <p>Whether you are buying outright, selling a piece, or renting for the occasion — every transaction follows the same considered choreography.</p>
   </div>
 </header>
 
@@ -46,52 +49,76 @@
   <div class="container">
 
     <div class="flow-tabs">
-      <button class="flow-tab active" data-target="renters">For Renters</button>
-      <button class="flow-tab" data-target="listers">For Listers</button>
+      <button class="flow-tab active" data-target="buyers">For Buyers</button>
+      <button class="flow-tab" data-target="renters">For Renters</button>
+      <button class="flow-tab" data-target="sellers">For Sellers</button>
     </div>
 
-    <div class="flow-panel active" id="panel-renters">
+    <div class="flow-panel active" id="panel-buyers">
       <div class="flow-steps">
         <article class="flow-step">
           <span class="num">01</span>
           <div class="step-icon"><i class="fas fa-search"></i></div>
-          <h4>Discover</h4>
-          <p>Browse the archive of authenticated handbags, watches, jewellery and shoes. Every item is condition-graded and photographed in our studio.</p>
+          <h4>Browse</h4>
+          <p>Every piece in our archive is authenticated in person, condition-graded by independent specialists and photographed in our studio.</p>
         </article>
         <article class="flow-step">
           <span class="num">02</span>
-          <div class="step-icon"><i class="fas fa-calendar-check"></i></div>
-          <h4>Reserve</h4>
-          <p>Select your dates, confirm identity and pay securely. Our concierge confirms availability with the lister within hours, never days.</p>
+          <div class="step-icon"><i class="fas fa-credit-card"></i></div>
+          <h4>Reserve or finance</h4>
+          <p>Pay in full, place a 10% holding deposit, or apply for finance over 12 to 36 months. Same-day decisions on most amounts.</p>
         </article>
         <article class="flow-step">
           <span class="num">03</span>
           <div class="step-icon"><i class="fas fa-gem"></i></div>
-          <h4>Wear & return</h4>
-          <p>Receive the piece by hand, fully insured. Wear it for your occasion. We collect, professionally clean, and return it to its owner.</p>
+          <h4>Take ownership</h4>
+          <p>Free white-glove delivery within South Africa, original packaging and provenance documents. 14-day return on any authentication discrepancy.</p>
         </article>
       </div>
     </div>
 
-    <div class="flow-panel" id="panel-listers">
+    <div class="flow-panel" id="panel-renters">
+      <div class="flow-steps">
+        <article class="flow-step">
+          <span class="num">01</span>
+          <div class="step-icon"><i class="fas fa-calendar-check"></i></div>
+          <h4>Reserve dates</h4>
+          <p>Choose your window. Identity verified, deposit secured, dates confirmed with the lister within hours, never days.</p>
+        </article>
+        <article class="flow-step">
+          <span class="num">02</span>
+          <div class="step-icon"><i class="fas fa-truck"></i></div>
+          <h4>Hand-delivered</h4>
+          <p>Cape Town and Johannesburg same-day; nationwide within 48 hours. The piece arrives in protective casing, fully insured.</p>
+        </article>
+        <article class="flow-step">
+          <span class="num">03</span>
+          <div class="step-icon"><i class="fas fa-arrows-rotate"></i></div>
+          <h4>Wear & return</h4>
+          <p>Enjoy the occasion. We collect, professionally clean, and return to the owner. Should you fall in love, the rental fee credits towards purchase.</p>
+        </article>
+      </div>
+    </div>
+
+    <div class="flow-panel" id="panel-sellers">
       <div class="flow-steps">
         <article class="flow-step">
           <span class="num">01</span>
           <div class="step-icon"><i class="fas fa-camera"></i></div>
-          <h4>Submit</h4>
-          <p>Send images and provenance documents. Our specialists authenticate, photograph and grade the item — at no cost to you.</p>
+          <h4>Submit your piece</h4>
+          <p>Send images and provenance. Our specialists authenticate, photograph and condition-grade the item — at no cost to you.</p>
         </article>
         <article class="flow-step">
           <span class="num">02</span>
-          <div class="step-icon"><i class="fas fa-shield-halved"></i></div>
-          <h4>We vet & list</h4>
-          <p>Your piece appears in the archive. Every renter is screened with verified ID, references and a security deposit before booking.</p>
+          <div class="step-icon"><i class="fas fa-tag"></i></div>
+          <h4>We list and sell</h4>
+          <p>Choose to sell outright, rent it out, or both. Every buyer and renter is screened with verified ID, address and references.</p>
         </article>
         <article class="flow-step">
           <span class="num">03</span>
           <div class="step-icon"><i class="fas fa-coins"></i></div>
-          <h4>Earn</h4>
-          <p>Receive 75% of each rental fee, paid weekly. Pieces in our care typically earn 8–14% of their retail value annually.</p>
+          <h4>Get paid</h4>
+          <p>Sale proceeds settle within five working days. Rentals pay weekly. Sellers keep 80% of sale price; listers keep 75% of each rental fee.</p>
         </article>
       </div>
     </div>
@@ -101,9 +128,11 @@
 
 <section class="faq-section">
   <div class="container">
-    <div class="section-head" style="justify-content:center;text-align:center;flex-direction:column;align-items:center">
-      <div class="eyebrow">Considered questions</div>
-      <h2>Frequently asked</h2>
+    <div class="section-head center">
+      <div>
+        <div class="eyebrow">Considered questions</div>
+        <h2>Frequently asked.</h2>
+      </div>
     </div>
 
     <div class="faq-list">
@@ -112,7 +141,11 @@
         <div class="faq-a">Every piece is examined in person by an independent specialist before listing. We verify hardware stamps, serials, stitching, weight and provenance documents. Items that cannot be authenticated are rejected, no exceptions.</div>
       </div>
       <div class="faq-item">
-        <button class="faq-q">What happens if a piece is damaged? <i class="fas fa-plus"></i></button>
+        <button class="faq-q">Do you offer finance on purchases? <i class="fas fa-plus"></i></button>
+        <div class="faq-a">Yes. We partner with two regulated financial providers offering 12 to 36 month terms on amounts above R30,000. Same-day decision in most cases. Holding deposits are 10% and refundable for 7 days.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q">What happens if a rented piece is damaged? <i class="fas fa-plus"></i></button>
         <div class="faq-a">Every rental is insured up to R500,000 throughout the booking period — including transit. Listers are made whole within 14 days of any approved claim. Renters provide a refundable deposit for additional cover.</div>
       </div>
       <div class="faq-item">
@@ -120,16 +153,12 @@
         <div class="faq-a">Cape Town, Johannesburg, Durban and Pretoria via white-glove courier as standard. Other cities by appointment — please contact our concierge team.</div>
       </div>
       <div class="faq-item">
-        <button class="faq-q">Who can join the platform? <i class="fas fa-plus"></i></button>
-        <div class="faq-a">Membership is by application. Renters and listers complete identity verification, address verification, and where appropriate provide references. We are deliberately small.</div>
-      </div>
-      <div class="faq-item">
         <button class="faq-q">How much can I earn from listing? <i class="fas fa-plus"></i></button>
-        <div class="faq-a">It depends on the piece. A Birkin in pristine condition typically earns its owner R800,000–R1,200,000 over five years on the platform. Watches and jewellery vary by demand. Our team provides a personalised earnings projection on application.</div>
+        <div class="faq-a">Sellers keep 80% of sale price, settled within five working days. Listers earning rental fees keep 75%, paid weekly. A Birkin in pristine condition typically generates R800,000–R1,200,000 over five years on the platform.</div>
       </div>
       <div class="faq-item">
-        <button class="faq-q">Can I rent without joining? <i class="fas fa-plus"></i></button>
-        <div class="faq-a">No. We accept that this slows growth, but it is foundational to the trust between our members. Even brief one-off rentals require a verified account.</div>
+        <button class="faq-q">Do I need an account to buy? <i class="fas fa-plus"></i></button>
+        <div class="faq-a">Yes. Even single-item purchases require ID verification. We accept that this slows growth, but it is foundational to the trust between members. The application takes under five minutes.</div>
       </div>
     </div>
   </div>
@@ -139,10 +168,10 @@
   <div class="container">
     <div class="eyebrow">Begin your application</div>
     <h2>Two minutes. One quiet form.</h2>
-    <p>Borrow your first piece or place your first item with us. Either way, the conversation begins here.</p>
+    <p>Buy your first piece, sell something rare, or speak to our concierge. Every conversation begins here.</p>
     <div class="cta-buttons">
-      <a href="browse.html" class="btn btn-primary">Apply to Borrow</a>
-      <a href="list.html" class="btn btn-outline">List a Piece</a>
+      <a href="browse.html" class="btn btn-primary">Shop the Collection</a>
+      <a href="list.html" class="btn btn-outline">Sell or Rent Out</a>
     </div>
   </div>
 </section>
@@ -151,24 +180,27 @@
   <div class="container">
     <div class="footer-grid">
       <div class="footer-brand">
-        <a href="index.html" class="brand">DnD<span>·</span>Lux</a>
-        <p>A members' marketplace for authenticated, insured luxury rentals. Founded by collectors, run by curators.</p>
+        <a href="index.html" class="brand">
+          <img src="https://dndlux.com/cdn/shop/files/dnd_logo_svg_new.svg?v=1770897170&width=600" alt="D&D Luxury" class="logo-img">
+        </a>
+        <p>South Africa's authenticated luxury marketplace. Buy, sell or rent timeless pieces — handled with the discretion they deserve.</p>
       </div>
       <div class="footer-col">
-        <h5>Discover</h5>
+        <h5>Shop</h5>
         <ul>
           <li><a href="browse.html?category=bags">Handbags</a></li>
           <li><a href="browse.html?category=watches">Watches</a></li>
           <li><a href="browse.html?category=jewellery">Jewellery</a></li>
           <li><a href="browse.html?category=shoes">Shoes</a></li>
+          <li><a href="browse.html?mode=rent">Rentals</a></li>
         </ul>
       </div>
       <div class="footer-col">
         <h5>Marketplace</h5>
         <ul>
           <li><a href="how-it-works.html">How it works</a></li>
-          <li><a href="list.html">For listers</a></li>
-          <li><a href="#">Authentication</a></li>
+          <li><a href="list.html">Sell with us</a></li>
+          <li><a href="list.html">Rent out a piece</a></li>
           <li><a href="concierge.html">Concierge</a></li>
         </ul>
       </div>
@@ -183,7 +215,7 @@
       </div>
     </div>
     <div class="footer-bottom">
-      <span>© 2026 DnD Lux Ltd. All rights reserved.</span>
+      <span>© 2026 D&D Luxury (Pty) Ltd. All rights reserved.</span>
       <div class="socials">
         <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
         <a href="#" aria-label="X"><i class="fab fa-x-twitter"></i></a>
