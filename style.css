@@ -133,7 +133,7 @@ button { font-family: inherit; }
 .brand .logo-img {
   height: 30px;
   width: auto;
-  filter: invert(1) brightness(1.05);
+  filter: brightness(0) invert(1);
 }
 
 .brand-fallback span { color: var(--gold); margin: 0 2px; }
@@ -387,8 +387,8 @@ section.tight { padding: 80px 0; }
 /* ========== MODE TOGGLE (segmented) ========== */
 .mode-toggle {
   display: inline-flex;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.14);
   border-radius: 999px;
   padding: 4px;
   gap: 0;
@@ -398,7 +398,7 @@ section.tight { padding: 80px 0; }
   background: transparent;
   border: none;
   color: var(--text-muted);
-  padding: 11px 26px;
+  padding: 12px 28px;
   font-size: 11px;
   letter-spacing: 0.22em;
   text-transform: uppercase;
@@ -413,6 +413,7 @@ section.tight { padding: 80px 0; }
 .mode-toggle button.active {
   background: var(--gold);
   color: #0B0B0B;
+  font-weight: 600;
 }
 
 .mode-toggle.local-toggle {
@@ -839,6 +840,8 @@ footer {
 .filters {
   position: sticky;
   top: 96px;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .filter-group {
@@ -921,6 +924,7 @@ footer {
 
 .price-range input {
   flex: 1;
+  min-width: 0;
   padding: 11px 14px;
   background: var(--bg-card);
   border: 1px solid var(--border);
@@ -957,21 +961,27 @@ footer {
 .results-count strong { color: var(--text); }
 
 .sort-select {
+  appearance: none;
+  -webkit-appearance: none;
   background: var(--bg-card);
   border: 1px solid var(--border);
   color: var(--text);
-  padding: 11px 18px;
+  padding: 11px 40px 11px 18px;
   font-family: var(--sans);
   font-size: 13px;
   cursor: pointer;
   border-radius: var(--radius);
   color-scheme: dark;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23C9A84C' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  background-size: 10px 6px;
 }
 
 .sort-select:focus { outline: none; border-color: var(--gold); }
 
 select option {
-  background: var(--bg-card);
+  background: #1a1a1a;
   color: var(--text);
 }
 
@@ -1156,6 +1166,16 @@ select option {
   border-radius: var(--radius);
   color-scheme: dark;
   transition: border-color var(--transition);
+}
+
+.field select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 40px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23C9A84C' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  background-size: 10px 6px;
 }
 
 .field input:focus, .field select:focus, .field textarea:focus {
@@ -1610,19 +1630,21 @@ select option {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 24px;
-  margin: 64px 0 24px;
+  margin: 64px 0 0;
+  padding-bottom: 80px;
+  border-bottom: 1px solid var(--border-soft);
 }
 
 .channel-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border-soft);
-  padding: 36px 32px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  padding: 40px 32px;
   text-align: center;
   border-radius: var(--radius);
   transition: all var(--transition);
 }
 
-.channel-card:hover { border-color: var(--gold-dim); transform: translateY(-3px); }
+.channel-card:hover { border-color: var(--gold); transform: translateY(-3px); box-shadow: var(--shadow-md); }
 
 .channel-card i {
   font-size: 24px;
