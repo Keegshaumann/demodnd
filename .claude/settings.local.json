@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx skills *)",
+      "PowerShell(npx skills find \"svg logo rendering\" 2>&1)",
+      "WebFetch(domain:dndlux.com)"
+    ]
+  }
+}

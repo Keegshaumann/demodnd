@@ -1,15 +1,18 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Listing — D&amp;D Luxury</title>
-  <meta name="description" content="View piece details, purchase or rent on D&amp;D Luxury.">
+  <title>My Profile — D&amp;D Luxury</title>
+  <meta name="description" content="Manage your listings on D&amp;D Luxury.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
   <link rel="stylesheet" href="style.css">
+  <script>
+    if (localStorage.getItem('dnd-auth') !== 'true') location.replace('signin.html');
+  </script>
 </head>
 <body>
 
@@ -36,20 +39,54 @@
   </div>
 </nav>
 
-<div class="container">
-  <div class="listing-detail" id="listing-detail"></div>
-</div>
-
-<section class="tight" style="border-top:1px solid var(--border-soft);background:var(--bg-elevated)">
+<!-- Profile hero -->
+<section class="profile-hero">
   <div class="container">
-    <div class="section-head">
-      <div class="section-head-block">
-        <div class="eyebrow">You may also consider</div>
-        <h2>Similar pieces.</h2>
+    <div class="profile-hero-inner">
+      <div class="profile-avatar">U</div>
+      <div class="profile-info">
+        <div class="profile-name">Member Profile</div>
+        <div class="profile-handle">
+          @username &nbsp;·&nbsp; Member since January 2026 &nbsp;·&nbsp;
+          <i class="fas fa-circle-check" style="color:var(--gold);font-size:11px;"></i> Verified
+        </div>
+        <div class="profile-stats">
+          <div class="profile-stat">
+            <span class="profile-stat-num" id="stat-total">4</span>
+            <span class="profile-stat-label">Listings</span>
+          </div>
+          <div class="profile-stat">
+            <span class="profile-stat-num">2</span>
+            <span class="profile-stat-label">Live</span>
+          </div>
+          <div class="profile-stat">
+            <span class="profile-stat-num">287</span>
+            <span class="profile-stat-label">Total views</span>
+          </div>
+          <div class="profile-stat">
+            <span class="profile-stat-num">4.96</span>
+            <span class="profile-stat-label">Rating</span>
+          </div>
+        </div>
       </div>
-      <a href="browse.html" class="btn btn-outline">View collection <i class="fas fa-arrow-right"></i></a>
+      <div class="profile-actions">
+        <a href="list.html" class="btn btn-primary btn-sm">List a piece <i class="fas fa-plus"></i></a>
+        <button id="signout-btn" class="btn btn-ghost btn-sm">Sign out</button>
+      </div>
     </div>
-    <div class="listings-grid" id="similar-grid"></div>
+  </div>
+</section>
+
+<!-- My listings -->
+<section class="my-listings-section">
+  <div class="container">
+    <div class="my-listings-head">
+      <h2>My listings.</h2>
+      <a href="list.html" class="btn btn-outline btn-sm">List a new piece <i class="fas fa-arrow-right"></i></a>
+    </div>
+    <div class="my-listing-stack" id="profile-listings">
+      <!-- rendered by main.js -->
+    </div>
   </div>
 </section>
 

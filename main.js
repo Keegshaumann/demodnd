@@ -12,9 +12,9 @@ const LISTINGS = [
   { id: 7,  name: 'Classic Flap Medium',      brand: 'Chanel',          category: 'bags',     buyPrice: 145000, price: 6200,  available: true,  condition: 'Pristine',   rating: 5.0, reviews: 47, year: 2023, img: 'https://images.unsplash.com/photo-1591348278863-a8fb3887e2aa?w=900&q=85', desc: 'Caviar leather with gold-tone CC clasp. The handbag every wardrobe aspires toward.' },
   { id: 8,  name: 'Horsebit Loafer',          brand: 'Gucci',           category: 'shoes',    buyPrice: 18500,  price: 1900,  available: true,  condition: 'Excellent',  rating: 4.6, reviews: 12, year: 2024, img: 'https://images.unsplash.com/photo-1614252369475-531eba835eb1?w=900&q=85', desc: 'The horsebit loafer rendered in glove-soft black calfskin. Italian craftsmanship since 1953.' },
   { id: 9,  name: 'Submariner Date',          brand: 'Rolex',           category: 'watches',  buyPrice: 215000, price: 6800,  available: true,  condition: 'Pristine',   rating: 4.9, reviews: 36, year: 2022, img: 'https://images.unsplash.com/photo-1547996160-81dfa63595aa?w=900&q=85', desc: 'Oystersteel diving instrument with black ceramic Cerachrom bezel. Water resistant to 300 metres.' },
-  { id: 10, name: 'Capucines BB',             brand: 'Louis Vuitton',   category: 'bags',     buyPrice: 92000,  price: 5200,  available: true,  condition: 'Mint',       rating: 4.8, reviews: 21, year: 2023, img: 'https://images.unsplash.com/photo-1601369850391-3d3c4d827c98?w=900&q=85', desc: 'Hand-finished Taurillon leather with the iconic LV signature flower. Effortless, architectural elegance.' },
+  { id: 10, name: 'Capucines BB',             brand: 'Louis Vuitton',   category: 'bags',     buyPrice: 92000,  price: 5200,  available: true,  condition: 'Mint',       rating: 4.8, reviews: 21, year: 2023, img: 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=900&q=85', desc: 'Hand-finished Taurillon leather with the iconic LV signature flower. Effortless, architectural elegance.' },
   { id: 11, name: 'Panthère Ring',            brand: 'Cartier',         category: 'jewellery',buyPrice: 68000,  price: 3500,  available: false, condition: 'Pristine',   rating: 5.0, reviews: 14, year: 2022, img: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=900&q=85', desc: '18k yellow gold with tsavorite garnet eyes and onyx spots. The maison\'s legendary feline reborn on the finger.' },
-  { id: 12, name: 'Crystal Heeled Mule',      brand: 'Manolo Blahnik',  category: 'shoes',    buyPrice: 14500,  price: 2200,  available: true,  condition: 'Excellent',  rating: 4.7, reviews: 18, year: 2024, img: 'https://images.unsplash.com/photo-1596944946297-11d6b2f64ec9?w=900&q=85', desc: 'Crystal-embellished satin upper on a slim 90mm heel. Couture footwork for occasion wear.' }
+  { id: 12, name: 'Crystal Heeled Mule',      brand: 'Manolo Blahnik',  category: 'shoes',    buyPrice: 14500,  price: 2200,  available: true,  condition: 'Excellent',  rating: 4.7, reviews: 18, year: 2024, img: 'https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=900&q=85', desc: 'Crystal-embellished satin upper on a slim 90mm heel. Couture footwork for occasion wear.' }
 ];
 
 const LISTERS = [
@@ -24,11 +24,59 @@ const LISTERS = [
   { name: 'Adrian K.',   initials: 'AK', verified: true, rating: 4.89, lists: 19, location: 'Stellenbosch' }
 ];
 
+// ---------- My Listings (profile dummy data) ----------
+const MY_LISTINGS = [
+  {
+    brand: 'Hermès', name: 'Birkin 30 — Gold Togo', category: 'Handbag', condition: 'Pristine',
+    intent: 'Sell', price: 285000, rentPrice: null,
+    status: 'live', statusLabel: 'Live',
+    img: 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=400&q=80',
+    submitted: '3 Mar 2026', daysListed: 65, views: 142, inquiries: 8, offers: 3, revenue: null
+  },
+  {
+    brand: 'Rolex', name: 'Daytona 116500LN White Dial', category: 'Watch', condition: 'Mint',
+    intent: 'Rent', price: null, rentPrice: 8500,
+    status: 'rented', statusLabel: 'Currently rented',
+    img: 'https://images.unsplash.com/photo-1547996160-81dfa63595aa?w=400&q=80',
+    submitted: '14 Feb 2026', daysListed: 83, views: 89, inquiries: 12, offers: 2, revenue: 17000
+  },
+  {
+    brand: 'Chanel', name: 'Classic Flap — Medium Caviar', category: 'Handbag', condition: 'Pristine',
+    intent: 'Sell', price: 95000, rentPrice: null,
+    status: 'review', statusLabel: 'In review',
+    img: 'https://images.unsplash.com/photo-1591348278863-a8fb3887e2aa?w=400&q=80',
+    submitted: '1 May 2026', daysListed: 7, views: 0, inquiries: 0, offers: 0, revenue: null
+  },
+  {
+    brand: 'Cartier', name: 'Love Bracelet — 18k Rose Gold', category: 'Jewellery', condition: 'Excellent',
+    intent: 'Rent', price: null, rentPrice: 3500,
+    status: 'live', statusLabel: 'Available',
+    img: 'https://images.unsplash.com/photo-1611652022419-a9419f74343d?w=400&q=80',
+    submitted: '22 Apr 2026', daysListed: 16, views: 56, inquiries: 4, offers: 1, revenue: 3500
+  }
+];
+
 const $ = (s, p = document) => p.querySelector(s);
 const $$ = (s, p = document) => Array.from(p.querySelectorAll(s));
 
 const formatPrice = (n) => `R${n.toLocaleString()}`;
 const getQueryParam = (name) => new URLSearchParams(location.search).get(name);
+
+function showToast(title, msg, duration = 6000) {
+  let toast = document.getElementById('dnd-toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'dnd-toast';
+    toast.className = 'toast';
+    toast.innerHTML = '<i class="fas fa-circle-check"></i><div class="toast-body"><div class="toast-title"></div><div class="toast-msg"></div></div>';
+    document.body.appendChild(toast);
+  }
+  toast.querySelector('.toast-title').textContent = title;
+  toast.querySelector('.toast-msg').textContent = msg;
+  toast.classList.add('show');
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => toast.classList.remove('show'), duration);
+}
 
 // global mode: 'buy' (default) | 'rent'
 function getMode() {
@@ -44,7 +92,7 @@ function renderListingCard(item) {
   return `
     <a href="listing.html?id=${item.id}" class="listing-card" data-id="${item.id}">
       <div class="listing-img">
-        <img src="${item.img}" alt="${item.brand} ${item.name}" loading="lazy">
+        <img src="${item.img}" alt="${item.brand} ${item.name}" loading="lazy" onerror="this.style.opacity='0'">
         <span class="badge ${item.available ? '' : 'unavailable'}">
           ${item.available ? (mode === 'rent' ? 'Available' : 'In stock') : 'Reserved'}
         </span>
@@ -106,6 +154,26 @@ function initNav() {
   });
 }
 
+// ---------- Auth nav state ----------
+function initAuthNav() {
+  const btn = document.getElementById('nav-auth-btn');
+  if (!btn) return;
+  if (localStorage.getItem('dnd-auth') === 'true') {
+    if (location.pathname.includes('profile.html')) {
+      btn.textContent = 'Sign out';
+      btn.href = '#';
+      btn.addEventListener('click', e => {
+        e.preventDefault();
+        localStorage.removeItem('dnd-auth');
+        location.href = 'index.html';
+      });
+    } else {
+      btn.textContent = 'My Profile';
+      btn.href = 'profile.html';
+    }
+  }
+}
+
 // ---------- Home page ----------
 function initHome() {
   const grid = $('#featured-grid');
@@ -128,17 +196,24 @@ function initBrowse() {
     brands: new Set(),
     minPrice: 0,
     maxPrice: 100000000,
-    sort: 'featured'
+    sort: 'featured',
+    search: getQueryParam('q') || ''
   };
+
+  // pre-fill search input if arriving from URL param
+  const browseSearchIn = $('#browse-search');
+  if (browseSearchIn && state.search) browseSearchIn.value = state.search;
 
   function applyFilters() {
     const mode = getMode();
     const priceField = mode === 'rent' ? 'price' : 'buyPrice';
+    const q = state.search.trim().toLowerCase();
 
     let result = LISTINGS.filter(item => {
       if (state.categories.size && !state.categories.has(item.category)) return false;
       if (state.brands.size && !state.brands.has(item.brand)) return false;
       if (item[priceField] < state.minPrice || item[priceField] > state.maxPrice) return false;
+      if (q && !item.name.toLowerCase().includes(q) && !item.brand.toLowerCase().includes(q) && !item.desc.toLowerCase().includes(q)) return false;
       return true;
     });
 
@@ -181,6 +256,11 @@ function initBrowse() {
     state.maxPrice = parseFloat(maxIn.value) || 100000000;
     applyFilters();
   }));
+
+  if (browseSearchIn) browseSearchIn.addEventListener('input', () => {
+    state.search = browseSearchIn.value;
+    applyFilters();
+  });
 
   const sortSel = $('#sort-select');
   if (sortSel) sortSel.addEventListener('change', () => {
@@ -421,10 +501,37 @@ function initListForm() {
 
   form.addEventListener('submit', (e) => {
     e.preventDefault();
+
+    // generate reference and update success state
+    const ref = 'DND-' + new Date().getFullYear() + '-' + Math.floor(1000 + Math.random() * 9000);
+    const refEl = $('#ref-number');
+    if (refEl) refEl.textContent = ref;
+
+    // save to localStorage so it appears in profile
+    const data = new FormData(form);
+    const intentMap = { sell: 'Sell', rent: 'Rent', both: 'Sell & Rent' };
+    const newListing = {
+      brand:       (data.get('brand') || 'New piece').trim(),
+      name:        (data.get('model') || 'Unlisted piece').trim(),
+      category:    data.get('category') || 'Other',
+      intent:      intentMap[data.get('intent')] || 'Sell',
+      price:       parseFloat(data.get('retail')) || null,
+      rentPrice:   parseFloat(data.get('rate'))   || null,
+      status:      'review',
+      statusLabel: 'In review',
+      img:         'https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=400&q=80',
+      submitted:   new Date().toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' }),
+      views:       0
+    };
+    const stored = JSON.parse(localStorage.getItem('dnd-my-listings') || '[]');
+    localStorage.setItem('dnd-my-listings', JSON.stringify([newListing, ...stored]));
+
     const success = $('#list-success');
     form.style.display = 'none';
     success.style.display = 'block';
     success.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+    showToast('Collection team notified', 'Our Cape Town team will contact you within 2 working days to arrange collection and authentication.');
   });
 
   const fileIn = $('#photos');
@@ -463,8 +570,117 @@ function initReveal() {
   $$('.reveal').forEach(el => obs.observe(el));
 }
 
+// ---------- Sign-in page ----------
+function initSignIn() {
+  const form = $('#signin-form');
+  if (!form) return;
+  if (localStorage.getItem('dnd-auth') === 'true') {
+    location.replace('profile.html');
+    return;
+  }
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    const u = $('#s-username').value.trim();
+    const p = $('#s-password').value;
+    if (u === 'username' && p === 'password') {
+      localStorage.setItem('dnd-auth', 'true');
+      location.href = 'profile.html';
+    } else {
+      const err = $('#signin-error');
+      err.style.display = 'block';
+      clearTimeout(err._t);
+      err._t = setTimeout(() => { err.style.display = 'none'; }, 4000);
+    }
+  });
+  const toggle = $('.pw-toggle');
+  const pwIn = $('#s-password');
+  if (toggle && pwIn) {
+    toggle.addEventListener('click', () => {
+      const show = pwIn.type === 'password';
+      pwIn.type = show ? 'text' : 'password';
+      toggle.querySelector('i').className = show ? 'fas fa-eye-slash' : 'fas fa-eye';
+    });
+  }
+}
+
+// ---------- Profile page ----------
+function initProfile() {
+  const wrap = $('#profile-listings');
+  if (!wrap) return;
+
+  const signoutBtn = $('#signout-btn');
+  if (signoutBtn) {
+    signoutBtn.addEventListener('click', () => {
+      localStorage.removeItem('dnd-auth');
+      location.href = 'index.html';
+    });
+  }
+
+  const submitted = JSON.parse(localStorage.getItem('dnd-my-listings') || '[]');
+  const all = [...submitted, ...MY_LISTINGS];
+
+  const statTotal = $('#stat-total');
+  if (statTotal) statTotal.textContent = all.length;
+
+  wrap.innerHTML = all.map(l => {
+    const isRent     = l.intent === 'Rent';
+    const priceStr   = l.rentPrice ? formatPrice(l.rentPrice) : (l.price ? formatPrice(l.price) : '—');
+    const priceUnit  = l.rentPrice ? '/day' : '';
+    const metric3Lbl = isRent ? 'Rentals' : 'Offers';
+    const metric3Val = l.offers ?? 0;
+    const revenueRow = (l.revenue && l.revenue > 0)
+      ? `<div class="analytic-cell analytic-cell--wide"><span class="analytic-value">${formatPrice(l.revenue)}</span><span class="analytic-label">Revenue earned</span></div>`
+      : '';
+
+    return `
+      <div class="my-listing-card">
+        <img class="my-listing-img" src="${l.img}" alt="${l.name}" onerror="this.style.opacity='0'">
+
+        <div class="my-listing-details">
+          <div class="my-listing-brand">${l.brand}</div>
+          <div class="my-listing-name">${l.name}</div>
+          <div class="my-listing-meta">${l.category}${l.condition ? ' · ' + l.condition : ''}</div>
+          <div class="my-listing-submitted">Submitted ${l.submitted}</div>
+          <div class="my-listing-intent">
+            <i class="${isRent ? 'fas fa-rotate' : 'fas fa-tag'}"></i>
+            ${isRent ? 'For rent' : 'For sale'}
+          </div>
+        </div>
+
+        <div class="my-listing-analytics">
+          <div class="analytics-top">
+            <span class="status-badge status-${l.status}">${l.statusLabel}</span>
+          </div>
+          <div class="analytics-grid">
+            <div class="analytic-cell">
+              <span class="analytic-value">${l.views ?? 0}</span>
+              <span class="analytic-label">Views</span>
+            </div>
+            <div class="analytic-cell">
+              <span class="analytic-value">${l.inquiries ?? 0}</span>
+              <span class="analytic-label">Enquiries</span>
+            </div>
+            <div class="analytic-cell">
+              <span class="analytic-value">${l.daysListed ?? 0}</span>
+              <span class="analytic-label">Days listed</span>
+            </div>
+            <div class="analytic-cell">
+              <span class="analytic-value">${metric3Val}</span>
+              <span class="analytic-label">${metric3Lbl}</span>
+            </div>
+            ${revenueRow}
+          </div>
+          <div class="analytic-price">
+            ${priceStr}<small>${priceUnit}</small>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   initNav();
+  initAuthNav();
   bindModeToggle(document);
   initHome();
   initBrowse();
@@ -472,5 +688,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initHowItWorks();
   initListForm();
   initConcierge();
+  initSignIn();
+  initProfile();
   setTimeout(initReveal, 50);
 });

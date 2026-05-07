@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Sign In — D&amp;D Luxury</title>
+  <meta name="description" content="Sign in to your D&amp;D Luxury account to manage your listings.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="brand">
+      <img src="logo.svg" alt="D&amp;D Luxury" class="logo-img">
+    </a>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="browse.html">Shop</a></li>
+      <li><a href="how-it-works.html">How It Works</a></li>
+      <li><a href="concierge.html">Concierge</a></li>
+    </ul>
+    <form class="nav-search-form" action="browse.html" method="get">
+      <input type="text" name="q" placeholder="Search pieces...">
+      <button type="submit" aria-label="Search"><i class="fas fa-search"></i></button>
+    </form>
+    <div class="nav-cta">
+      <a href="signin.html" class="btn btn-ghost" id="nav-auth-btn">Sign In</a>
+      <a href="list.html" class="btn btn-primary btn-sm">Sell or Rent Out</a>
+      <button class="nav-toggle" aria-label="Menu"><i class="fas fa-bars"></i></button>
+    </div>
+  </div>
+</nav>
+
+<div class="signin-wrap">
+  <div class="signin-card">
+    <a href="index.html" class="signin-logo">
+      <img src="logo.svg" alt="D&amp;D Luxury" style="height:44px;width:auto;margin:0 auto;">
+    </a>
+
+    <h2>Welcome back.</h2>
+    <p class="signin-sub">Sign in to manage your listings and profile.</p>
+
+    <form id="signin-form" novalidate>
+      <div class="field">
+        <label for="s-username">Username</label>
+        <input type="text" id="s-username" placeholder="Enter username" autocomplete="username" required>
+      </div>
+      <div class="field">
+        <label for="s-password">Password</label>
+        <div class="pw-wrap">
+          <input type="password" id="s-password" placeholder="••••••••" autocomplete="current-password" required>
+          <button type="button" class="pw-toggle" aria-label="Toggle password visibility">
+            <i class="fas fa-eye"></i>
+          </button>
+        </div>
+      </div>
+      <p class="signin-error" id="signin-error">Incorrect username or password. Please try again.</p>
+      <button type="submit" class="btn btn-primary btn-block" style="margin-top:8px;">
+        Sign in <i class="fas fa-arrow-right"></i>
+      </button>
+    </form>
+
+    <a href="#" class="signin-forgot">Forgot your password?</a>
+
+    <div class="signin-divider"><span>New to D&amp;D Luxury?</span></div>
+    <a href="concierge.html" class="btn btn-outline btn-block">Contact us to register</a>
+  </div>
+</div>
+
+<script src="main.js"></script>
+</body>
+</html>

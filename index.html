@@ -1,9 +1,9 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>D&D Luxury — South Africa's Authenticated Luxury Marketplace</title>
+  <title>D&amp;D Luxury — South Africa's Authenticated Luxury Marketplace</title>
   <meta name="description" content="Buy or rent authenticated luxury — Hermès, Rolex, Cartier, Chanel and more — with full provenance, insurance and concierge handling.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -16,170 +16,129 @@
 <nav class="nav">
   <div class="nav-inner">
     <a href="index.html" class="brand">
-      <img src="https://dndlux.com/cdn/shop/files/dnd_logo_svg_new.svg?v=1770897170&width=600" alt="D&D Luxury" class="logo-img">
+      <img src="logo.svg" alt="D&amp;D Luxury" class="logo-img">
     </a>
     <ul class="nav-links">
-      <li><a href="index.html">Home</a></li>
+      <li><a href="index.html" class="active">Home</a></li>
       <li><a href="browse.html">Shop</a></li>
       <li><a href="how-it-works.html">How It Works</a></li>
       <li><a href="concierge.html">Concierge</a></li>
     </ul>
+    <form class="nav-search-form" action="browse.html" method="get">
+      <input type="text" name="q" placeholder="Search pieces...">
+      <button type="submit" aria-label="Search"><i class="fas fa-search"></i></button>
+    </form>
     <div class="nav-cta">
-      <a href="#" class="btn btn-ghost">Sign In</a>
+      <a href="signin.html" class="btn btn-ghost" id="nav-auth-btn">Sign In</a>
       <a href="list.html" class="btn btn-primary btn-sm">Sell or Rent Out</a>
       <button class="nav-toggle" aria-label="Menu"><i class="fas fa-bars"></i></button>
     </div>
   </div>
 </nav>
 
-<header class="hero">
+<!-- Hero -->
+<header class="hero-marketplace">
   <div class="container">
-    <div class="hero-content reveal">
-      <div class="eyebrow">Authenticated · Insured · South African</div>
-      <h1>The country's quietest<br>address for <em>true luxury.</em></h1>
-      <p class="hero-tagline">Buy authenticated icons from Hermès, Rolex, Cartier, Chanel and beyond — or rent for the occasion. Every piece independently verified, fully insured, delivered by hand.</p>
-
-      <div class="hero-cta">
-        <a href="browse.html" class="btn btn-primary">Shop the Collection <i class="fas fa-arrow-right"></i></a>
-        <a href="browse.html?mode=rent" class="btn btn-outline">Rent for the Occasion</a>
-      </div>
-
-      <div class="hero-meta-strip">
-        <div class="hero-meta-cell"><strong>500+</strong><small>Pieces in stock</small></div>
-        <div class="hero-meta-cell"><strong>100%</strong><small>Authenticated</small></div>
-        <div class="hero-meta-cell"><strong>R500K</strong><small>Insured per item</small></div>
-        <div class="hero-meta-cell"><strong>4.96<span style="color:var(--gold);font-size:18px;margin-left:4px">★</span></strong><small>Member rating</small></div>
-      </div>
+    <div class="eyebrow">Authenticated · Insured · South African</div>
+    <h1>South Africa's authenticated<br><em>luxury marketplace.</em></h1>
+    <p class="hero-marketplace-sub">500+ pieces. Buy outright or rent for the occasion. Every item independently verified, fully insured, delivered by hand.</p>
+    <form class="hero-search-bar" action="browse.html" method="get">
+      <i class="fas fa-search"></i>
+      <input type="text" name="q" placeholder="Search for Hermès, Rolex, Chanel, Cartier...">
+      <button type="submit">Search</button>
+    </form>
+    <div class="hero-quick-links">
+      <span>Browse:</span>
+      <a href="browse.html?category=bags">Handbags</a>
+      <a href="browse.html?category=watches">Watches</a>
+      <a href="browse.html?category=jewellery">Jewellery</a>
+      <a href="browse.html?category=shoes">Shoes</a>
+      <a href="browse.html?mode=rent">Rentals</a>
     </div>
   </div>
 </header>
 
-<section class="houses-strip">
+<!-- Trust strip -->
+<div class="trust-strip">
   <div class="container">
-    <div class="houses-row">
-      <span>Hermès</span>
-      <span>Rolex</span>
-      <span>Cartier</span>
-      <span>Chanel</span>
-      <span>Audemars Piguet</span>
-      <span>Louis Vuitton</span>
-      <span>Dior</span>
-      <span>Patek Philippe</span>
+    <div class="trust-items">
+      <div class="trust-item"><i class="fas fa-shield-halved"></i> 100% Authenticated</div>
+      <div class="trust-item"><i class="fas fa-lock"></i> Insured to R500,000</div>
+      <div class="trust-item"><i class="fas fa-truck"></i> White-glove delivery</div>
+      <div class="trust-item"><i class="fas fa-rotate-left"></i> 14-day returns</div>
+      <div class="trust-item"><i class="fas fa-star"></i> 4.96 Member rating</div>
+    </div>
+  </div>
+</div>
+
+<!-- Category tiles -->
+<section class="categories-section">
+  <div class="container">
+    <span class="section-label">Shop by category</span>
+    <div class="categories-grid">
+      <a href="browse.html?category=bags" class="cat-tile">
+        <img src="https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=600&q=80" alt="Handbags" loading="lazy">
+        <div class="cat-footer">
+          <span class="cat-name">Handbags</span>
+          <span class="cat-count">4 pieces</span>
+        </div>
+      </a>
+      <a href="browse.html?category=watches" class="cat-tile">
+        <img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&q=80" alt="Watches" loading="lazy">
+        <div class="cat-footer">
+          <span class="cat-name">Watches</span>
+          <span class="cat-count">3 pieces</span>
+        </div>
+      </a>
+      <a href="browse.html?category=jewellery" class="cat-tile">
+        <img src="https://images.unsplash.com/photo-1611652022419-a9419f74343d?w=600&q=80" alt="Jewellery" loading="lazy">
+        <div class="cat-footer">
+          <span class="cat-name">Jewellery</span>
+          <span class="cat-count">3 pieces</span>
+        </div>
+      </a>
+      <a href="browse.html?category=shoes" class="cat-tile">
+        <img src="https://images.unsplash.com/photo-1614252369475-531eba835eb1?w=600&q=80" alt="Shoes" loading="lazy">
+        <div class="cat-footer">
+          <span class="cat-name">Shoes</span>
+          <span class="cat-count">2 pieces</span>
+        </div>
+      </a>
     </div>
   </div>
 </section>
 
-<section class="reveal">
+<!-- Featured listings -->
+<section style="padding:80px 0 100px;">
   <div class="container">
     <div class="section-head">
       <div class="section-head-block">
-        <div class="eyebrow">Featured this week</div>
-        <h2>Pieces in residence.</h2>
+        <div class="eyebrow">New in</div>
+        <h2>Latest pieces.</h2>
       </div>
-      <p>A curated edit of the rarest items currently in our care — chosen by hand, ready for collection or rental.</p>
+      <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+        <div class="mode-toggle" role="tablist" aria-label="Buy or rent">
+          <button data-mode="buy" type="button">Buy</button>
+          <button data-mode="rent" type="button">Rent</button>
+        </div>
+        <a href="browse.html" class="btn btn-outline btn-sm">View all <i class="fas fa-arrow-right"></i></a>
+      </div>
     </div>
     <div class="listings-grid" id="featured-grid"></div>
-    <div style="text-align:center;margin-top:64px">
-      <a href="browse.html" class="btn btn-outline">View the full archive <i class="fas fa-arrow-right"></i></a>
-    </div>
   </div>
 </section>
 
-<section class="how-section reveal">
-  <div class="container">
-    <div class="section-head center">
-      <div>
-        <div class="eyebrow">Two ways to wear</div>
-        <h2>Own it forever, or borrow it briefly.</h2>
-        <p>Same authentication, same insurance, same considered handling. The choice of how long is yours.</p>
-      </div>
+<!-- Sell CTA banner -->
+<section style="background:var(--bg-elevated);border-top:1px solid var(--border-soft);border-bottom:1px solid var(--border-soft);padding:56px 0;">
+  <div class="container" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:32px;">
+    <div>
+      <div class="eyebrow">List a piece</div>
+      <h2 style="font-size:clamp(28px,3.5vw,40px);margin-bottom:10px;">Have a piece to sell or rent out?</h2>
+      <p style="color:var(--text-muted);max-width:520px;font-size:15px;">We authenticate, photograph and list your item. You keep 80% on sale, 75% on rentals. White-glove collection from your door.</p>
     </div>
-
-    <div class="how-grid">
-      <div class="how-col">
-        <h3><i class="fas fa-gem"></i>To buy</h3>
-        <div class="step">
-          <div class="step-num">1</div>
-          <div class="step-body">
-            <h4>Browse the archive</h4>
-            <p>Every item authenticated in person, photographed in our studio, condition-graded by independent specialists.</p>
-          </div>
-        </div>
-        <div class="step">
-          <div class="step-num">2</div>
-          <div class="step-body">
-            <h4>Reserve or finance</h4>
-            <p>Pay in full, place a holding deposit, or apply for finance over 12 to 36 months. White-glove delivery within South Africa is included.</p>
-          </div>
-        </div>
-        <div class="step">
-          <div class="step-num">3</div>
-          <div class="step-body">
-            <h4>Take ownership</h4>
-            <p>Receive the piece by hand, with original packaging and full provenance documents. 14-day return on any authentication discrepancy.</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="how-col">
-        <h3><i class="fas fa-key"></i>To rent</h3>
-        <div class="step">
-          <div class="step-num">1</div>
-          <div class="step-body">
-            <h4>Choose your dates</h4>
-            <p>Reserve any rentable piece for an evening, a fortnight, or a season. Same authentication, fully insured throughout.</p>
-          </div>
-        </div>
-        <div class="step">
-          <div class="step-num">2</div>
-          <div class="step-body">
-            <h4>We deliver, by hand</h4>
-            <p>Our courier brings the piece in protective casing. Cape Town and Johannesburg same-day; nationwide within 48 hours.</p>
-          </div>
-        </div>
-        <div class="step">
-          <div class="step-num">3</div>
-          <div class="step-body">
-            <h4>Wear it. Return it.</h4>
-            <p>We collect, professionally clean and return it to its owner. Should you fall in love, the rental fee credits towards purchase.</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section class="stats-section reveal">
-  <div class="container">
-    <div class="stats-grid">
-      <div>
-        <span class="stat-num">500+</span>
-        <div class="stat-label">Pieces in stock</div>
-      </div>
-      <div>
-        <span class="stat-num">200+</span>
-        <div class="stat-label">Verified sellers</div>
-      </div>
-      <div>
-        <span class="stat-num">100%</span>
-        <div class="stat-label">Authenticated</div>
-      </div>
-      <div>
-        <span class="stat-num">R500K</span>
-        <div class="stat-label">Insured per piece</div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section class="cta-section reveal">
-  <div class="container">
-    <div class="eyebrow">Membership by application</div>
-    <h2>Quietly join the archive.</h2>
-    <p>Buy your first piece, list one of your own, or speak to our concierge about something specific. The conversation begins here.</p>
-    <div class="cta-buttons">
-      <a href="browse.html" class="btn btn-primary">Shop the Collection</a>
-      <a href="list.html" class="btn btn-outline">Sell or Rent Out a Piece</a>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;flex-shrink:0;">
+      <a href="list.html" class="btn btn-primary">Start listing <i class="fas fa-arrow-right"></i></a>
+      <a href="how-it-works.html" class="btn btn-outline">How it works</a>
     </div>
   </div>
 </section>
@@ -189,7 +148,7 @@
     <div class="footer-grid">
       <div class="footer-brand">
         <a href="index.html" class="brand">
-          <img src="https://dndlux.com/cdn/shop/files/dnd_logo_svg_new.svg?v=1770897170&width=600" alt="D&D Luxury" class="logo-img">
+          <img src="logo.svg" alt="D&amp;D Luxury" class="logo-img">
         </a>
         <p>South Africa's authenticated luxury marketplace. Buy, sell or rent timeless pieces — handled with the discretion they deserve.</p>
       </div>
@@ -223,7 +182,7 @@
       </div>
     </div>
     <div class="footer-bottom">
-      <span>© 2026 D&D Luxury (Pty) Ltd. All rights reserved.</span>
+      <span>© 2026 D&amp;D Luxury (Pty) Ltd. All rights reserved.</span>
       <div class="socials">
         <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
         <a href="#" aria-label="X"><i class="fab fa-x-twitter"></i></a>
