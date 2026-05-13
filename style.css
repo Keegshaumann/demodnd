@@ -3091,3 +3091,251 @@ footer .footer-col a { font-weight: 300; }
   flex-shrink: 0;
   user-select: none;
 }
+
+/* ========== APPROVAL FLOW ========== */
+
+/* Auth tabs (Sign In / Apply) */
+.auth-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 32px;
+  gap: 0;
+}
+
+.auth-tab {
+  flex: 1;
+  background: transparent;
+  border: none;
+  padding: 14px 0;
+  font-family: var(--sans);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  cursor: pointer;
+  color: var(--text-dim);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: all var(--transition);
+}
+
+.auth-tab:hover { color: var(--text-muted); }
+
+.auth-tab.active {
+  color: var(--text);
+  border-bottom-color: var(--text);
+}
+
+.auth-panel { display: none; }
+.auth-panel.active { display: block; animation: fadeIn 0.3s var(--ease-out); }
+
+/* Approval step tracker */
+.approval-steps {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  margin: 32px 0 36px;
+}
+
+.approval-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  position: relative;
+}
+
+.approval-step:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  top: 18px;
+  left: 50%;
+  right: -50%;
+  height: 1px;
+  background: var(--border);
+  z-index: 0;
+}
+
+.approval-step.done::after,
+.approval-step.active::after {
+  background: var(--text);
+}
+
+.step-circle {
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  color: var(--text-dim);
+  background: var(--bg-elevated);
+  position: relative;
+  z-index: 1;
+  transition: all var(--transition);
+}
+
+.approval-step.done .step-circle {
+  background: var(--text);
+  border-color: var(--text);
+  color: #fff;
+}
+
+.approval-step.active .step-circle {
+  border-color: var(--text);
+  color: var(--text);
+}
+
+.step-label {
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  font-weight: 500;
+  text-align: center;
+}
+
+.approval-step.done .step-label,
+.approval-step.active .step-label {
+  color: var(--text);
+}
+
+/* Pending approval banner on profile */
+.pending-banner {
+  background: #F8F8F8;
+  border-top: 3px solid var(--text);
+  border-bottom: 1px solid var(--border);
+  padding: 28px 0;
+}
+
+.pending-banner-inner {
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.pending-banner-icon {
+  width: 48px;
+  height: 48px;
+  background: var(--text);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.pending-banner-body { flex: 1; min-width: 240px; }
+
+.pending-banner-title {
+  font-family: var(--serif);
+  font-size: 22px;
+  margin-bottom: 6px;
+  letter-spacing: -0.01em;
+}
+
+.pending-banner-sub {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.65;
+  font-weight: 300;
+  max-width: 560px;
+}
+
+.pending-banner-sub strong { color: var(--text); font-weight: 500; }
+
+.pending-eta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-top: 14px;
+  font-weight: 500;
+}
+
+.pending-eta::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background: #F59E0B;
+  border-radius: 50%;
+  animation: pulse-dot 1.8s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.75); }
+}
+
+/* Queued status badge */
+.status-queued {
+  background: rgba(0,0,0,0.05);
+  color: #555555;
+}
+
+/* Registration success screen */
+.apply-success {
+  display: none;
+  text-align: center;
+  padding: 40px 0 20px;
+}
+
+.apply-success-icon {
+  width: 60px;
+  height: 60px;
+  background: var(--text);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  margin: 0 auto 24px;
+}
+
+.apply-success h3 {
+  font-family: var(--serif);
+  font-size: 28px;
+  margin-bottom: 10px;
+}
+
+.apply-success p {
+  font-size: 13px;
+  color: var(--text-muted);
+  font-weight: 300;
+  line-height: 1.7;
+  margin-bottom: 28px;
+}
+
+/* Queued listing overlay */
+.listing-queued-note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  font-weight: 500;
+  padding: 10px 0 0;
+  margin-top: 10px;
+  border-top: 1px solid var(--border-soft);
+}
+
+.listing-queued-note::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #F59E0B;
+  flex-shrink: 0;
+  animation: pulse-dot 1.8s ease-in-out infinite;
+}

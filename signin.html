@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Sign In — D&amp;D Luxury</title>
-  <meta name="description" content="Sign in to your D&amp;D Luxury account to manage your listings.">
+  <meta name="description" content="Sign in or apply to join D&amp;D Luxury.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -38,41 +38,154 @@
 </nav>
 
 <div class="signin-wrap">
-  <div class="signin-card">
+  <div class="signin-card" style="max-width:460px;">
+
     <a href="index.html" class="signin-logo">
       <img src="logo.svg" alt="D&amp;D Luxury" style="height:44px;width:auto;margin:0 auto;">
     </a>
 
-    <h2>Welcome back.</h2>
-    <p class="signin-sub">Sign in to manage your listings and profile.</p>
+    <!-- Tabs -->
+    <div class="auth-tabs">
+      <button class="auth-tab active" data-tab="signin">Sign In</button>
+      <button class="auth-tab" data-tab="apply">Apply to Join</button>
+    </div>
 
-    <form id="signin-form" novalidate>
-      <div class="field">
-        <label for="s-username">Username</label>
-        <input type="text" id="s-username" placeholder="Enter username" autocomplete="username" required>
-      </div>
-      <div class="field">
-        <label for="s-password">Password</label>
-        <div class="pw-wrap">
-          <input type="password" id="s-password" placeholder="••••••••" autocomplete="current-password" required>
-          <button type="button" class="pw-toggle" aria-label="Toggle password visibility">
-            <i class="fas fa-eye"></i>
-          </button>
+    <!-- Sign In Panel -->
+    <div class="auth-panel active" id="panel-signin">
+      <h2 style="font-size:clamp(22px,3vw,28px);margin-bottom:6px;">Welcome back.</h2>
+      <p class="signin-sub">Sign in to manage your listings and profile.</p>
+
+      <form id="signin-form" novalidate>
+        <div class="field">
+          <label for="s-username">Username</label>
+          <input type="text" id="s-username" placeholder="Enter username" autocomplete="username" required>
         </div>
+        <div class="field">
+          <label for="s-password">Password</label>
+          <div class="pw-wrap">
+            <input type="password" id="s-password" placeholder="••••••••" autocomplete="current-password" required>
+            <button type="button" class="pw-toggle" aria-label="Toggle password visibility">
+              <i class="fas fa-eye"></i>
+            </button>
+          </div>
+        </div>
+        <p class="signin-error" id="signin-error">Incorrect username or password. Please try again.</p>
+        <button type="submit" class="btn btn-primary btn-block" style="margin-top:8px;">
+          Sign in <i class="fas fa-arrow-right"></i>
+        </button>
+      </form>
+      <a href="#" class="signin-forgot">Forgot your password?</a>
+      <div class="signin-divider"><span>New to D&amp;D Luxury?</span></div>
+      <button class="btn btn-outline btn-block" onclick="switchTab('apply')">Apply to join</button>
+    </div>
+
+    <!-- Apply Panel -->
+    <div class="auth-panel" id="panel-apply">
+
+      <!-- Application form -->
+      <div id="apply-form-wrap">
+        <h2 style="font-size:clamp(22px,3vw,28px);margin-bottom:6px;">Apply to join.</h2>
+        <p class="signin-sub" style="margin-bottom:24px;">We review every application within 24–48 hours. Once approved, your queued pieces go live automatically.</p>
+
+        <form id="apply-form" novalidate>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+            <div class="field">
+              <label for="a-first">First name</label>
+              <input type="text" id="a-first" placeholder="Jane" required>
+            </div>
+            <div class="field">
+              <label for="a-last">Last name</label>
+              <input type="text" id="a-last" placeholder="Smith" required>
+            </div>
+          </div>
+          <div class="field" style="margin-bottom:16px;">
+            <label for="a-email">Email address</label>
+            <input type="email" id="a-email" placeholder="jane@example.com" required>
+          </div>
+          <div class="field" style="margin-bottom:16px;">
+            <label for="a-phone">Phone number</label>
+            <input type="tel" id="a-phone" placeholder="+27 __ ___ ____">
+          </div>
+          <div class="field" style="margin-bottom:16px;">
+            <label for="a-source">How did you hear about us?</label>
+            <select id="a-source">
+              <option value="">Select an option</option>
+              <option>Instagram</option>
+              <option>Word of mouth</option>
+              <option>Google search</option>
+              <option>A friend referred me</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="field" style="margin-bottom:20px;">
+            <label for="a-bio">Tell us about your collection <span style="color:var(--text-dim);font-weight:300;">(optional)</span></label>
+            <textarea id="a-bio" placeholder="Briefly describe what pieces you'd like to sell or rent out..." style="min-height:80px;"></textarea>
+          </div>
+          <div class="consent-row" style="padding:16px 0;">
+            <input type="checkbox" id="a-consent" required>
+            <label for="a-consent">I agree to the <a href="#">Terms &amp; Conditions</a> and <a href="#">Privacy Policy</a>.</label>
+          </div>
+          <button type="submit" class="btn btn-primary btn-block">
+            Submit application <i class="fas fa-arrow-right"></i>
+          </button>
+        </form>
       </div>
-      <p class="signin-error" id="signin-error">Incorrect username or password. Please try again.</p>
-      <button type="submit" class="btn btn-primary btn-block" style="margin-top:8px;">
-        Sign in <i class="fas fa-arrow-right"></i>
-      </button>
-    </form>
 
-    <a href="#" class="signin-forgot">Forgot your password?</a>
+      <!-- Post-submission success -->
+      <div class="apply-success" id="apply-success">
+        <div class="apply-success-icon"><i class="fas fa-check"></i></div>
+        <h3>Application received.</h3>
+        <p>Thank you — we'll review your application and be in touch within <strong>24–48 hours</strong>. In the meantime, you can start adding pieces to your account. They'll go live automatically once you're approved.</p>
 
-    <div class="signin-divider"><span>New to D&amp;D Luxury?</span></div>
-    <a href="concierge.html" class="btn btn-outline btn-block">Contact us to register</a>
+        <!-- Step tracker -->
+        <div class="approval-steps">
+          <div class="approval-step done">
+            <div class="step-circle"><i class="fas fa-check" style="font-size:11px;"></i></div>
+            <span class="step-label">Applied</span>
+          </div>
+          <div class="approval-step active">
+            <div class="step-circle"><i class="fas fa-hourglass-half" style="font-size:11px;"></i></div>
+            <span class="step-label">Under Review</span>
+          </div>
+          <div class="approval-step">
+            <div class="step-circle"><i class="fas fa-circle-check" style="font-size:11px;"></i></div>
+            <span class="step-label">Approved</span>
+          </div>
+        </div>
+
+        <div class="pending-eta" style="justify-content:center;margin-bottom:28px;">Estimated review: 24–48 hours</div>
+
+        <a href="profile.html?state=pending" class="btn btn-primary btn-block" onclick="localStorage.setItem('dnd-auth','true');localStorage.setItem('dnd-pending','true');">
+          Go to my account <i class="fas fa-arrow-right"></i>
+        </a>
+        <a href="list.html" class="btn btn-outline btn-block" style="margin-top:10px;" onclick="localStorage.setItem('dnd-auth','true');localStorage.setItem('dnd-pending','true');">
+          Start adding pieces <i class="fas fa-plus"></i>
+        </a>
+      </div>
+
+    </div>
   </div>
 </div>
 
 <script src="main.js"></script>
+<script>
+  function switchTab(name) {
+    document.querySelectorAll('.auth-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+    document.querySelectorAll('.auth-panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + name));
+  }
+
+  document.querySelectorAll('.auth-tab').forEach(tab => {
+    tab.addEventListener('click', () => switchTab(tab.dataset.tab));
+  });
+
+  document.getElementById('apply-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    document.getElementById('apply-form-wrap').style.display = 'none';
+    document.getElementById('apply-success').style.display = 'block';
+  });
+
+  // Open apply tab if URL has ?tab=apply
+  if (location.search.includes('tab=apply')) switchTab('apply');
+</script>
 </body>
 </html>
