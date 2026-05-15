@@ -805,6 +805,42 @@ section.tight { padding: 80px 0; }
   line-height: 1.65;
 }
 
+/* ── Hero X grid decoration ────────────────────────────────── */
+.hero-deco {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.hero-grid-icon {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  transform: translate(-50%, -50%);
+  opacity: 0.28;
+  filter: grayscale(1) brightness(0);
+}
+
+.hero-deco-vignette {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: radial-gradient(
+    ellipse 48% 55% at 50% 50%,
+    rgba(248,248,248,0.98) 0%,
+    rgba(248,248,248,0.93) 38%,
+    rgba(248,248,248,0.55) 65%,
+    transparent 100%
+  );
+}
+
+.hero-marketplace .container { position: relative; z-index: 3; }
+
+/* ── end hero deco ─────────────────────────────────────────── */
+
 .hero-search-bar {
   display: flex;
   align-items: center;

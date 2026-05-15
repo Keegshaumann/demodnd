@@ -3,7 +3,17 @@
     "allow": [
       "Bash(npx skills *)",
       "PowerShell(npx skills find \"svg logo rendering\" 2>&1)",
-      "WebFetch(domain:dndlux.com)"
+      "WebFetch(domain:dndlux.com)",
+      "Bash(agent-browser batch *)",
+      "Bash(npx agent-browser *)",
+      "WebSearch",
+      "WebFetch(domain:commons.wikimedia.org)",
+      "Bash(curl -sL -A \"Mozilla/5.0\" \"https://upload.wikimedia.org/wikipedia/commons/c/c9/Hermes_wordmark.svg\" -o brand-hermes.svg)",
+      "Bash(curl -sL -A \"Mozilla/5.0\" \"https://upload.wikimedia.org/wikipedia/commons/1/1c/Rolex_wordmark_logo.svg\" -o brand-rolex.svg)",
+      "Bash(curl -sL -A \"Mozilla/5.0\" \"https://upload.wikimedia.org/wikipedia/commons/1/1f/Logo_of_Bottega_Veneta.svg\" -o icon-bv.svg)",
+      "Bash(curl -sL -A \"Mozilla/5.0\" \"https://upload.wikimedia.org/wikipedia/commons/b/b3/Valentino_logo.svg\" -o icon-valentino.svg)",
+      "Bash(curl -sL -A \"Mozilla/5.0\" \"https://upload.wikimedia.org/wikipedia/commons/3/32/Bulgari_logo.svg\" -o icon-bulgari.svg)",
+      "Bash(wait)"
     ]
   }
 }
