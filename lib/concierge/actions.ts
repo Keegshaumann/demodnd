@@ -6,6 +6,7 @@ import {
   ADMIN_NOTIFICATION_EMAIL,
 } from "@/lib/email/client";
 import { conciergeMessageEmail } from "@/lib/email/templates";
+import { rateLimitByIp } from "@/lib/rate-limit";
 
 export type ConciergeResult = { ok: true } | { ok: false; error: string };
 
@@ -23,6 +24,14 @@ export type ConciergeInput = z.infer<typeof conciergeSchema>;
 export async function sendConciergeMessageAction(
   input: ConciergeInput,
 ): Promise<ConciergeResult> {
+  // Spam/cost protection: 5 enquiries per 10 minutes per IP.
+  if (!(await rateLimitByIp("concierge", 5, 600))) {
+    return {
+      ok: false,
+      error: "Too many messages — please try again in a few minutes.",
+    };
+  }
+
   const parsed = conciergeSchema.safeParse(input);
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input." };

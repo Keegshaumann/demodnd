@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { env } from "@/lib/env";
 import { ROLE_HOME } from "@/lib/auth/roles";
+import { rateLimitByIp } from "@/lib/rate-limit";
 import type { UserRole } from "@/lib/supabase/database.types";
 
 export interface AuthState {
@@ -42,6 +43,10 @@ export async function signInAction(
   _prev: AuthState,
   formData: FormData,
 ): Promise<AuthState> {
+  // Brute-force protection: 10 sign-in attempts per 15 min per IP.
+  if (!(await rateLimitByIp("signin", 10, 900))) {
+    return { error: "Too many attempts. Please wait a few minutes and try again." };
+  }
   const parsed = credentialsSchema.safeParse({
     email: formData.get("email"),
     password: formData.get("password"),
@@ -77,6 +82,10 @@ export async function signUpAction(
   _prev: AuthState,
   formData: FormData,
 ): Promise<AuthState> {
+  // 10 sign-ups per hour per IP.
+  if (!(await rateLimitByIp("signup", 10, 3600))) {
+    return { error: "Too many sign-up attempts. Please try again later." };
+  }
   const parsed = signUpSchema.safeParse({
     email: formData.get("email"),
     password: formData.get("password"),
@@ -118,6 +127,10 @@ export async function magicLinkAction(
   _prev: AuthState,
   formData: FormData,
 ): Promise<AuthState> {
+  // 5 magic-link requests per 15 min per IP.
+  if (!(await rateLimitByIp("magiclink", 5, 900))) {
+    return { error: "Too many requests. Please wait a few minutes." };
+  }
   const parsed = emailOnlySchema.safeParse({ email: formData.get("email") });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Invalid input." };

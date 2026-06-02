@@ -306,8 +306,14 @@ function RegisterPanel({ redirectTo }: { redirectTo?: string }) {
           <input type="checkbox" required className="mt-1" />
           <span>
             I agree to the{" "}
-            <span className="text-gold underline">Terms &amp; Conditions</span>{" "}
-            and <span className="text-gold underline">Privacy Policy</span>.
+            <a href="/terms" target="_blank" className="text-gold underline">
+              Terms &amp; Conditions
+            </a>{" "}
+            and{" "}
+            <a href="/privacy" target="_blank" className="text-gold underline">
+              Privacy Policy
+            </a>
+            .
           </span>
         </label>
 

@@ -211,6 +211,36 @@ see `.env.example` for the canonical list):
 4. **App**: `NEXT_PUBLIC_SITE_URL` (e.g. `http://localhost:3000`, or the Vercel URL).
 5. **Deploy target**: Vercel (set all the same env vars in the project settings).
 
+### ⚠️ BEFORE PRODUCTION — go-live checklist (do not forget)
+- [ ] **`ADMIN_NOTIFICATION_EMAIL` must be the real D&D company email** (where seller
+      submissions + concierge enquiries land). In dev it's set to a personal/test inbox.
+- [ ] **Resend: verify the D&D domain** (Resend → Domains) and set `EMAIL_FROM` to a
+      real sender like `D&D Luxury <no-reply@dndluxury.co.za>` — the dev `onboarding@resend.dev`
+      only delivers to your own Resend account email.
+- [ ] **Stripe: switch to LIVE keys** (`pk_live`/`rk_live`/`sk_live`) + create a real
+      **production webhook** in the Stripe dashboard pointing at
+      `https://<your-domain>/api/stripe/webhook` and use its `whsec_…` as
+      `STRIPE_WEBHOOK_SECRET`. Test-mode keys/CLI are dev-only.
+- [ ] `NEXT_PUBLIC_SITE_URL` = the production URL; update Supabase Auth Site URL +
+      redirect URLs to the production domain; re-enable email confirmation if desired.
+- [ ] Assign the real admin account (`update public.users set role='admin' …`).
+- [ ] **Supabase Auth → enable "Leaked password protection"** (HaveIBeenPwned) — a
+      dashboard setting (the one security-advisor item not set from code).
+- [ ] Have the **Terms & Privacy** (currently generic drafts at `/terms`, `/privacy`)
+      reviewed by a SA attorney; fill in the registered Information Officer details.
+
+### Security / abuse hardening (built — see migrations 20260602130000 + 20260602140000)
+- **Seller ID-verification gate**: `seller_profiles.verified` (default false). Sellers
+  can't list until an admin verifies them; gated in `/sell` UI + `createSubmissionAction`
+  (admins bypass). Admins verify at `/admin/users`.
+- **Admin user management** `/admin/users`: search (email/name/username/id), verify,
+  suspend/ban/reactivate, delete (auth.admin.deleteUser → cascade); self-lockout guarded.
+- **Rate limiting** `lib/rate-limit.ts` (DB-backed `rate_limit_hit` fn, serverless-safe,
+  fails open) on concierge, sign-in/up, magic-link, submissions.
+- **Security headers + CSP** in `next.config.ts` (Stripe/Supabase-aware; `unsafe-inline`
+  for Next hydration — nonce-based CSP is a future hardening). A multi-agent
+  `/security-review` over this batch returned **0 high-confidence findings**.
+
 ---
 
 ## 6. What's DONE in detail (Steps 1–6) + file map

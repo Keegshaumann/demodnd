@@ -81,6 +81,7 @@ export interface Database {
           bank_branch_code: string | null;
           bank_account_holder: string | null;
           reputation_score: number;
+          verified: boolean;
           created_at: string;
         };
         Insert: {
@@ -94,6 +95,7 @@ export interface Database {
           bank_branch_code?: string | null;
           bank_account_holder?: string | null;
           reputation_score?: number;
+          verified?: boolean;
           created_at?: string;
         };
         Update: {
@@ -107,8 +109,15 @@ export interface Database {
           bank_branch_code?: string | null;
           bank_account_holder?: string | null;
           reputation_score?: number;
+          verified?: boolean;
           created_at?: string;
         };
+        Relationships: [];
+      };
+      rate_limits: {
+        Row: { key: string; bucket: number; count: number };
+        Insert: { key: string; bucket: number; count?: number };
+        Update: { key?: string; bucket?: number; count?: number };
         Relationships: [];
       };
       subscription_tiers: {
@@ -518,6 +527,10 @@ export interface Database {
     Functions: {
       is_admin: {
         Args: Record<string, never>;
+        Returns: boolean;
+      };
+      rate_limit_hit: {
+        Args: { p_key: string; p_max: number; p_window: number };
         Returns: boolean;
       };
     };

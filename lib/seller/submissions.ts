@@ -10,6 +10,7 @@ import {
 } from "@/lib/email/client";
 import { submissionReceivedAdminEmail } from "@/lib/email/templates";
 import { ensureSellerProfile } from "@/lib/seller/profile";
+import { rateLimit } from "@/lib/rate-limit";
 import { AUTH_METHOD_LABELS, CATEGORY_VALUES } from "@/lib/marketplace/constants";
 import { CONDITIONS } from "@/lib/marketplace/constants";
 
@@ -55,6 +56,10 @@ export async function createSubmissionAction(
   if (user.role !== "seller" && user.role !== "admin") {
     return { ok: false, error: "A seller account is required to submit a piece." };
   }
+  // 20 submissions per hour per seller.
+  if (!(await rateLimit(`submission:${user.id}`, 20, 3600))) {
+    return { ok: false, error: "Too many submissions — please try again later." };
+  }
 
   const parsed = submissionSchema.safeParse(input);
   if (!parsed.success) {
@@ -75,6 +80,22 @@ export async function createSubmissionAction(
   // Guarantee a seller_profiles row exists (drives the public profile, the
   // reputation widget, and the admin payout ledger).
   await ensureSellerProfile(supabase, user);
+
+  // Selling requires D&D to have ID-verified the seller. Admins bypass.
+  if (user.role !== "admin") {
+    const { data: profile } = await supabase
+      .from("seller_profiles")
+      .select("verified")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (!profile?.verified) {
+      return {
+        ok: false,
+        error:
+          "Your account is pending ID verification by D&D. You'll be able to list once verified.",
+      };
+    }
+  }
 
   const { data: inserted, error } = await supabase
     .from("auth_submissions")

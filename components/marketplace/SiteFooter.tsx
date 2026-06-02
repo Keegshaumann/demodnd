@@ -45,15 +45,22 @@ export function SiteFooter() {
             links={[
               { href: "/how-it-works", label: "About" },
               { href: "/concierge", label: "Contact" },
+              { href: "/terms", label: "Terms & Conditions" },
+              { href: "/privacy", label: "Privacy Policy" },
             ]}
           />
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-4 border-t border-white/10 pt-8 text-xs text-white/35">
           <span>© 2026 D&amp;D Luxury (Pty) Ltd. All rights reserved.</span>
-          <span className="uppercase tracking-[0.2em]">
-            Authenticated · Insured · South African
-          </span>
+          <div className="flex items-center gap-4">
+            <Link href="/terms" className="hover:text-white">
+              Terms
+            </Link>
+            <Link href="/privacy" className="hover:text-white">
+              Privacy
+            </Link>
+          </div>
         </div>
       </div>
     </footer>

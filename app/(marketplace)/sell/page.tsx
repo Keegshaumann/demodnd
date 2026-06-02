@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth/guards";
+import { createClient } from "@/lib/supabase/server";
 import { SubmissionWizard } from "@/components/auth-portal/SubmissionWizard";
+import { ClockIcon } from "@/components/ui/icons";
 import {
   ShieldIcon,
   CertificateIcon,
@@ -40,7 +42,21 @@ const BENEFITS = [
 
 export default async function SellPage() {
   const user = await getCurrentUser();
-  const canList = user && (user.role === "seller" || user.role === "admin");
+
+  // Sellers must be ID-verified by D&D before they can list. Admins bypass.
+  let verified = false;
+  if (user && user.role === "seller") {
+    const supabase = await createClient();
+    const { data } = await supabase
+      .from("seller_profiles")
+      .select("verified")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    verified = data?.verified ?? false;
+  }
+  const isAdmin = user?.role === "admin";
+  const canList = isAdmin || (user?.role === "seller" && verified);
+  const isUnverifiedSeller = user?.role === "seller" && !verified;
 
   return (
     <>
@@ -70,6 +86,8 @@ export default async function SellPage() {
           <div>
             {canList ? (
               <SubmissionWizard userId={user.id} />
+            ) : isUnverifiedSeller ? (
+              <PendingVerification />
             ) : (
               <SignInPrompt isBuyer={user?.role === "buyer"} />
             )}
@@ -99,6 +117,29 @@ export default async function SellPage() {
         </div>
       </div>
     </>
+  );
+}
+
+function PendingVerification() {
+  return (
+    <div className="surface-card p-10 text-center sm:p-12">
+      <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full border border-gold/20 text-gold">
+        <ClockIcon width={30} height={30} />
+      </div>
+      <h3 className="mb-3 font-serif text-[26px]">Verification in progress</h3>
+      <p className="mx-auto mb-6 max-w-[460px] text-[15px] text-ink-muted">
+        Before you can list, D&amp;D Luxury verifies every seller&apos;s identity —
+        a quick ID check that keeps the marketplace trusted on both sides. Our
+        team is reviewing your account and will be in touch shortly.
+      </p>
+      <p className="mx-auto max-w-[460px] text-[13px] text-ink-dim">
+        Need to send your documents or have a question?{" "}
+        <Link href="/concierge" className="text-gold underline">
+          Contact our concierge
+        </Link>
+        .
+      </p>
+    </div>
   );
 }
 

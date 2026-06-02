@@ -482,8 +482,10 @@ export function SubmissionWizard({ userId }: { userId: string }) {
             />
             <span>
               I confirm I am the rightful owner of this piece and accept the{" "}
-              <span className="text-gold underline">Seller Terms</span> and
-              authentication protocol.
+              <a href="/terms" target="_blank" className="text-gold underline">
+                Seller Terms
+              </a>{" "}
+              and authentication protocol.
             </span>
           </label>
         </div>
