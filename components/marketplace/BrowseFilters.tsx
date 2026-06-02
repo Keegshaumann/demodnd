@@ -91,6 +91,7 @@ export function BrowseFilters() {
             type="number"
             inputMode="numeric"
             placeholder="Min"
+            aria-label="Minimum price"
             value={minR}
             onChange={(e) => setMinR(e.target.value)}
             onBlur={applyPrice}
@@ -101,6 +102,7 @@ export function BrowseFilters() {
             type="number"
             inputMode="numeric"
             placeholder="Max"
+            aria-label="Maximum price"
             value={maxR}
             onChange={(e) => setMaxR(e.target.value)}
             onBlur={applyPrice}

@@ -26,6 +26,7 @@ export interface BrowseFilters {
   methods?: AuthMethod[];
   minCents?: number;
   maxCents?: number;
+  sellerId?: string;
   sort?: "featured" | "price-asc" | "price-desc";
 }
 
@@ -59,6 +60,7 @@ export async function getActiveListings(
   const supabase = await createClient();
   let query = supabase.from("listings").select("*").eq("status", "active");
 
+  if (filters.sellerId) query = query.eq("seller_id", filters.sellerId);
   if (filters.categories?.length)
     query = query.in("category", filters.categories);
   if (filters.brands?.length) query = query.in("brand", filters.brands);

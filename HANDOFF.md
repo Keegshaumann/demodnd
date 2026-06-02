@@ -4,8 +4,9 @@
 > and [`BUILD_PROMPT.md`](BUILD_PROMPT.md) (the 14-step build order).**
 >
 > This file is a complete handoff written so a brand-new session/agent (with zero
-> prior context) can continue the build exactly where it stopped. Last updated at
-> the end of **Step 6**.
+> prior context) can continue the build exactly where it stopped. Last updated when
+> **all 14 steps were complete** (two multi-agent adversarial review passes done: after
+> Step 10 and after Step 14).
 
 ---
 
@@ -14,7 +15,30 @@
 We are rebuilding the static HTML demo (in the repo root: `index.html`, `browse.html`,
 `listing.html`, etc.) as a **production-grade Next.js 15 full-stack luxury marketplace**.
 
-**Build order is the 14 steps in `BUILD_PROMPT.md`. Done: Steps 1–6. Next: Step 7.**
+**Build order is the 14 steps in `BUILD_PROMPT.md`. ✅ ALL 14 STEPS COMPLETE.**
+Remaining work is *provisioning + deploy* (real Supabase/Stripe/Resend keys, apply
+migrations, assign an admin, deploy to Vercel) — see §5 and §11. No build steps left.
+
+> Second review (after Step 14) over steps 11–14 + the /seller routing: 2 findings, both
+> fixed — (a) an invalid wishlist category could create an all-null "match-everything"
+> wishlist (now re-validated in `lib/buyer/actions.ts`, guarded in `lib/wishlist/match.ts`,
+> + DB CHECK in migration `20260602111240`); (b) star-rating a11y label on the public
+> seller profile. The access-control review of the /seller dual-routing found nothing.
+
+> Routing note: `/seller` hosts BOTH the role-gated seller dashboard (`/seller`,
+> `/seller/listings|sales|subscription|profile`) AND the PUBLIC reputation profiles
+> (`/seller/[username]`). Middleware gates only the dashboard sections (see
+> `lib/auth/roles.ts` `matchProtected`); usernames are auto-generated as
+> `emaillocal-uid6` so they never collide with those section names.
+
+> A multi-agent adversarial review ran after Step 10 (12 findings, all verified, 11 fixed).
+> Notable: migration `20260602111230_review_fixes.sql` (a) removes the seller branch from
+> the orders SELECT policy so sellers can't read buyer name/address via the Data API —
+> seller dashboards now read orders via the service-role client, non-PII columns only;
+> (b) adds a partial unique index `orders_one_per_listing` and the webhook now atomically
+> claims the listing (active→sold) + refunds a double-sale. Ledger totals exclude
+> refunded/disputed. New RLS tests 8–9 cover both. Finding #4 (missing `/buyer` routes) is
+> resolved by Step 11.
 
 | Step | What | Status |
 |---|---|---|
@@ -24,14 +48,14 @@ We are rebuilding the static HTML demo (in the repo root: `index.html`, `browse.
 | 4 | Seller submission portal (4-step wizard) | ✅ Done |
 | 5 | Admin auth queue (approve / request-info / decline) | ✅ Done |
 | 6 | Marketplace pages (`/browse`, `/listing/[id]`, homepage featured grid) | ✅ Done |
-| 7 | **Stripe checkout + webhook** | ⬜ **NEXT** |
-| 8 | Delivery confirmation | ⬜ |
-| 9 | Admin sales ledger | ⬜ |
-| 10 | Seller dashboard | ⬜ |
-| 11 | Buyer dashboard | ⬜ |
-| 12 | Wishlist matching | ⬜ |
-| 13 | Seller reputation public profile (`/seller/[username]`) | ⬜ |
-| 14 | Admin analytics | ⬜ |
+| 7 | Stripe checkout + webhook (PaymentIntent + Payment Element) | ✅ Done |
+| 8 | Delivery confirmation (order detail + Confirm Receipt) | ✅ Done |
+| 9 | Admin sales ledger (`/admin/orders` + EFT banking details) | ✅ Done |
+| 10 | Seller dashboard (listings/sales/subscription/profile) + review fixes | ✅ Done |
+| 11 | Buyer dashboard (`/buyer` overview, orders, wishlist CRUD) | ✅ Done |
+| 12 | Wishlist matching (email + in-platform notification on approval) | ✅ Done |
+| 13 | Seller reputation public profile (`/seller/[username]`) | ✅ Done |
+| 14 | Admin analytics (`/admin` overview) + tier config (`/admin/tiers`) | ✅ Done |
 
 **The code builds cleanly right now**: `npm run build` and `npx tsc --noEmit` both pass.
 
@@ -289,27 +313,20 @@ current best practices and caught the version-mismatch issue. A Stripe skill
 > cents, enforce auth with `requireRole`/`requireUser`, and verify with build + curl. After
 > each step, confirm before moving on.
 
-### Step 7 — Stripe checkout + webhook  ← START HERE
-- Build `/checkout/[listingId]` (the buy button already links here). Server component:
-  load the active listing, require a signed-in non-owner buyer (else redirect to signin),
-  show order summary.
-- Create a **Stripe PaymentIntent** server-side (amount = `listing.price_cents`, currency
-  `zar`, metadata: `listing_id`, `buyer_id`, `seller_id`). Use the **Stripe Payment Element**
-  (`@stripe/react-stripe-js` + `@stripe/stripe-js`) with the client secret, or a Checkout
-  Session — PaymentIntent + Payment Element matches the spec ("Payment Intent on checkout").
-- Webhook route `app/api/stripe/webhook/route.ts` (raw body; verify signature with
-  `STRIPE_WEBHOOK_SECRET`; it's already excluded from middleware). On
-  `payment_intent.succeeded`: using the **service-role client** (idempotent on
-  `stripe_payment_intent_id`):
-  - compute `splitCommission(gross, listing.fee_rate_bps)`,
-  - insert `orders` row (status `paid`, store gross/commission/seller_payout/fee_rate_bps,
-    `paid_at`),
-  - update the listing to `status='sold'`,
-  - email buyer (`purchaseConfirmationBuyerEmail`) + seller (`saleNotificationSellerEmail`).
-- Capture shipping name/address at checkout → `orders.shipping_name/shipping_address`.
-- Use the `stripe-best-practices` skill. Use `stripe listen` to test webhooks locally.
+### Step 7 — Stripe checkout + webhook  ✅ DONE
+Files: `lib/stripe/checkout.ts` (`createListingPaymentIntent` + idempotent
+`fulfillPaymentIntent`), `app/api/stripe/webhook/route.ts` (raw-body signature verify),
+`app/(marketplace)/checkout/[listingId]/page.tsx` (PaymentIntent + order summary; guards
+guest/owner/non-active listings), `components/marketplace/CheckoutForm.tsx` (Payment Element
++ shipping AddressElement), `app/(marketplace)/checkout/success/page.tsx`. Standard account,
+ZAR, no `payment_method_types` (dynamic methods). The webhook creates the `orders` row with
+the listing's locked `fee_rate_bps`, marks the listing `sold`, and emails buyer + seller —
+idempotent on `stripe_payment_intent_id`.
+**Test locally**: `stripe login`, then
+`stripe listen --forward-to localhost:3000/api/stripe/webhook` (it prints the `whsec_…` for
+`STRIPE_WEBHOOK_SECRET`). Test card `4242 4242 4242 4242`.
 
-### Step 8 — Delivery confirmation
+### Step 8 — Delivery confirmation  ← START HERE
 - Order detail page (e.g. `/buyer/orders/[id]`) showing status timeline.
 - "Confirm Receipt" button for the buyer → server action: verify the order's `buyer_id`
   matches, then (service-role or an `orders` RLS update policy for buyers) set

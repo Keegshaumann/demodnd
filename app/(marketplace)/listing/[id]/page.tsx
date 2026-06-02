@@ -124,7 +124,7 @@ export default async function ListingPage({
                   {formatZar(listing.price_cents)}
                 </div>
                 {isSold && (
-                  <span className="rounded-full border border-rose-300 px-3 py-1 text-[10px] font-medium uppercase tracking-[0.16em] text-rose-600">
+                  <span className="rounded-full border border-border px-3 py-1 text-[10px] font-medium uppercase tracking-[0.16em] text-ink-dim">
                     Sold
                   </span>
                 )}

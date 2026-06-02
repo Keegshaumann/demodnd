@@ -171,4 +171,65 @@ begin
 end $$;
 reset role;
 
+-- ============================================================================
+-- TEST 8: orders — sellers CANNOT read buyer identity/shipping (discretion);
+--         buyers CAN read their own order. (seller branch removed from policy)
+-- ============================================================================
+insert into public.orders
+  (id, buyer_id, listing_id, seller_id, stripe_payment_intent_id,
+   gross_amount_cents, commission_amount_cents, seller_payout_amount_cents,
+   fee_rate_bps, status, shipping_name, shipping_address, paid_at)
+values
+  ('dddddddd-dddd-dddd-dddd-dddddddddddd',
+   '33333333-3333-3333-3333-333333333333',   -- buyer
+   'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',   -- seller1's active listing
+   '11111111-1111-1111-1111-111111111111',   -- seller1
+   'pi_test_123', 28500000, 3420000, 25080000, 1200, 'paid',
+   'Jane Buyer', '1 Secret Road, Cape Town', now());
+
+-- seller1 must NOT see the order (no seller read branch)
+set role authenticated;
+select set_config('request.jwt.claims', '{"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"}', false);
+do $$
+begin
+  if (select count(*) from public.orders) <> 0 then
+    raise exception 'TEST8 FAIL: seller can read orders (buyer PII leak), saw %', (select count(*) from public.orders);
+  end if;
+end $$;
+reset role;
+
+-- buyer MUST see their own order
+set role authenticated;
+select set_config('request.jwt.claims', '{"sub":"33333333-3333-3333-3333-333333333333","role":"authenticated"}', false);
+do $$
+begin
+  if (select count(*) from public.orders) <> 1 then
+    raise exception 'TEST8b FAIL: buyer should read their own order, saw %', (select count(*) from public.orders);
+  end if;
+end $$;
+reset role;
+
+-- ============================================================================
+-- TEST 9: double-sale guard — a second paid order for the same listing fails
+-- ============================================================================
+do $$
+declare ok boolean := false;
+begin
+  begin
+    insert into public.orders
+      (buyer_id, listing_id, seller_id, stripe_payment_intent_id,
+       gross_amount_cents, commission_amount_cents, seller_payout_amount_cents,
+       fee_rate_bps, status, paid_at)
+    values
+      ('22222222-2222-2222-2222-222222222222',
+       'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+       '11111111-1111-1111-1111-111111111111',
+       'pi_test_456', 28500000, 3420000, 25080000, 1200, 'paid', now());
+  exception when unique_violation then ok := true;
+  end;
+  if not ok then
+    raise exception 'TEST9 FAIL: a second paid order for the same listing was allowed';
+  end if;
+end $$;
+
 select 'ALL RLS TESTS PASSED' as result;

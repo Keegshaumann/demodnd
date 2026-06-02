@@ -7,9 +7,10 @@
 --   • RLS is enabled on every table. Authorization reads the `users.role`
 --     column (source of truth) via is_admin(), NEVER user_metadata (which is
 --     user-editable and unsafe for authz — see Supabase security guidance).
---   • Critical immutable columns (users.role/status, listings.fee_rate_bps,
---     orders.*) are locked at the DB level with column-level GRANTs, so even a
+--   • Critical immutable columns (users.role/status, listings.fee_rate_bps) are
+--     locked against WRITES at the DB level with column-level GRANTs, so even a
 --     compromised authenticated session cannot tamper with them via the API.
+--     (orders are written only server-side via the service-role client.)
 -- ============================================================================
 
 -- ============================================================================

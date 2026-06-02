@@ -35,6 +35,7 @@ export function BrowseToolbar() {
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Search pieces..."
+          aria-label="Search pieces"
           className="w-[180px] bg-transparent text-[13px] outline-none placeholder:text-ink-dim"
         />
       </form>
@@ -47,6 +48,7 @@ export function BrowseToolbar() {
             else p.set("sort", e.target.value);
           })
         }
+        aria-label="Sort listings"
         className="field-input w-auto py-2.5 text-[13px]"
       >
         <option value="featured">Sort: Featured</option>

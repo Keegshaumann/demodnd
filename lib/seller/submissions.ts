@@ -9,6 +9,7 @@ import {
   ADMIN_NOTIFICATION_EMAIL,
 } from "@/lib/email/client";
 import { submissionReceivedAdminEmail } from "@/lib/email/templates";
+import { ensureSellerProfile } from "@/lib/seller/profile";
 import { AUTH_METHOD_LABELS, CATEGORY_VALUES } from "@/lib/marketplace/constants";
 import { CONDITIONS } from "@/lib/marketplace/constants";
 
@@ -48,6 +49,12 @@ export async function createSubmissionAction(
 ): Promise<SubmissionResult> {
   const user = await getCurrentUser();
   if (!user) return { ok: false, error: "You must be signed in to submit a piece." };
+  if (user.status === "banned" || user.status === "suspended") {
+    return { ok: false, error: "Your account can't submit pieces. Contact D&D Luxury." };
+  }
+  if (user.role !== "seller" && user.role !== "admin") {
+    return { ok: false, error: "A seller account is required to submit a piece." };
+  }
 
   const parsed = submissionSchema.safeParse(input);
   if (!parsed.success) {
@@ -65,6 +72,10 @@ export async function createSubmissionAction(
   }
 
   const supabase = await createClient();
+  // Guarantee a seller_profiles row exists (drives the public profile, the
+  // reputation widget, and the admin payout ledger).
+  await ensureSellerProfile(supabase, user);
+
   const { data: inserted, error } = await supabase
     .from("auth_submissions")
     .insert({

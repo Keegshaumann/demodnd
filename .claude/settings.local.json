@@ -33,7 +33,15 @@
       "Bash(docker run *)",
       "Bash(npx tsc *)",
       "Bash(pkill -f \"next dev\")",
-      "Read(//private/tmp/**)"
+      "Read(//private/tmp/**)",
+      "Bash(node -p \"require\\('./node_modules/@stripe/stripe-js/package.json'\\).version\")",
+      "Bash(node -p \"require\\('./node_modules/@stripe/react-stripe-js/package.json'\\).version\")",
+      "Bash(awk '/wishlists: {/,/Relationships/' /Users/keegshaumann/Documents/GitHub/demodnd/lib/supabase/database.types.ts)",
+      "Bash(node -e ' *)",
+      "Bash(awk '/create table .*wishlists|wishlists \\\\\\(/,/\\\\\\);/' /Users/keegshaumann/Documents/GitHub/demodnd/supabase/migrations/20260602111210_init.sql)",
+      "Bash(awk '/create table public.seller_profiles/,/\\\\\\);/' /Users/keegshaumann/Documents/GitHub/demodnd/supabase/migrations/20260602111210_init.sql)",
+      "Bash(awk '/create table public.notifications/,/\\\\\\);/' /Users/keegshaumann/Documents/GitHub/demodnd/supabase/migrations/20260602111210_init.sql)",
+      "Bash(awk '/notifications: {/,/Relationships/' /Users/keegshaumann/Documents/GitHub/demodnd/lib/supabase/database.types.ts)"
     ],
     "additionalDirectories": [
       "/Users/keegshaumann/Documents/GitHub/demodnd"

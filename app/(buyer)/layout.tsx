@@ -1,14 +1,25 @@
 import { requireRole } from "@/lib/auth/guards";
+import { AnnounceBar } from "@/components/marketplace/AnnounceBar";
+import { SiteHeader } from "@/components/marketplace/SiteHeader";
+import { SiteFooter } from "@/components/marketplace/SiteFooter";
 
 /**
  * Buyer area shell. Middleware gates `/buyer/*` by role; this layout enforces it
- * again server-side (defense-in-depth). Dashboard chrome arrives in Step 11.
+ * again server-side (defense-in-depth) and renders the site chrome (buyers are
+ * shoppers).
  */
 export default async function BuyerLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  await requireRole("buyer");
-  return <>{children}</>;
+  const user = await requireRole("buyer");
+  return (
+    <>
+      <AnnounceBar />
+      <SiteHeader user={{ role: user.role, email: user.email }} />
+      <main>{children}</main>
+      <SiteFooter />
+    </>
+  );
 }

@@ -1,6 +1,35 @@
 import "server-only";
+import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { AuthMethod } from "@/lib/supabase/database.types";
+
+export interface SellerReviewItem {
+  rating: number;
+  body: string | null;
+  createdAt: string;
+}
+
+/**
+ * Recent reviews for a seller (public). Reviewer identity is intentionally
+ * omitted — buyers are never named publicly.
+ */
+export async function getSellerReviews(
+  sellerId: string,
+  limit = 5,
+): Promise<SellerReviewItem[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("reviews")
+    .select("rating, body, created_at")
+    .eq("seller_id", sellerId)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  return (data ?? []).map((r) => ({
+    rating: r.rating,
+    body: r.body,
+    createdAt: r.created_at,
+  }));
+}
 
 export interface SellerReputation {
   userId: string;
