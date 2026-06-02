@@ -63,6 +63,19 @@ migrations, assign an admin, deploy to Vercel) — see §5 and §11. No build st
 > (tabbed buyer/seller flow + FAQ) and `/concierge` (a working contact form that emails
 > D&D via Resend) were ported from the demo so every nav/footer link resolves, plus a
 > branded `app/not-found.tsx` 404. No rental/finance content (stripped per spec).
+>
+> Motion layer (restrained, luxury-appropriate; all in globals.css + two components):
+> `app/template.tsx` fades page content on every navigation (`.page-in`);
+> `components/ui/Reveal.tsx` does staggered scroll-reveals on grids (home/browse/listing
+> similar/seller profile); buttons have press feedback; the brand marquee pauses on hover.
+> **Everything respects `prefers-reduced-motion`** (global guard) and there's an
+> on-brand `:focus-visible` ring for keyboard a11y. transform/opacity only.
+>
+> Production hardening: loading skeletons (`app/(marketplace)/browse|listing/[id]/loading.tsx`
+> + `components/ui/Skeleton.tsx` shimmer), error boundaries (`app/error.tsx` +
+> `app/global-error.tsx`), and SEO (`metadataBase`/openGraph/twitter/icons in the root
+> layout, `app/robots.ts` disallowing private + seller-dashboard paths while keeping
+> `/seller/[username]` crawlable, and a dynamic `app/sitemap.ts`).
 
 ### ⚠️ Important reality checks
 - **Your local code is safe** regardless of any Claude account. It lives in this git repo.

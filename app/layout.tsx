@@ -17,13 +17,34 @@ const raleway = Raleway({
   display: "swap",
 });
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: {
     default: "D&D Luxury — South Africa's Authenticated Luxury Marketplace",
     template: "%s — D&D Luxury",
   },
   description:
     "Buy authenticated luxury — Hermès, Rolex, Cartier, Chanel and more — with full provenance, insurance and white-glove handling.",
+  applicationName: "D&D Luxury",
+  icons: { icon: "/logo.svg", shortcut: "/logo.svg", apple: "/logo.svg" },
+  robots: { index: true, follow: true },
+  openGraph: {
+    type: "website",
+    siteName: "D&D Luxury",
+    locale: "en_ZA",
+    url: siteUrl,
+    title: "D&D Luxury — South Africa's Authenticated Luxury Marketplace",
+    description:
+      "Buy authenticated luxury — Hermès, Rolex, Cartier, Chanel and more — fully authenticated, insured, and delivered by hand.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "D&D Luxury",
+    description:
+      "South Africa's authenticated luxury marketplace — every piece verified before it goes live.",
+  },
 };
 
 export default function RootLayout({

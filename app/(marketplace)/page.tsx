@@ -3,6 +3,7 @@ import Image from "next/image";
 import { HeroDeco } from "@/components/marketplace/HeroDeco";
 import { HeroSearch } from "@/components/marketplace/HeroSearch";
 import { ListingCard } from "@/components/marketplace/ListingCard";
+import { Reveal } from "@/components/ui/Reveal";
 import { getActiveListings } from "@/lib/marketplace/listings";
 import {
   ShieldIcon,
@@ -140,7 +141,7 @@ export default async function HomePage() {
 
       {/* Brand marquee */}
       <div className="overflow-hidden border-b border-border bg-surface py-6">
-        <div className="flex w-max animate-marquee items-center">
+        <div className="flex w-max animate-marquee items-center [animation-play-state:running] hover:[animation-play-state:paused]">
           {[...MARQUEE, ...MARQUEE].map((name, i) => (
             <span key={`${name}-${i}`} className="flex items-center">
               <span className="px-[52px] font-serif text-[21px] italic text-ink-dim transition-colors hover:text-ink">
@@ -159,9 +160,9 @@ export default async function HomePage() {
             Shop by category
           </span>
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-            {CATEGORIES.map((cat) => (
+            {CATEGORIES.map((cat, i) => (
+              <Reveal key={cat.href} delay={i * 70}>
               <Link
-                key={cat.href}
                 href={cat.href}
                 className="group relative block aspect-[3/4] overflow-hidden rounded-[3px] border border-border-soft bg-card transition-all duration-[420ms] ease-out-soft hover:-translate-y-1.5 hover:border-gold/10 hover:shadow-md"
               >
@@ -183,6 +184,7 @@ export default async function HomePage() {
                   </span>
                 </div>
               </Link>
+              </Reveal>
             ))}
           </div>
         </div>
@@ -202,8 +204,10 @@ export default async function HomePage() {
               </Link>
             </div>
             <div className="grid grid-cols-1 gap-9 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {latest.map((l) => (
-                <ListingCard key={l.id} listing={l} />
+              {latest.map((l, i) => (
+                <Reveal key={l.id} delay={Math.min(i, 7) * 55}>
+                  <ListingCard listing={l} />
+                </Reveal>
               ))}
             </div>
           </div>

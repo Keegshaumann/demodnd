@@ -4,6 +4,7 @@ import { getActiveListings, type BrowseFilters } from "@/lib/marketplace/listing
 import { ListingCard } from "@/components/marketplace/ListingCard";
 import { BrowseFilters as FiltersSidebar } from "@/components/marketplace/BrowseFilters";
 import { BrowseToolbar } from "@/components/marketplace/BrowseToolbar";
+import { Reveal } from "@/components/ui/Reveal";
 import { ChevronRightIcon } from "@/components/ui/icons";
 import type { AuthMethod } from "@/lib/supabase/database.types";
 
@@ -92,8 +93,10 @@ export default async function BrowsePage({
               </div>
             ) : (
               <div className="grid grid-cols-1 gap-9 sm:grid-cols-2 xl:grid-cols-3">
-                {listings.map((l) => (
-                  <ListingCard key={l.id} listing={l} />
+                {listings.map((l, i) => (
+                  <Reveal key={l.id} delay={Math.min(i, 6) * 45}>
+                    <ListingCard listing={l} />
+                  </Reveal>
                 ))}
               </div>
             )}

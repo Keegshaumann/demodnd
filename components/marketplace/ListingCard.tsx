@@ -50,7 +50,7 @@ export function ListingCard({ listing }: { listing: ListingCardData }) {
           )}
         </div>
         <div className="flex items-end justify-between gap-3 border-t border-border-soft pt-[18px]">
-          <div className="font-serif text-[22px] leading-none">
+          <div className="font-serif text-[22px] leading-none tabular-nums">
             {formatZar(listing.priceCents)}
           </div>
         </div>

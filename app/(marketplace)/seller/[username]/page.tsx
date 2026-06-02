@@ -8,6 +8,7 @@ import {
 } from "@/lib/marketplace/seller-reputation";
 import { getActiveListings } from "@/lib/marketplace/listings";
 import { ListingCard } from "@/components/marketplace/ListingCard";
+import { Reveal } from "@/components/ui/Reveal";
 import { AUTH_METHOD_LABELS } from "@/lib/marketplace/constants";
 import {
   StarIcon,
@@ -163,8 +164,10 @@ export default async function SellerProfilePage({
           </h2>
           {listings.length > 0 && (
             <div className="grid grid-cols-1 gap-9 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {listings.map((l) => (
-                <ListingCard key={l.id} listing={l} />
+              {listings.map((l, i) => (
+                <Reveal key={l.id} delay={Math.min(i, 7) * 50}>
+                  <ListingCard listing={l} />
+                </Reveal>
               ))}
             </div>
           )}

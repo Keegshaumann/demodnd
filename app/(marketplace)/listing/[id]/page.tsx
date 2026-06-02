@@ -8,6 +8,7 @@ import { categoryLabel } from "@/lib/marketplace/constants";
 import { ListingGallery } from "@/components/marketplace/ListingGallery";
 import { SellerReputation } from "@/components/marketplace/SellerReputation";
 import { ListingCard } from "@/components/marketplace/ListingCard";
+import { Reveal } from "@/components/ui/Reveal";
 import {
   ChevronRightIcon,
   CertificateIcon,
@@ -170,8 +171,10 @@ export default async function ListingPage({
               </Link>
             </div>
             <div className="grid grid-cols-1 gap-9 sm:grid-cols-2 xl:grid-cols-4">
-              {similar.map((l) => (
-                <ListingCard key={l.id} listing={l} />
+              {similar.map((l, i) => (
+                <Reveal key={l.id} delay={Math.min(i, 4) * 55}>
+                  <ListingCard listing={l} />
+                </Reveal>
               ))}
             </div>
           </div>

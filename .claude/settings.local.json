@@ -41,7 +41,9 @@
       "Bash(awk '/create table .*wishlists|wishlists \\\\\\(/,/\\\\\\);/' /Users/keegshaumann/Documents/GitHub/demodnd/supabase/migrations/20260602111210_init.sql)",
       "Bash(awk '/create table public.seller_profiles/,/\\\\\\);/' /Users/keegshaumann/Documents/GitHub/demodnd/supabase/migrations/20260602111210_init.sql)",
       "Bash(awk '/create table public.notifications/,/\\\\\\);/' /Users/keegshaumann/Documents/GitHub/demodnd/supabase/migrations/20260602111210_init.sql)",
-      "Bash(awk '/notifications: {/,/Relationships/' /Users/keegshaumann/Documents/GitHub/demodnd/lib/supabase/database.types.ts)"
+      "Bash(awk '/notifications: {/,/Relationships/' /Users/keegshaumann/Documents/GitHub/demodnd/lib/supabase/database.types.ts)",
+      "Read(//Users/keegshaumann/.claude/skills/ui-ux-pro-max/.claude/skills/ui-ux-pro-max/**)",
+      "Bash(python3 scripts/search.py \"animation micro-interaction scroll reveal hover\" --domain ux -n 8)"
     ],
     "additionalDirectories": [
       "/Users/keegshaumann/Documents/GitHub/demodnd"
