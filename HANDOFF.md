@@ -59,6 +59,11 @@ migrations, assign an admin, deploy to Vercel) — see §5 and §11. No build st
 
 **The code builds cleanly right now**: `npm run build` and `npx tsc --noEmit` both pass.
 
+> Post-spec additions (beyond the 14 steps): the informational pages `/how-it-works`
+> (tabbed buyer/seller flow + FAQ) and `/concierge` (a working contact form that emails
+> D&D via Resend) were ported from the demo so every nav/footer link resolves, plus a
+> branded `app/not-found.tsx` 404. No rental/finance content (stripped per spec).
+
 ### ⚠️ Important reality checks
 - **Your local code is safe** regardless of any Claude account. It lives in this git repo.
 - **The work is currently UNCOMMITTED.** `git log` shows only the original demo commits.
