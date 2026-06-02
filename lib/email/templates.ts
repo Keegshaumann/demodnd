@@ -47,9 +47,10 @@ function button(label: string, href: string): string {
 }
 
 function detailRow(label: string, value: string): string {
+  // value is data (brand/title/email/amounts) — always escape (escape-by-default).
   return `<tr>
     <td style="padding:8px 0;color:#888888;font-size:12px;text-transform:uppercase;letter-spacing:0.12em;width:160px;">${label}</td>
-    <td style="padding:8px 0;color:#1A1A1A;font-size:14px;">${value}</td>
+    <td style="padding:8px 0;color:#1A1A1A;font-size:14px;">${escapeHtml(value)}</td>
   </tr>`;
 }
 
@@ -88,7 +89,7 @@ export function submissionApprovedSellerEmail(args: {
   return layout({
     heading: "Your piece is now live",
     bodyHtml: `
-      ${paragraph(`Good news — <strong>${args.title}</strong> has been authenticated by our team and is now live on the marketplace.`)}
+      ${paragraph(`Good news — <strong>${escapeHtml(args.title)}</strong> has been authenticated by our team and is now live on the marketplace.`)}
       ${paragraph("Buyers can now view and purchase it. We'll notify you the moment it sells.")}
       ${button("View your listing", args.listingUrl)}
     `,
@@ -103,8 +104,8 @@ export function submissionMoreInfoSellerEmail(args: {
   return layout({
     heading: "We need a little more information",
     bodyHtml: `
-      ${paragraph(`Our authentication team has reviewed <strong>${args.title}</strong> and needs some additional detail before we can approve it.`)}
-      <div style="background:#F8F8F8;border:1px solid #E5E5E5;border-radius:3px;padding:16px 18px;margin:0 0 20px;color:#1A1A1A;font-size:14px;line-height:1.7;">${args.notes}</div>
+      ${paragraph(`Our authentication team has reviewed <strong>${escapeHtml(args.title)}</strong> and needs some additional detail before we can approve it.`)}
+      <div style="background:#F8F8F8;border:1px solid #E5E5E5;border-radius:3px;padding:16px 18px;margin:0 0 20px;color:#1A1A1A;font-size:14px;line-height:1.7;">${escapeHtml(args.notes)}</div>
       ${button("Update your submission", args.portalUrl)}
     `,
   });
@@ -117,8 +118,8 @@ export function submissionDeclinedSellerEmail(args: {
   return layout({
     heading: "Submission outcome",
     bodyHtml: `
-      ${paragraph(`Thank you for submitting <strong>${args.title}</strong>. After careful review, our authentication team is unable to list this piece at this time.`)}
-      ${args.notes ? `<div style="background:#F8F8F8;border:1px solid #E5E5E5;border-radius:3px;padding:16px 18px;margin:0 0 20px;color:#1A1A1A;font-size:14px;line-height:1.7;">${args.notes}</div>` : ""}
+      ${paragraph(`Thank you for submitting <strong>${escapeHtml(args.title)}</strong>. After careful review, our authentication team is unable to list this piece at this time.`)}
+      ${args.notes ? `<div style="background:#F8F8F8;border:1px solid #E5E5E5;border-radius:3px;padding:16px 18px;margin:0 0 20px;color:#1A1A1A;font-size:14px;line-height:1.7;">${escapeHtml(args.notes)}</div>` : ""}
       ${paragraph("You're welcome to submit other pieces any time.")}
     `,
   });
@@ -154,7 +155,7 @@ export function saleNotificationSellerEmail(args: {
   return layout({
     heading: "Your piece has sold",
     bodyHtml: `
-      ${paragraph(`Congratulations — <strong>${args.title}</strong> has sold.`)}
+      ${paragraph(`Congratulations — <strong>${escapeHtml(args.title)}</strong> has sold.`)}
       <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;border-top:1px solid #EFEFEF;border-bottom:1px solid #EFEFEF;margin:8px 0 24px;">
         ${detailRow("Sale price", formatZar(args.grossAmountCents))}
         ${detailRow("Your payout", formatZar(args.sellerPayoutCents))}
@@ -201,7 +202,8 @@ function escapeHtml(s: string): string {
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
 
 export function conciergeMessageEmail(args: {

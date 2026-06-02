@@ -54,7 +54,12 @@
       "Bash(brew --prefix stripe)",
       "Bash(ls \"$\\(brew --prefix stripe \\)/bin\")",
       "Read(//opt/homebrew/Cellar/**)",
-      "Bash(npm audit *)"
+      "Bash(npm audit *)",
+      "WebFetch(domain:claude.com)",
+      "Bash(ls -1 /Users/keegshaumann/.claude/skills/security-best-practices/references/ 2>/dev/null)",
+      "Read(//Users/keegshaumann/.agents/skills/security-best-practices/references/**)",
+      "Bash(echo \"\\(exit: $?\\)\")",
+      "Bash(awk '/-- ---- users/,/-- ---- seller_profiles/' supabase/migrations/20260602111210_init.sql)"
     ],
     "additionalDirectories": [
       "/Users/keegshaumann/Documents/GitHub/demodnd"
