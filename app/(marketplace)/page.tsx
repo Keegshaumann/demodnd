@@ -66,7 +66,10 @@ const CATEGORIES = [
   },
 ];
 
-export default function HomePage() {
+export default async function HomePage() {
+  const featured = await getActiveListings({ sort: "featured" });
+  const latest = featured.slice(0, 8);
+
   return (
     <>
       {/* Hero */}
@@ -184,6 +187,28 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* Latest pieces */}
+      {latest.length > 0 && (
+        <section style={{ padding: "80px 0 100px" }}>
+          <div className="dnd-container">
+            <div className="mb-12 flex flex-wrap items-end justify-between gap-4">
+              <div>
+                <div className="eyebrow mb-3">New in</div>
+                <h2 className="font-serif text-[34px]">Latest pieces.</h2>
+              </div>
+              <Link href="/browse" className="btn btn-outline btn-sm">
+                View all <ArrowRightIcon width={16} height={16} />
+              </Link>
+            </div>
+            <div className="grid grid-cols-1 gap-9 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {latest.map((l) => (
+                <ListingCard key={l.id} listing={l} />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Sell CTA */}
       <section className="border-y border-border-soft bg-surface" style={{ padding: "56px 0" }}>
