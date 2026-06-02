@@ -76,8 +76,35 @@ export async function approveSubmissionAction(
     .eq("id", submissionId)
     .maybeSingle();
   if (!sub) return { ok: false, error: "Submission not found." };
+  // ADM-3: only pending / more_info submissions are approvable — never resurrect
+  // a declined one (or re-approve an approved one).
   if (sub.status === "approved") {
     return { ok: false, error: "This submission is already approved." };
+  }
+  if (sub.status === "declined") {
+    return { ok: false, error: "This submission was declined and can't be approved." };
+  }
+
+  // ADM-1: atomically CLAIM the submission before creating anything. The
+  // conditional update only succeeds for the single caller that flips it out of
+  // pending/more_info, so concurrent or repeated approvals can't each create a
+  // listing (+ duplicate seller emails and wishlist-match spam). The partial
+  // unique index on listings(auth_submission_id) is the final DB backstop.
+  const { data: claimed, error: claimError } = await db
+    .from("auth_submissions")
+    .update({
+      status: "approved",
+      reviewed_by: admin.id,
+      reviewed_at: new Date().toISOString(),
+    })
+    .eq("id", sub.id)
+    .in("status", ["pending", "more_info"])
+    .select("id");
+  if (claimError) {
+    return { ok: false, error: "Could not approve the submission." };
+  }
+  if (!claimed || claimed.length === 0) {
+    return { ok: false, error: "This submission was already actioned." };
   }
 
   const feeBps = await resolveSellerFeeBps(db, sub.seller_id);
@@ -103,6 +130,15 @@ export async function approveSubmissionAction(
     .single();
 
   if (error || !listing) {
+    // Roll the claim back so the submission can be retried.
+    await db
+      .from("auth_submissions")
+      .update({
+        status: sub.status,
+        reviewed_by: sub.reviewed_by,
+        reviewed_at: sub.reviewed_at,
+      })
+      .eq("id", sub.id);
     return { ok: false, error: "Could not create the listing." };
   }
 
@@ -114,15 +150,6 @@ export async function approveSubmissionAction(
     }));
     await db.from("listing_images").insert(imageRows);
   }
-
-  await db
-    .from("auth_submissions")
-    .update({
-      status: "approved",
-      reviewed_by: admin.id,
-      reviewed_at: new Date().toISOString(),
-    })
-    .eq("id", sub.id);
 
   const email = await sellerEmail(db, sub.seller_id);
   if (email) {

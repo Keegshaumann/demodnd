@@ -103,6 +103,15 @@ export async function setUserStatusAction(
     return { ok: false, error: "You can't change your own account status." };
   }
   const db = createAdminClient();
+  // ADM-4: admins can't suspend/ban each other.
+  const { data: target } = await db
+    .from("users")
+    .select("role")
+    .eq("id", userId)
+    .maybeSingle();
+  if (target?.role === "admin") {
+    return { ok: false, error: "You can't change another admin's account." };
+  }
   const { error } = await db.from("users").update({ status }).eq("id", userId);
   if (error) return { ok: false, error: "Could not update the account." };
   revalidatePath("/admin/users");
@@ -116,6 +125,18 @@ export async function setSellerVerifiedAction(
 ): Promise<AdminUserActionResult> {
   await requireRole("admin");
   const db = createAdminClient();
+
+  // ADM-2: only seller accounts have an identity to verify. Refuse to fabricate
+  // a seller_profiles row for a buyer (it would create an orphan profile + claim
+  // a username while granting no access, since the seller gate reads users.role).
+  const { data: targetUser } = await db
+    .from("users")
+    .select("role")
+    .eq("id", userId)
+    .maybeSingle();
+  if (targetUser?.role === "buyer") {
+    return { ok: false, error: "Only seller accounts can be ID-verified." };
+  }
 
   const { data: existing } = await db
     .from("seller_profiles")
@@ -159,6 +180,15 @@ export async function deleteUserAction(
     return { ok: false, error: "You can't delete your own account." };
   }
   const db = createAdminClient();
+  // ADM-4: admins can't delete each other.
+  const { data: target } = await db
+    .from("users")
+    .select("role")
+    .eq("id", userId)
+    .maybeSingle();
+  if (target?.role === "admin") {
+    return { ok: false, error: "You can't delete another admin's account." };
+  }
   const { error } = await db.auth.admin.deleteUser(userId);
   if (error) return { ok: false, error: "Could not delete the account." };
   revalidatePath("/admin/users");

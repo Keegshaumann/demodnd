@@ -110,12 +110,16 @@ export default async function SellerProfilePage({
             <div className="flex-1">
               <div className="flex items-center gap-2">
                 <h1 className="font-serif text-[34px]">{name}</h1>
-                <CheckCircleIcon
-                  width={18}
-                  height={18}
-                  className="text-gold"
-                  aria-label="Verified seller"
-                />
+                {/* SELL-3: only show the badge for sellers D&D has actually
+                    ID-verified — not every seller. */}
+                {rep?.verified && (
+                  <CheckCircleIcon
+                    width={18}
+                    height={18}
+                    className="text-gold"
+                    aria-label="ID-verified by D&D"
+                  />
+                )}
               </div>
               <div className="mt-1 flex flex-wrap items-center gap-3 text-[13px] text-ink-muted">
                 <span className="inline-flex items-center gap-1.5">

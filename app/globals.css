@@ -83,18 +83,25 @@
     animation: pageIn 420ms cubic-bezier(0.16, 1, 0.3, 1) both;
   }
 
-  /* Scroll reveal — initial + revealed states toggled by the Reveal component. */
+  /* Scroll reveal — initial + revealed states toggled by the Reveal component.
+     The pre-reveal hidden state is only applied when scripting is enabled, so
+     with JS disabled (or a text browser / crawler) the content renders visible
+     instead of being stuck at opacity:0 (PUB-3). */
   .reveal {
-    opacity: 0;
-    transform: translateY(16px);
     transition:
       opacity 700ms cubic-bezier(0.16, 1, 0.3, 1),
       transform 700ms cubic-bezier(0.16, 1, 0.3, 1);
     will-change: opacity, transform;
   }
-  .reveal.is-visible {
-    opacity: 1;
-    transform: none;
+  @media (scripting: enabled) {
+    .reveal {
+      opacity: 0;
+      transform: translateY(16px);
+    }
+    .reveal.is-visible {
+      opacity: 1;
+      transform: none;
+    }
   }
 
   /* Animated underline for inline links. */

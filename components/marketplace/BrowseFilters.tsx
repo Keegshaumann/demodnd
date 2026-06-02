@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   CATEGORIES,
   CONDITIONS,
@@ -16,6 +16,13 @@ export function BrowseFilters() {
 
   const [minR, setMinR] = useState(searchParams.get("min") ?? "");
   const [maxR, setMaxR] = useState(searchParams.get("max") ?? "");
+
+  // PUB-4: resync the price inputs with the URL on Back/Forward or Clear-all
+  // from elsewhere (the one-shot useState initializer doesn't re-run otherwise).
+  useEffect(() => {
+    setMinR(searchParams.get("min") ?? "");
+    setMaxR(searchParams.get("max") ?? "");
+  }, [searchParams]);
 
   function pushParams(next: URLSearchParams) {
     const qs = next.toString();

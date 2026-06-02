@@ -6,18 +6,12 @@ import { createClient } from "@/lib/supabase/server";
 import { env } from "@/lib/env";
 import { ROLE_HOME } from "@/lib/auth/roles";
 import { rateLimitByIp } from "@/lib/rate-limit";
+import { safeInternalRedirect } from "@/lib/auth/safe-redirect";
 import type { UserRole } from "@/lib/supabase/database.types";
 
 export interface AuthState {
   error?: string;
   message?: string;
-}
-
-/** Only allow internal redirect targets (defends against open redirects). */
-function safeRedirect(value: FormDataEntryValue | null): string | null {
-  if (typeof value !== "string") return null;
-  if (!value.startsWith("/") || value.startsWith("//")) return null;
-  return value;
 }
 
 const credentialsSchema = z.object({
@@ -44,7 +38,8 @@ export async function signInAction(
   formData: FormData,
 ): Promise<AuthState> {
   // Brute-force protection: 10 sign-in attempts per 15 min per IP.
-  if (!(await rateLimitByIp("signin", 10, 900))) {
+  // Fail CLOSED on a limiter error — never silently drop auth abuse protection.
+  if (!(await rateLimitByIp("signin", 10, 900, true))) {
     return { error: "Too many attempts. Please wait a few minutes and try again." };
   }
   const parsed = credentialsSchema.safeParse({
@@ -61,7 +56,7 @@ export async function signInAction(
     return { error: "Incorrect email or password. Please try again." };
   }
 
-  const redirectTo = safeRedirect(formData.get("redirect"));
+  const redirectTo = safeInternalRedirect(formData.get("redirect"));
   let destination = redirectTo;
   if (!destination) {
     const { data: profile } = await supabase
@@ -82,8 +77,8 @@ export async function signUpAction(
   _prev: AuthState,
   formData: FormData,
 ): Promise<AuthState> {
-  // 10 sign-ups per hour per IP.
-  if (!(await rateLimitByIp("signup", 10, 3600))) {
+  // 10 sign-ups per hour per IP. Fail CLOSED on a limiter error.
+  if (!(await rateLimitByIp("signup", 10, 3600, true))) {
     return { error: "Too many sign-up attempts. Please try again later." };
   }
   const parsed = signUpSchema.safeParse({
@@ -127,15 +122,15 @@ export async function magicLinkAction(
   _prev: AuthState,
   formData: FormData,
 ): Promise<AuthState> {
-  // 5 magic-link requests per 15 min per IP.
-  if (!(await rateLimitByIp("magiclink", 5, 900))) {
+  // 5 magic-link requests per 15 min per IP. Fail CLOSED on a limiter error.
+  if (!(await rateLimitByIp("magiclink", 5, 900, true))) {
     return { error: "Too many requests. Please wait a few minutes." };
   }
   const parsed = emailOnlySchema.safeParse({ email: formData.get("email") });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Invalid input." };
   }
-  const next = safeRedirect(formData.get("redirect")) ?? "/";
+  const next = safeInternalRedirect(formData.get("redirect")) ?? "/";
 
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithOtp({

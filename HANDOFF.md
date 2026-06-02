@@ -19,6 +19,31 @@ We are rebuilding the static HTML demo (in the repo root: `index.html`, `browse.
 Remaining work is *provisioning + deploy* (real Supabase/Stripe/Resend keys, apply
 migrations, assign an admin, deploy to Vercel) — see §5 and §11. No build steps left.
 
+> **🟢 Session 2026-06-03 — live wiring + full audit + automated tests (Stripe still deferred).**
+> Live **Supabase + Resend** are provisioned; `.env.local` is wired (Stripe keys remain
+> placeholders by request). **All 8 migrations are APPLIED to the live project.**
+> A multi-agent audit found **26 real issues — all fixed**, including a **CRITICAL**: any
+> seller could self-set `seller_profiles.verified` via a direct Supabase call and bypass the
+> ID-verification gate (the column wasn't grant-locked). Now column-locked in migration
+> `20260603120000_audit_fixes.sql` and **verified by a live exploit attempt** (self-verify →
+> `permission denied`, legit profile edits still work). Running the app end-to-end also exposed a
+> latent infra bug the static audit couldn't see: **`service_role` had NO DML grants** — every
+> `createAdminClient` call (admin search, analytics, order fulfilment, wishlist matching, the
+> verified badge) silently failed `permission denied`. Fixed in `20260603130000_service_role_grants.sql`.
+> Other fixes: open-redirect chokepoint (`lib/auth/safe-redirect.ts`), provision-on-read for a missing
+> profile, auth rate-limit now fails **closed**, atomic submission-approval (no duplicate listings),
+> admins can't ban/delete each other, sold-listing pages render instead of 404, wishlist matching
+> covers `model` + accents, and mobile horizontal-overflow fixed.
+>
+> **Tests added** — `npm test` (Vitest, 27 unit: commission/money, redirect safety, role gating,
+> wishlist matching) and `npm run test:e2e` (Playwright, 24 E2E across public/admin/seller/buyer +
+> mobile, real logins). Browse is now **paginated**; dashboards have loading skeletons.
+> `npm run build`, `npm test`, `npm run test:e2e` **all green**.
+>
+> **Local test logins (gitignored, never committed):** admin → `.admin-credentials.local`
+> (`dndadmin@dndluxury.co.za`); seller/buyer test accounts → `test-accounts.secrets.local`.
+> All seeded demo data uses the `@dndluxury.co.za` domain — **purge it before production** (see §5).
+
 > Second review (after Step 14) over steps 11–14 + the /seller routing: 2 findings, both
 > fixed — (a) an invalid wishlist category could create an all-null "match-everything"
 > wishlist (now re-validated in `lib/buyer/actions.ts`, guarded in `lib/wishlist/match.ts`,
@@ -228,8 +253,15 @@ see `.env.example` for the canonical list):
       dashboard setting (the one security-advisor item not set from code).
 - [ ] Have the **Terms & Privacy** (currently generic drafts at `/terms`, `/privacy`)
       reviewed by a SA attorney; fill in the registered Information Officer details.
+- [ ] **Purge the seeded test data** — all demo accounts, listings, submissions and
+      wishlists use the `@dndluxury.co.za` domain. Delete the test users in Supabase Auth
+      (cascades their rows) and remove the demo listings, or start the prod project clean
+      with `supabase/apply_all.sql` (schema + tiers only, no demo data).
+- [ ] Delete the gitignored local-credential files (`.admin-credentials.local`,
+      `test-accounts.secrets.local`) once they're no longer needed; create the real admin
+      with a fresh password.
 
-### Security / abuse hardening (built — see migrations 20260602130000 + 20260602140000)
+### Security / abuse hardening (built — see migrations 20260602130000, 20260602140000, 20260603120000, 20260603130000)
 - **Seller ID-verification gate**: `seller_profiles.verified` (default false). Sellers
   can't list until an admin verifies them; gated in `/sell` UI + `createSubmissionAction`
   (admins bypass). Admins verify at `/admin/users`.

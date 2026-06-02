@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getActiveListings, type BrowseFilters } from "@/lib/marketplace/listings";
+import { getActiveListingsPage, type BrowseFilters } from "@/lib/marketplace/listings";
 import { ListingCard } from "@/components/marketplace/ListingCard";
 import { BrowseFilters as FiltersSidebar } from "@/components/marketplace/BrowseFilters";
 import { BrowseToolbar } from "@/components/marketplace/BrowseToolbar";
+import { Pagination } from "@/components/marketplace/Pagination";
 import { Reveal } from "@/components/ui/Reveal";
 import { ChevronRightIcon } from "@/components/ui/icons";
 import type { AuthMethod } from "@/lib/supabase/database.types";
@@ -52,7 +53,25 @@ export default async function BrowsePage({
         : "featured",
   };
 
-  const listings = await getActiveListings(filters);
+  const page = Math.max(1, Number(first(params.page)) || 1);
+  const PAGE_SIZE = 24;
+  const { items: listings, total, totalPages } = await getActiveListingsPage(
+    filters,
+    page,
+    PAGE_SIZE,
+  );
+
+  // Build page hrefs that preserve the active filters (everything but `page`).
+  const baseQs = new URLSearchParams();
+  for (const [k, v] of Object.entries(params)) {
+    if (k === "page") continue;
+    for (const val of asArray(v)) baseQs.append(k, val);
+  }
+  const hrefFor = (p: number) => {
+    const sp = new URLSearchParams(baseQs);
+    sp.set("page", String(p));
+    return `/browse?${sp.toString()}`;
+  };
 
   return (
     <>
@@ -81,8 +100,8 @@ export default async function BrowsePage({
           <main className="min-w-0">
             <div className="mb-9 flex flex-wrap items-center justify-between gap-4 border-b border-border-soft pb-5">
               <div className="text-[14px] text-ink-muted">
-                <strong className="text-ink">{listings.length}</strong>{" "}
-                {listings.length === 1 ? "piece" : "pieces"}
+                <strong className="text-ink">{total}</strong>{" "}
+                {total === 1 ? "piece" : "pieces"}
               </div>
               <BrowseToolbar />
             </div>
@@ -92,13 +111,16 @@ export default async function BrowsePage({
                 No pieces match your filters yet. Try widening your search.
               </div>
             ) : (
-              <div className="grid grid-cols-1 gap-9 sm:grid-cols-2 xl:grid-cols-3">
-                {listings.map((l, i) => (
-                  <Reveal key={l.id} delay={Math.min(i, 6) * 45}>
-                    <ListingCard listing={l} />
-                  </Reveal>
-                ))}
-              </div>
+              <>
+                <div className="grid grid-cols-1 gap-9 sm:grid-cols-2 xl:grid-cols-3">
+                  {listings.map((l, i) => (
+                    <Reveal key={l.id} delay={Math.min(i, 6) * 45}>
+                      <ListingCard listing={l} />
+                    </Reveal>
+                  ))}
+                </div>
+                <Pagination page={page} totalPages={totalPages} hrefFor={hrefFor} />
+              </>
             )}
           </main>
         </div>

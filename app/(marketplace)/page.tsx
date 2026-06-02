@@ -217,7 +217,7 @@ export default async function HomePage() {
       {/* Sell CTA */}
       <section className="border-y border-border-soft bg-surface" style={{ padding: "56px 0" }}>
         <div className="dnd-container flex flex-wrap items-center justify-between gap-8">
-          <div>
+          <div className="min-w-0">
             <div className="eyebrow mb-4">List a piece</div>
             <h2 className="mb-2.5" style={{ fontSize: "clamp(28px,3.5vw,40px)" }}>
               Have a piece to sell?
@@ -228,7 +228,7 @@ export default async function HomePage() {
               door.
             </p>
           </div>
-          <div className="flex flex-shrink-0 flex-wrap gap-3">
+          <div className="flex min-w-0 flex-wrap gap-3">
             <Link href="/sell" className="btn btn-primary">
               Start listing <ArrowRightIcon width={16} height={16} />
             </Link>

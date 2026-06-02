@@ -24,6 +24,17 @@ yarn-error.log*
 .env*
 !.env.example
 
+# local-only secrets (admin credentials, etc.) — never commit
+.admin-credentials.local
+*.secrets.local
+
+# playwright (reports + saved auth sessions — the latter hold session tokens)
+/test-results/
+/playwright-report/
+/blob-report/
+/.playwright/
+tests/e2e/.auth/
+
 # typescript
 *.tsbuildinfo
 
@@ -33,3 +44,6 @@ yarn-error.log*
 # editor
 .idea
 *.swp
+
+# claude code — personal/local settings (permissions, etc.)
+.claude/settings.local.json

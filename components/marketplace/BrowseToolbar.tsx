@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { SearchIcon } from "@/components/ui/icons";
 
 export function BrowseToolbar() {
@@ -9,6 +9,12 @@ export function BrowseToolbar() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [q, setQ] = useState(searchParams.get("q") ?? "");
+
+  // PUB-4: keep the input in sync with the URL on Back/Forward or an external
+  // search push (the one-shot useState initializer doesn't re-run otherwise).
+  useEffect(() => {
+    setQ(searchParams.get("q") ?? "");
+  }, [searchParams]);
 
   function update(mutate: (p: URLSearchParams) => void) {
     const next = new URLSearchParams(searchParams.toString());
@@ -18,7 +24,7 @@ export function BrowseToolbar() {
   }
 
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex flex-wrap items-center gap-3">
       <form
         onSubmit={(e) => {
           e.preventDefault();

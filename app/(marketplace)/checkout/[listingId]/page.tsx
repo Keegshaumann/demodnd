@@ -4,6 +4,7 @@ import Link from "next/link";
 import { redirect, notFound } from "next/navigation";
 import { getListingById } from "@/lib/marketplace/listings";
 import { getCurrentUser } from "@/lib/auth/guards";
+import { roleCanAccess } from "@/lib/auth/roles";
 import { createListingPaymentIntent } from "@/lib/stripe/checkout";
 import { formatZar } from "@/lib/money";
 import { categoryLabel } from "@/lib/marketplace/constants";
@@ -21,6 +22,10 @@ export default async function CheckoutPage({
 
   const user = await getCurrentUser();
   if (!user) redirect(`/signin?redirect=/checkout/${listingId}`);
+  // BUY-1: only buyer accounts (admins pass as superuser) may purchase — the
+  // order + "confirm receipt" views live under the buyer-only area, so a
+  // seller-role buyer would be locked out of the very order they paid for.
+  if (!roleCanAccess(user.role, "buyer")) redirect(`/listing/${listingId}`);
 
   const listing = await getListingById(listingId);
   if (!listing) notFound();

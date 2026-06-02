@@ -1,6 +1,10 @@
--- D&D Luxury — full schema apply (run once in Supabase SQL editor).
+-- ============================================================================
+-- AUTO-GENERATED — concatenation of migrations/*.sql (in order) + seed.sql.
+-- Apply to a fresh database in one shot. Do not hand-edit; regenerate from
+-- the migration files instead.
+-- ============================================================================
 
--- >>>> supabase/migrations/20260602111210_init.sql
+-- >>> migrations/20260602111210_init.sql
 -- ============================================================================
 -- D&D Luxury Marketplace — initial schema
 -- ============================================================================
@@ -583,8 +587,7 @@ grant update (brand, category, title, model, description, condition,
 
 grant execute on function public.is_admin() to anon, authenticated;
 
-
--- >>>> supabase/migrations/20260602111220_storage.sql
+-- >>> migrations/20260602111220_storage.sql
 -- ============================================================================
 -- Storage buckets for item photos and authentication certificates.
 -- ============================================================================
@@ -649,8 +652,7 @@ create policy "certificates: admin delete"
   on storage.objects for delete to authenticated
   using (bucket_id = 'certificates' and public.is_admin());
 
-
--- >>>> supabase/migrations/20260602111230_review_fixes.sql
+-- >>> migrations/20260602111230_review_fixes.sql
 -- ============================================================================
 -- Review fixes (post Step 10 adversarial review):
 --  1. Buyer-discretion: sellers must NOT be able to read buyer identity /
@@ -678,8 +680,7 @@ create unique index if not exists orders_one_per_listing
   on public.orders (listing_id)
   where status in ('paid', 'delivered');
 
-
--- >>>> supabase/migrations/20260602111240_wishlist_criteria_check.sql
+-- >>> migrations/20260602111240_wishlist_criteria_check.sql
 -- ============================================================================
 -- Review fix: enforce the "a wishlist must have at least one matcher" invariant
 -- at the DB level too, so no all-null wishlist (which would match every listing
@@ -689,8 +690,7 @@ alter table public.wishlists
   add constraint wishlists_has_criteria
   check (brand is not null or category is not null or keywords is not null);
 
-
--- >>>> supabase/migrations/20260602130000_admin_security.sql
+-- >>> migrations/20260602130000_admin_security.sql
 -- ============================================================================
 -- Admin + security additions:
 --  1. Seller ID-verification ("limbo"): a seller can't list/sell until D&D has
@@ -749,8 +749,7 @@ $$;
 revoke all on function public.rate_limit_hit(text, int, int) from public;
 grant execute on function public.rate_limit_hit(text, int, int) to service_role;
 
-
--- >>>> supabase/migrations/20260602140000_harden_functions.sql
+-- >>> migrations/20260602140000_harden_functions.sql
 -- ============================================================================
 -- Hardening: SECURITY DEFINER trigger functions live in `public`, where Postgres
 -- grants EXECUTE to PUBLIC by default. They can only run as triggers (Postgres
@@ -762,8 +761,118 @@ revoke all on function public.handle_new_user() from public;
 revoke all on function public.recompute_seller_reputation() from public;
 revoke all on function public.touch_updated_at() from public;
 
+-- >>> migrations/20260603120000_audit_fixes.sql
+-- ============================================================================
+-- Audit fixes (2026-06-03) — closes findings from the pre-go-live audit.
+-- ============================================================================
 
--- >>>> supabase/seed.sql
+-- ---------------------------------------------------------------------------
+-- SELL-1 (CRITICAL): lock seller_profiles.verified + reputation_score.
+-- The table-wide `grant ... insert, update ... to authenticated` let any seller
+-- self-set verified=true (and forge reputation_score) via a direct supabase-js
+-- call, defeating the entire ID-verification gate. Re-grant column-scoped
+-- INSERT/UPDATE that OMITS `verified` and `reputation_score`. Admins still set
+-- those via the service-role client, which bypasses column grants. This mirrors
+-- the column-lock pattern already used for users.role and listings.fee_rate_bps.
+-- (ensureSellerProfile inserts user_id+username; updateSellerProfileAction
+--  updates display_name/bio/bank_* — all still permitted below.)
+-- ---------------------------------------------------------------------------
+revoke insert, update on public.seller_profiles from authenticated;
+
+grant insert (user_id, username, display_name, bio,
+              bank_name, bank_account_number, bank_branch_code, bank_account_holder)
+  on public.seller_profiles to authenticated;
+
+grant update (username, display_name, bio,
+              bank_name, bank_account_number, bank_branch_code, bank_account_holder)
+  on public.seller_profiles to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- SELL-2: enforce ID-verification at the data layer for new submissions.
+-- createSubmissionAction already blocks unverified sellers, but the INSERT
+-- policy trusted only auth.uid()=seller_id, so a crafted supabase-js insert
+-- bypassed the gate (and the 4-photo minimum / path checks). Require a verified
+-- profile in the policy itself (defense in depth). Pairs with SELL-1 so
+-- `verified` can no longer be self-set.
+-- ---------------------------------------------------------------------------
+drop policy if exists "submissions: owner insert" on public.auth_submissions;
+create policy "submissions: verified owner insert"
+  on public.auth_submissions for insert to authenticated
+  with check (
+    (select auth.uid()) = seller_id
+    and exists (
+      select 1 from public.seller_profiles sp
+      where sp.user_id = (select auth.uid()) and sp.verified
+    )
+  );
+
+-- ---------------------------------------------------------------------------
+-- PUB-1: a sold listing should render its public "Sold" state, not hard-404.
+-- The detail page intends to show sold pieces (Sold badge + disabled button)
+-- and the buyer's order-confirmation links straight to /listing/{id}, but the
+-- RLS SELECT policy only exposed status='active', so the page 404'd for the
+-- public (and the buyer who just purchased). Expose 'sold' too. Browse only
+-- queries status='active', so sold items still don't appear in listings —
+-- only their direct detail page becomes reachable, matching the UI.
+-- ---------------------------------------------------------------------------
+drop policy if exists "listings: public reads active; owner/admin read all" on public.listings;
+create policy "listings: public reads active or sold; owner/admin read all"
+  on public.listings for select to anon, authenticated
+  using (
+    status in ('active', 'sold')
+    or seller_id = (select auth.uid())
+    or public.is_admin()
+  );
+
+drop policy if exists "listing_images: visible with parent listing" on public.listing_images;
+create policy "listing_images: visible with parent listing"
+  on public.listing_images for select to anon, authenticated
+  using (exists (
+    select 1 from public.listings l
+    where l.id = listing_id
+      and (l.status in ('active', 'sold') or l.seller_id = (select auth.uid()) or public.is_admin())
+  ));
+
+-- ---------------------------------------------------------------------------
+-- ADM-1: hard DB backstop against duplicate listings from a concurrent/repeated
+-- approve. One live listing per authenticated submission. Pairs with the atomic
+-- claim-then-act now used in approveSubmissionAction. (Mirrors the existing
+-- orders_one_per_listing partial unique index.)
+-- ---------------------------------------------------------------------------
+create unique index if not exists listings_one_per_submission
+  on public.listings (auth_submission_id)
+  where auth_submission_id is not null;
+
+-- >>> migrations/20260603130000_service_role_grants.sql
+-- ============================================================================
+-- service_role privileges (2026-06-03)
+-- ============================================================================
+-- The service-role key is the TRUSTED server-side client (createAdminClient).
+-- It bypasses RLS, but Postgres table GRANTs still apply — and this project's
+-- init migration granted privileges only to `anon`/`authenticated`, never to
+-- `service_role` (and the project lacks Supabase's default service_role grants).
+--
+-- Result: every createAdminClient call failed with "permission denied for
+-- table ..." — admin user search, the seller verification badge
+-- (getSellerReputation), platform analytics, the orders ledger, order
+-- fulfilment / confirm-receipt, wishlist-match notifications, and submission
+-- approval. Caught by the E2E suite (admin search + verified badge).
+--
+-- Grant the trusted role full access. This does NOT weaken the SELL-1 fix: the
+-- column-level locks on `verified`/`reputation_score`/`role`/`fee_rate_bps`
+-- apply to the untrusted `authenticated` role; `service_role` is server-only
+-- (the key never reaches the browser) and is meant to have full access.
+-- ============================================================================
+grant all on all tables in schema public to service_role;
+grant all on all sequences in schema public to service_role;
+
+-- Keep future tables covered too (matches Supabase's default posture).
+alter default privileges in schema public
+  grant all on tables to service_role;
+alter default privileges in schema public
+  grant all on sequences to service_role;
+
+-- >>> seed.sql
 -- ============================================================================
 -- Seed: subscription tiers (from PROJECT.md).
 -- max_listings, transaction_fee_bps and auth_included are authoritative.
@@ -780,4 +889,3 @@ select * from (values
   ('Elite',         99900,   0, null,  300, 'All methods + priority review',     12, 4, true)
 ) as t(name, monthly_fee_cents, per_item_fee_cents, max_listings, transaction_fee_bps, auth_included, courier_credits, sort_order, active)
 where not exists (select 1 from public.subscription_tiers);
-

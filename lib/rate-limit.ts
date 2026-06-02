@@ -14,13 +14,16 @@ export async function clientIp(): Promise<string> {
  * Returns true if the action is ALLOWED (under the limit for the window), false
  * if rate-limited. Counter is DB-backed (works across serverless instances).
  *
- * Fails OPEN: if the limiter itself errors we allow the request rather than
- * block a legitimate user. Abuse protection should degrade gracefully.
+ * Default policy FAILS OPEN: if the limiter itself errors we allow the request
+ * rather than block a legitimate user (good for cosmetic limits like concierge).
+ * Pass `failClosed=true` for credential endpoints (sign-in/up, magic link) so a
+ * broken limiter can never silently remove brute-force protection (PUB-2).
  */
 export async function rateLimit(
   key: string,
   max: number,
   windowSeconds: number,
+  failClosed = false,
 ): Promise<boolean> {
   try {
     const db = createAdminClient();
@@ -31,12 +34,12 @@ export async function rateLimit(
     });
     if (error) {
       console.error("rate_limit_hit error", error.message);
-      return true;
+      return !failClosed;
     }
     return data === true;
   } catch (err) {
     console.error("rateLimit failed", err);
-    return true;
+    return !failClosed;
   }
 }
 
@@ -45,7 +48,8 @@ export async function rateLimitByIp(
   action: string,
   max: number,
   windowSeconds: number,
+  failClosed = false,
 ): Promise<boolean> {
   const ip = await clientIp();
-  return rateLimit(`${action}:${ip}`, max, windowSeconds);
+  return rateLimit(`${action}:${ip}`, max, windowSeconds, failClosed);
 }

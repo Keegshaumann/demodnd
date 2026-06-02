@@ -2,11 +2,17 @@
  * Money helpers. All amounts are integer ZAR cents — never floats.
  */
 
-/** Format integer ZAR cents as a Rand string, e.g. 28500000 -> "R 285,000". */
+/**
+ * Format integer ZAR cents as a Rand string. The en-ZA locale uses a
+ * (non-breaking) space group separator and comma decimal, e.g.
+ * 28500000 -> "R 285 000", and with decimals -> "R 285 000,50".
+ */
 export function formatZar(
   cents: number,
   opts: { withDecimals?: boolean } = {},
 ): string {
+  // Guard against NaN/Infinity ever reaching the UI as "R NaN".
+  if (!Number.isFinite(cents)) return "R 0";
   const rands = cents / 100;
   const formatter = new Intl.NumberFormat("en-ZA", {
     minimumFractionDigits: opts.withDecimals ? 2 : 0,

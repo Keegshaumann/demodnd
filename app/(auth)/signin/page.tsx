@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { AuthPanels } from "@/components/auth-portal/AuthPanels";
 import { getCurrentUser } from "@/lib/auth/guards";
 import { ROLE_HOME } from "@/lib/auth/roles";
+import { safeInternalRedirect } from "@/lib/auth/safe-redirect";
 
 export const metadata: Metadata = { title: "Sign In" };
 
@@ -25,20 +26,15 @@ export default async function SignInPage({
   const redirectParam = firstParam(params.redirect);
   const errorCode = firstParam(params.error);
 
-  // Already signed in → go to the right dashboard.
+  // Only honour internal redirect targets (defends against open redirects) —
+  // shared chokepoint so the page/action/callback checks can't drift (AUTH-1/5).
+  const safeRedirect = safeInternalRedirect(redirectParam) ?? undefined;
+
+  // Already signed in → go to the safe redirect, else the right dashboard.
   const user = await getCurrentUser();
   if (user) {
-    redirect(
-      redirectParam && redirectParam.startsWith("/")
-        ? redirectParam
-        : ROLE_HOME[user.role],
-    );
+    redirect(safeRedirect ?? ROLE_HOME[user.role]);
   }
-
-  const safeRedirect =
-    redirectParam && redirectParam.startsWith("/") && !redirectParam.startsWith("//")
-      ? redirectParam
-      : undefined;
 
   return (
     <div className="flex min-h-[calc(100vh-160px)] items-center justify-center px-5 py-16">

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { requireUser } from "@/lib/auth/guards";
+import { requireRole } from "@/lib/auth/guards";
 import { getOrderForBuyer } from "@/lib/orders/queries";
 import { formatZar } from "@/lib/money";
 import { categoryLabel } from "@/lib/marketplace/constants";
@@ -49,7 +49,9 @@ export default async function OrderDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const user = await requireUser();
+  // BUY-6: consistent with the buyer-only area this page lives under (the order
+  // views are buyer-scoped; checkout is now buyer-only too — see BUY-1).
+  const user = await requireRole("buyer");
   const detail = await getOrderForBuyer(id, user.id);
   if (!detail) notFound();
 

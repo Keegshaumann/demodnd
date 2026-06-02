@@ -50,6 +50,7 @@ export async function confirmReceiptAction(
   }
 
   revalidatePath(`/buyer/orders/${orderId}`);
+  revalidatePath("/buyer/orders"); // BUY-4: keep the orders list badge in sync
   revalidatePath("/buyer");
   return { ok: true };
 }

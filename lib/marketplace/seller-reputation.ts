@@ -36,6 +36,7 @@ export interface SellerReputation {
   username: string | null;
   displayName: string | null;
   bio: string | null;
+  verified: boolean;
   rating: number;
   reviewsCount: number;
   itemsListed: number;
@@ -56,7 +57,7 @@ export async function getSellerReputation(
 
   const { data: profile } = await db
     .from("seller_profiles")
-    .select("username, display_name, bio, reputation_score, created_at")
+    .select("username, display_name, bio, reputation_score, verified, created_at")
     .eq("user_id", sellerId)
     .maybeSingle();
 
@@ -93,6 +94,7 @@ export async function getSellerReputation(
     username: profile?.username ?? null,
     displayName: profile?.display_name ?? null,
     bio: profile?.bio ?? null,
+    verified: profile?.verified ?? false,
     rating: profile?.reputation_score ?? 0,
     reviewsCount: reviewsCount ?? 0,
     itemsListed: itemsListed ?? 0,

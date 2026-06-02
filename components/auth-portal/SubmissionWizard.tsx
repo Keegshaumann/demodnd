@@ -73,7 +73,13 @@ export function SubmissionWizard({ userId }: { userId: string }) {
     const chosen = Array.from(files).slice(0, remaining);
 
     for (const file of chosen) {
-      if (!file.type.startsWith("image/")) continue;
+      if (!file.type.startsWith("image/")) {
+        // SELL-5: tell the user instead of silently dropping the file (e.g. an
+        // iPhone HEIC reporting a non-image MIME) — otherwise they hit the
+        // 4-photo minimum with no idea why a photo "vanished".
+        setStepError(`"${file.name}" isn't an image and was skipped.`);
+        continue;
+      }
       if (file.size > MAX_BYTES) {
         setStepError(`"${file.name}" exceeds the 10MB limit.`);
         continue;
@@ -117,6 +123,7 @@ export function SubmissionWizard({ userId }: { userId: string }) {
 
   function validateStep(): boolean {
     setStepError(null);
+    setResult(null); // SELL-4: clear a stale server-error banner when navigating
     if (step === 1) {
       if (!brand.trim() || !category || !title.trim() || !condition) {
         setStepError("Please complete all required fields.");
@@ -151,6 +158,7 @@ export function SubmissionWizard({ userId }: { userId: string }) {
   }
   function back() {
     setStepError(null);
+    setResult(null); // SELL-4: clear a stale server-error banner when navigating
     setStep((s) => Math.max(1, s - 1));
   }
 

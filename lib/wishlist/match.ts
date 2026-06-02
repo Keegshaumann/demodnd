@@ -4,41 +4,7 @@ import { sendEmail } from "@/lib/email/client";
 import { wishlistAlertBuyerEmail } from "@/lib/email/templates";
 import { formatZar } from "@/lib/money";
 import { env } from "@/lib/env";
-import type { Wishlist } from "@/lib/supabase/database.types";
-
-/** Does a wishlist match this listing? brand/category/keywords/price all narrow. */
-function matches(
-  w: Wishlist,
-  listing: {
-    brand: string;
-    category: string;
-    title: string;
-    description: string | null;
-    price_cents: number;
-  },
-): boolean {
-  // A wishlist with no brand/category/keywords would match everything — never
-  // alert on it (defends against any all-null row slipping past validation).
-  if (!w.brand && !w.category && !w.keywords) return false;
-  if (w.brand && w.brand.toLowerCase() !== listing.brand.toLowerCase()) {
-    return false;
-  }
-  if (w.category && w.category !== listing.category) return false;
-  if (w.max_price_cents != null && listing.price_cents > w.max_price_cents) {
-    return false;
-  }
-  if (w.keywords) {
-    const haystack =
-      `${listing.title} ${listing.brand} ${listing.description ?? ""}`.toLowerCase();
-    const tokens = w.keywords
-      .toLowerCase()
-      .split(/\s+/)
-      .filter(Boolean);
-    // Every keyword token must appear (precise — luxury buyers don't want spam).
-    if (!tokens.every((t) => haystack.includes(t))) return false;
-  }
-  return true;
-}
+import { wishlistMatches } from "@/lib/wishlist/matching";
 
 /**
  * Notify buyers whose wishlists match a newly-active listing: an in-platform
@@ -54,7 +20,9 @@ export async function notifyWishlistMatches(listingId: string): Promise<void> {
 
   const { data: listing } = await db
     .from("listings")
-    .select("id, brand, category, title, description, price_cents, seller_id, status")
+    .select(
+      "id, brand, category, title, model, description, price_cents, seller_id, status",
+    )
     .eq("id", listingId)
     .maybeSingle();
   if (!listing || listing.status !== "active") return;
@@ -66,7 +34,7 @@ export async function notifyWishlistMatches(listingId: string): Promise<void> {
   const matchedBuyerIds = new Set<string>();
   for (const w of wishlists) {
     if (w.buyer_id === listing.seller_id) continue; // never alert the seller
-    if (matches(w, listing)) matchedBuyerIds.add(w.buyer_id);
+    if (wishlistMatches(w, listing)) matchedBuyerIds.add(w.buyer_id);
   }
   if (matchedBuyerIds.size === 0) return;
 

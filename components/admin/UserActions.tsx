@@ -32,26 +32,27 @@ export function UserActions({ user }: { user: AdminUserRow }) {
   return (
     <div className="flex flex-col items-end gap-2">
       <div className="flex flex-wrap items-center justify-end gap-2">
-        {/* Verification */}
-        {user.verified ? (
-          <button
-            type="button"
-            disabled={pending}
-            onClick={() => run(() => setSellerVerifiedAction(user.id, false))}
-            className="btn btn-outline btn-sm"
-          >
-            Un-verify
-          </button>
-        ) : (
-          <button
-            type="button"
-            disabled={pending}
-            onClick={() => run(() => setSellerVerifiedAction(user.id, true))}
-            className="btn btn-primary btn-sm"
-          >
-            <CheckIcon width={14} height={14} /> Verify ID
-          </button>
-        )}
+        {/* Verification — only sellers have an identity to verify (ADM-2) */}
+        {user.role !== "buyer" &&
+          (user.verified ? (
+            <button
+              type="button"
+              disabled={pending}
+              onClick={() => run(() => setSellerVerifiedAction(user.id, false))}
+              className="btn btn-outline btn-sm"
+            >
+              Un-verify
+            </button>
+          ) : (
+            <button
+              type="button"
+              disabled={pending}
+              onClick={() => run(() => setSellerVerifiedAction(user.id, true))}
+              className="btn btn-primary btn-sm"
+            >
+              <CheckIcon width={14} height={14} /> Verify ID
+            </button>
+          ))}
 
         {/* Status */}
         {user.status === "active" ? (

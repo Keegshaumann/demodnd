@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import type { EmailOtpType } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
+import { safeInternalRedirect } from "@/lib/auth/safe-redirect";
 
 /**
  * Auth callback for magic links and email confirmations. Supports both the
@@ -13,9 +14,7 @@ export async function GET(request: NextRequest) {
   const tokenHash = searchParams.get("token_hash");
   const type = searchParams.get("type") as EmailOtpType | null;
 
-  const nextParam = searchParams.get("next") ?? "/";
-  const next =
-    nextParam.startsWith("/") && !nextParam.startsWith("//") ? nextParam : "/";
+  const next = safeInternalRedirect(searchParams.get("next")) ?? "/";
 
   const supabase = await createClient();
 
