@@ -1,0 +1,189 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ===========================================================================
+   D&D Luxury — base + component layers.
+   These mirror the static demo (style.css) so React pages render in the exact
+   same visual family. Tokens come from tailwind.config.ts.
+   =========================================================================== */
+
+@layer base {
+  :root {
+    --shadow-sm: 0 4px 16px rgba(0, 0, 0, 0.08);
+    --shadow-md: 0 12px 32px rgba(0, 0, 0, 0.12);
+    --shadow-lg: 0 20px 48px rgba(0, 0, 0, 0.16);
+    --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-bg text-ink font-sans;
+    font-size: 15px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-serif text-ink;
+    font-weight: 500;
+    letter-spacing: -0.005em;
+    line-height: 1.15;
+  }
+
+  h1 em,
+  h2 em {
+    font-style: italic;
+    font-weight: 400;
+    color: #333333;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+}
+
+@layer components {
+  .dnd-container {
+    @apply mx-auto w-full px-6 md:px-10;
+    max-width: 1320px;
+  }
+
+  /* Eyebrow label with leading rule — matches .eyebrow in the demo */
+  .eyebrow {
+    @apply inline-block font-sans font-medium uppercase text-gold;
+    font-size: 10.5px;
+    letter-spacing: 0.32em;
+  }
+  .eyebrow::before {
+    content: "";
+    display: inline-block;
+    width: 24px;
+    height: 1px;
+    @apply bg-gold;
+    vertical-align: middle;
+    margin-right: 12px;
+    margin-bottom: 3px;
+  }
+
+  .section-label {
+    @apply block font-sans font-medium uppercase text-ink-dim;
+    font-size: 10.5px;
+    letter-spacing: 0.28em;
+  }
+
+  /* Buttons ---------------------------------------------------------------- */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2.5 font-sans font-medium uppercase cursor-pointer whitespace-nowrap;
+    padding: 15px 30px;
+    font-size: 11.5px;
+    letter-spacing: 0.22em;
+    border: 1px solid transparent;
+    border-radius: 3px;
+    transition: all 320ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .btn-primary {
+    @apply bg-gold text-white;
+    border-color: #0d0d0d;
+  }
+  .btn-primary:hover {
+    background: #000000;
+    border-color: #000000;
+    transform: translateY(-1px);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.22);
+  }
+  .btn-primary:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+  .btn-outline {
+    @apply bg-transparent text-ink;
+    border-color: #e5e5e5;
+  }
+  .btn-outline:hover {
+    @apply text-gold;
+    border-color: #0d0d0d;
+  }
+  .btn-ghost {
+    @apply bg-transparent text-ink-muted;
+    padding: 14px 18px;
+  }
+  .btn-ghost:hover {
+    @apply text-gold;
+  }
+  .btn-sm {
+    padding: 10px 18px;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+  }
+  .btn-block {
+    @apply w-full;
+  }
+
+  /* Form fields ----------------------------------------------------------- */
+  .field-label {
+    @apply block font-medium uppercase text-ink-dim;
+    font-size: 10.5px;
+    letter-spacing: 0.22em;
+    margin-bottom: 9px;
+  }
+  .field-input {
+    @apply w-full bg-bg text-ink font-sans;
+    padding: 13px 14px;
+    border: 1px solid #e5e5e5;
+    border-radius: 3px;
+    font-size: 14px;
+    color-scheme: light;
+    transition: border-color 320ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .field-input::placeholder {
+    @apply text-ink-dim;
+  }
+  .field-input:focus {
+    outline: none;
+    border-color: #0d0d0d;
+  }
+  textarea.field-input {
+    min-height: 110px;
+    resize: vertical;
+    line-height: 1.6;
+  }
+  select.field-input {
+    appearance: none;
+    -webkit-appearance: none;
+    padding-right: 40px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23111111' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    background-size: 10px 6px;
+  }
+
+  /* Card ------------------------------------------------------------------ */
+  .surface-card {
+    @apply bg-card;
+    border: 1px solid #e5e5e5;
+    border-radius: 3px;
+  }
+
+  /* Pill badge (auth method / status) ------------------------------------- */
+  .pill {
+    @apply inline-flex items-center gap-1.5 font-medium uppercase text-gold;
+    background: rgba(255, 255, 255, 0.94);
+    padding: 7px 14px;
+    font-size: 9.5px;
+    letter-spacing: 0.22em;
+    border: 1px solid #e5e5e5;
+    border-radius: 999px;
+  }
+}

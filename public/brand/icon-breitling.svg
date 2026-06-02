@@ -1,0 +1,9 @@
+<svg viewBox="0 0 60 36" xmlns="http://www.w3.org/2000/svg" fill="#0a0a0a">
+  <!-- Left wing -->
+  <path d="M0,18 C4,10 10,6 18,8 L22,12 C15,11 9,14 6,18 C9,22 15,25 22,24 L18,28 C10,30 4,26 0,18Z" opacity="0.9"/>
+  <!-- Right wing -->
+  <path d="M60,18 C56,10 50,6 42,8 L38,12 C45,11 51,14 54,18 C51,22 45,25 38,24 L42,28 C50,30 56,26 60,18Z" opacity="0.9"/>
+  <!-- B centre circle -->
+  <circle cx="30" cy="18" r="9" fill="none" stroke="#0a0a0a" stroke-width="2"/>
+  <text x="30" y="23" text-anchor="middle" font-family="Georgia,serif" font-size="12" font-weight="700" fill="#0a0a0a">B</text>
+</svg>

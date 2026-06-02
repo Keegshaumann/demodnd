@@ -1,0 +1,110 @@
+"use server";
+
+import { z } from "zod";
+import { createClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/auth/guards";
+import { env } from "@/lib/env";
+import {
+  sendEmail,
+  ADMIN_NOTIFICATION_EMAIL,
+} from "@/lib/email/client";
+import { submissionReceivedAdminEmail } from "@/lib/email/templates";
+import { AUTH_METHOD_LABELS, CATEGORY_VALUES } from "@/lib/marketplace/constants";
+import { CONDITIONS } from "@/lib/marketplace/constants";
+
+const submissionSchema = z.object({
+  brand: z.string().trim().min(1, "Brand is required.").max(120),
+  category: z.enum(CATEGORY_VALUES as [string, ...string[]]),
+  title: z.string().trim().min(1, "Item name is required.").max(160),
+  model: z.string().trim().max(160).optional().or(z.literal("")),
+  description: z.string().trim().max(4000).optional().or(z.literal("")),
+  condition: z.enum(CONDITIONS as unknown as [string, ...string[]]),
+  priceCents: z
+    .number()
+    .int("Price must be a whole number of cents.")
+    .positive("Enter an asking price.")
+    .max(100_000_000_00), // R100m ceiling sanity check
+  year: z
+    .number()
+    .int()
+    .min(1900)
+    .max(new Date().getFullYear())
+    .optional()
+    .nullable(),
+  method: z.enum(["photo", "courier", "dropoff"]),
+  photoPaths: z
+    .array(z.string().min(1))
+    .min(4, "Upload at least 4 photos.")
+    .max(20, "A maximum of 20 photos is allowed."),
+});
+
+export type SubmissionInput = z.infer<typeof submissionSchema>;
+export type SubmissionResult =
+  | { ok: true; id: string }
+  | { ok: false; error: string };
+
+export async function createSubmissionAction(
+  input: SubmissionInput,
+): Promise<SubmissionResult> {
+  const user = await getCurrentUser();
+  if (!user) return { ok: false, error: "You must be signed in to submit a piece." };
+
+  const parsed = submissionSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid submission." };
+  }
+  const data = parsed.data;
+
+  // Defense-in-depth: every uploaded path must live in the user's own folder
+  // (matches the storage RLS policy: first segment = auth.uid()).
+  const badPath = data.photoPaths.find(
+    (p) => !p.startsWith(`${user.id}/`),
+  );
+  if (badPath) {
+    return { ok: false, error: "Invalid photo upload path." };
+  }
+
+  const supabase = await createClient();
+  const { data: inserted, error } = await supabase
+    .from("auth_submissions")
+    .insert({
+      seller_id: user.id,
+      method: data.method,
+      status: "pending",
+      brand: data.brand,
+      category: data.category,
+      title: data.title,
+      model: data.model || null,
+      description: data.description || null,
+      condition: data.condition,
+      asking_price_cents: data.priceCents,
+      year: data.year ?? null,
+      photo_paths: data.photoPaths,
+    })
+    .select("id")
+    .single();
+
+  if (error || !inserted) {
+    return { ok: false, error: "Could not save your submission. Please try again." };
+  }
+
+  // Notify D&D admin. Email failure must not fail the submission.
+  try {
+    await sendEmail({
+      to: ADMIN_NOTIFICATION_EMAIL,
+      subject: `New authentication submission — ${data.brand} ${data.title}`,
+      html: submissionReceivedAdminEmail({
+        brand: data.brand,
+        title: data.title,
+        method: AUTH_METHOD_LABELS[data.method],
+        askingPriceCents: data.priceCents,
+        sellerEmail: user.email,
+        reviewUrl: `${env.NEXT_PUBLIC_SITE_URL}/admin/submissions`,
+      }),
+    });
+  } catch (err) {
+    console.error("Failed to send admin submission email:", err);
+  }
+
+  return { ok: true, id: inserted.id };
+}
