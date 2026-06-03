@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { getSalesLedger, type LedgerRow } from "@/lib/admin/orders";
 import { formatZar } from "@/lib/money";
 import type { OrderStatus } from "@/lib/supabase/database.types";
@@ -153,7 +154,15 @@ function LedgerCard({
             {row.status}
           </span>
         </div>
-        <span className="text-[12px] text-ink-dim">{date}</span>
+        <div className="flex items-center gap-4">
+          <span className="text-[12px] text-ink-dim">{date}</span>
+          <Link
+            href={`/admin/orders/${row.id}`}
+            className="text-[12px] text-gold hover:underline"
+          >
+            Manage →
+          </Link>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-[1.2fr_1fr_1.2fr]">

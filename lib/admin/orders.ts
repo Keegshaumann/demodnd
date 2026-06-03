@@ -149,3 +149,94 @@ export async function getSalesLedger(
 
   return { rows, totals };
 }
+
+export interface OrderDetailRow {
+  id: string;
+  status: OrderStatus;
+  createdAt: string;
+  paidAt: string | null;
+  deliveredAt: string | null;
+  grossCents: number;
+  commissionCents: number;
+  payoutCents: number;
+  feeRateBps: number;
+  shippingName: string | null;
+  shippingAddress: string | null;
+  listingId: string;
+  itemBrand: string;
+  itemTitle: string;
+  buyerEmail: string;
+  buyerName: string | null;
+  sellerName: string;
+  sellerEmail: string;
+  bank: {
+    name: string | null;
+    accountNumber: string | null;
+    branchCode: string | null;
+    accountHolder: string | null;
+  };
+}
+
+/** One order with full detail for the admin order page. Admin-only (page gated). */
+export async function getOrderDetail(
+  orderId: string,
+): Promise<OrderDetailRow | null> {
+  const db = createAdminClient();
+  const { data: order } = await db
+    .from("orders")
+    .select("*")
+    .eq("id", orderId)
+    .maybeSingle();
+  if (!order) return null;
+
+  const [listingRes, usersRes, profileRes] = await Promise.all([
+    db
+      .from("listings")
+      .select("id, brand, title")
+      .eq("id", order.listing_id)
+      .maybeSingle(),
+    db
+      .from("users")
+      .select("id, email, full_name")
+      .in("id", [order.buyer_id, order.seller_id]),
+    db
+      .from("seller_profiles")
+      .select(
+        "display_name, bank_name, bank_account_number, bank_branch_code, bank_account_holder",
+      )
+      .eq("user_id", order.seller_id)
+      .maybeSingle(),
+  ]);
+  const listing = listingRes.data;
+  const userById = new Map((usersRes.data ?? []).map((u) => [u.id, u]));
+  const buyer = userById.get(order.buyer_id);
+  const seller = userById.get(order.seller_id);
+  const profile = profileRes.data;
+
+  return {
+    id: order.id,
+    status: order.status,
+    createdAt: order.created_at,
+    paidAt: order.paid_at,
+    deliveredAt: order.delivered_at,
+    grossCents: order.gross_amount_cents,
+    commissionCents: order.commission_amount_cents,
+    payoutCents: order.seller_payout_amount_cents,
+    feeRateBps: order.fee_rate_bps,
+    shippingName: order.shipping_name,
+    shippingAddress: order.shipping_address,
+    listingId: order.listing_id,
+    itemBrand: listing?.brand ?? "—",
+    itemTitle: listing?.title ?? "Item",
+    buyerEmail: buyer?.email ?? "—",
+    buyerName: buyer?.full_name ?? null,
+    sellerName: profile?.display_name ?? seller?.full_name ?? seller?.email ?? "—",
+    sellerEmail: seller?.email ?? "—",
+    bank: {
+      name: profile?.bank_name ?? null,
+      accountNumber: profile?.bank_account_number ?? null,
+      branchCode: profile?.bank_branch_code ?? null,
+      accountHolder: profile?.bank_account_holder ?? null,
+    },
+  };
+}

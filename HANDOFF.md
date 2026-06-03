@@ -36,9 +36,18 @@ migrations, assign an admin, deploy to Vercel) — see §5 and §11. No build st
 > covers `model` + accents, and mobile horizontal-overflow fixed.
 >
 > **Tests added** — `npm test` (Vitest, 27 unit: commission/money, redirect safety, role gating,
-> wishlist matching) and `npm run test:e2e` (Playwright, 24 E2E across public/admin/seller/buyer +
+> wishlist matching) and `npm run test:e2e` (Playwright, 28 E2E across public/admin/seller/buyer +
 > mobile, real logins). Browse is now **paginated**; dashboards have loading skeletons.
 > `npm run build`, `npm test`, `npm run test:e2e` **all green**.
+>
+> **Admin panel expanded** (5 → 8 sections): **Listings** moderation (`/admin/listings` — filter by
+> status, delist/relist, edit price, FK-safe delete; sold pieces locked), **Reviews** moderation
+> (`/admin/reviews`), **Disputes** (`/admin/disputes` — resolve with a recorded decision; refund
+> money-movement stays Stripe-deferred), and an **order detail** page (`/admin/orders/[id]` — shipping,
+> commission split, seller EFT + guarded status actions: mark delivered / flag disputed / record
+> refund). All gate on `requireRole('admin')` via the service-role client; designed + adversarially
+> verified by multi-agent workflows (0 issues). A demo order + dispute + review are seeded so the
+> tools have content (test data, purge before prod).
 >
 > **Local test logins (gitignored, never committed):** admin → `.admin-credentials.local`
 > (`dndadmin@dndluxury.co.za`); seller/buyer test accounts → `test-accounts.secrets.local`.
