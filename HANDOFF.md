@@ -12,8 +12,10 @@
 
 ## 0. TL;DR — where we are right now
 
-We are rebuilding the static HTML demo (in the repo root: `index.html`, `browse.html`,
-`listing.html`, etc.) as a **production-grade Next.js 15 full-stack luxury marketplace**.
+We rebuilt the original static HTML demo as a **production-grade Next.js 15 full-stack
+luxury marketplace**. (The legacy static demo — `index.html`, `style.css`, `main.js`, loose
+SVGs — was removed on 2026-06-03 once the Next.js app became the source of truth; it remains
+in git history if ever needed as a visual reference.)
 
 **Build order is the 14 steps in `BUILD_PROMPT.md`. ✅ ALL 14 STEPS COMPLETE.**
 Remaining work is *provisioning + deploy* (real Supabase/Stripe/Resend keys, apply
@@ -494,8 +496,8 @@ supabase/
   seed.sql, README.md, .verify/00_stubs.sql, .verify/99_rls_tests.sql
 config: package.json, tsconfig.json, next.config.ts, tailwind.config.ts,
         postcss.config.mjs, .eslintrc.json, .gitignore, .env.example, .env.local (gitignored)
-demo (DO NOT DELETE — design reference): index.html, browse.html, listing.html, profile.html,
-        list.html, signin.html, how-it-works.html, concierge.html, style.css, main.js, *.svg
+demo: REMOVED 2026-06-03 — the legacy static HTML/CSS/JS + loose root SVGs were deleted now
+        that the Next.js app is the source of truth (recover from git history if ever needed).
 ```
 
 ---
