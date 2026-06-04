@@ -47,12 +47,17 @@ export async function SellerReputation({ sellerId }: { sellerId: string }) {
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5 font-serif text-lg">
             {name}
-            <CheckCircleIcon
-              width={15}
-              height={15}
-              className="text-gold"
-              aria-label="Verified seller"
-            />
+            {/* Only show for sellers D&D has actually ID-verified (SELL-3), and
+                carry the meaning in sr-only text since the icon is decorative. */}
+            {rep.verified && (
+              <span
+                className="inline-flex items-center text-gold"
+                title="ID-verified by D&D"
+              >
+                <CheckCircleIcon width={15} height={15} />
+                <span className="sr-only">ID-verified by D&amp;D</span>
+              </span>
+            )}
           </div>
           <div className="flex items-center gap-2 text-[12.5px] text-ink-muted">
             <Stars rating={rep.rating} />

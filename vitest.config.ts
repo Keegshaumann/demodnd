@@ -11,6 +11,9 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": fileURLToPath(new URL("./", import.meta.url)),
+      // Let pure server modules (e.g. lib/payfast/signature) import under test.
+      "server-only": fileURLToPath(new URL("./tests/stubs/empty.ts", import.meta.url)),
+      "client-only": fileURLToPath(new URL("./tests/stubs/empty.ts", import.meta.url)),
     },
   },
 });

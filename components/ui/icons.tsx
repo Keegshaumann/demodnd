@@ -15,6 +15,10 @@ const base = {
   viewBox: "0 0 24 24",
   width: 18,
   height: 18,
+  // Decorative by default — icons sit next to visible text labels. Screen
+  // readers skip them; meaningful uses put the label on the parent element.
+  "aria-hidden": true,
+  focusable: "false" as const,
 };
 
 export function SearchIcon(props: IconProps) {

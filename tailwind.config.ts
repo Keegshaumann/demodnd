@@ -26,7 +26,8 @@ const config: Config = {
         "silver-bright": "#888888",
         ink: "#1A1A1A",
         "ink-muted": "#555555",
-        "ink-dim": "#888888",
+        // Darkened from #888888 so small "dim" text meets WCAG AA (≈4.8:1 on #F8F8F8).
+        "ink-dim": "#6e6e6e",
       },
       fontFamily: {
         serif: [

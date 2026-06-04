@@ -9,10 +9,12 @@ import { ListingGallery } from "@/components/marketplace/ListingGallery";
 import { SellerReputation } from "@/components/marketplace/SellerReputation";
 import { ListingCard } from "@/components/marketplace/ListingCard";
 import { Reveal } from "@/components/ui/Reveal";
+import { JsonLd } from "@/components/seo/JsonLd";
+
+const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 import {
   ChevronRightIcon,
   CertificateIcon,
-  ShieldIcon,
   LockIcon,
   TruckIcon,
   RotateIcon,
@@ -27,7 +29,31 @@ export async function generateMetadata({
   const { id } = await params;
   const listing = await getListingById(id);
   if (!listing) return { title: "Listing" };
-  return { title: `${listing.brand} ${listing.title}` };
+  const title = `${listing.brand} ${listing.title}`;
+  const description = (
+    listing.description ??
+    `${title} — authenticated luxury, fully insured and delivered by hand. Available on D&D Luxury.`
+  ).slice(0, 160);
+  const path = `/listing/${listing.id}`;
+  const image = listing.images[0]?.url;
+  return {
+    title,
+    description,
+    alternates: { canonical: path },
+    openGraph: {
+      title,
+      description,
+      url: path,
+      type: "website",
+      images: image ? [image] : undefined,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: image ? [image] : undefined,
+    },
+  };
 }
 
 const FEATURES = [
@@ -58,8 +84,45 @@ export default async function ListingPage({
   const imageUrls = listing.images.map((img) => img.url);
   const similar = await getSimilarListings(listing);
 
+  const productLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: `${listing.brand} ${listing.title}`,
+    brand: { "@type": "Brand", name: listing.brand },
+    category: categoryLabel(listing.category),
+    description: listing.description ?? `${listing.brand} ${listing.title}`,
+    ...(imageUrls.length ? { image: imageUrls } : {}),
+    itemCondition: "https://schema.org/UsedCondition",
+    offers: {
+      "@type": "Offer",
+      priceCurrency: "ZAR",
+      price: (listing.price_cents / 100).toFixed(2),
+      availability: isSold
+        ? "https://schema.org/SoldOut"
+        : "https://schema.org/InStock",
+      url: `${SITE}/listing/${listing.id}`,
+    },
+  };
+  const breadcrumbLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: `${SITE}/` },
+      { "@type": "ListItem", position: 2, name: "Shop", item: `${SITE}/browse` },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: listing.brand,
+        item: `${SITE}/browse?brand=${encodeURIComponent(listing.brand)}`,
+      },
+      { "@type": "ListItem", position: 4, name: listing.title },
+    ],
+  };
+
   return (
     <>
+      <JsonLd data={productLd} />
+      <JsonLd data={breadcrumbLd} />
       <div className="dnd-container">
         <div className="grid grid-cols-1 items-start gap-12 py-14 lg:grid-cols-[1.25fr_1fr] lg:gap-20">
           {/* Gallery */}

@@ -176,6 +176,9 @@ export async function approveSubmissionAction(
   }
 
   revalidatePath("/admin/submissions");
+  // The piece is now live — refresh the public surfaces that list it.
+  revalidatePath("/browse");
+  revalidatePath("/");
   return { ok: true };
 }
 

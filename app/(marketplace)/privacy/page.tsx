@@ -40,7 +40,8 @@ export default function PrivacyPage() {
         </li>
         <li>
           <strong>Transactions:</strong> orders, amounts, delivery details. Card
-          data is handled by Stripe — we never store card numbers.
+          data is handled by PayFast (PCI-DSS Level 1) — we never see or store
+          card numbers.
         </li>
         <li>
           <strong>Usage:</strong> basic technical and interaction data needed to
@@ -59,7 +60,7 @@ export default function PrivacyPage() {
       <p>
         We use trusted Operators (processors) to run the service, including{" "}
         <strong>Supabase</strong> (database, authentication, storage),{" "}
-        <strong>Stripe</strong> (payments) and <strong>Resend</strong> (email).
+        <strong>PayFast</strong> (payments) and <strong>Resend</strong> (email).
         Some of these process data outside South Africa; where they do, we rely on
         appropriate safeguards as required by POPIA. We do not sell your personal
         information.

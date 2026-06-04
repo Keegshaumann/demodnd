@@ -5,7 +5,7 @@ import { z } from "zod";
  * Server-side environment validation.
  *
  * This module is `server-only` — importing it from a client component is a build
- * error, which guarantees secrets (service role key, Stripe secret, Resend key)
+ * error, which guarantees secrets (service role key, Resend key, PayFast passphrase)
  * never leak into the browser bundle.
  *
  * Public values (NEXT_PUBLIC_*) are validated here too but are also safe to read
@@ -17,10 +17,14 @@ const serverEnvSchema = z.object({
   NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1),
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
 
-  // Stripe (standard account — D&D collects funds directly, NOT Connect)
-  STRIPE_SECRET_KEY: z.string().min(1),
-  STRIPE_WEBHOOK_SECRET: z.string().min(1),
-  NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string().min(1),
+  // PayFast (South African gateway — D&D collects funds directly; sellers are
+  // paid later via manual EFT). Defaults to PayFast's PUBLIC SANDBOX credentials
+  // so checkout works end-to-end before D&D has onboarded. For production set
+  // PAYFAST_MODE=live + the real merchant id/key/passphrase.
+  PAYFAST_MODE: z.enum(["sandbox", "live"]).default("sandbox"),
+  PAYFAST_MERCHANT_ID: z.string().min(1).default("10000100"),
+  PAYFAST_MERCHANT_KEY: z.string().min(1).default("46f0cd694581a"),
+  PAYFAST_PASSPHRASE: z.string().default(""),
 
   // Resend (transactional email)
   RESEND_API_KEY: z.string().min(1),

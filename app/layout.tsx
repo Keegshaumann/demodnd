@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Cormorant_Garamond, Raleway } from "next/font/google";
 import { CookieConsent } from "@/components/legal/CookieConsent";
+import { JsonLd } from "@/components/seo/JsonLd";
 import "./globals.css";
 
 const cormorant = Cormorant_Garamond({
@@ -19,6 +20,30 @@ const raleway = Raleway({
 });
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+
+const organizationLd = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "D&D Luxury",
+  url: siteUrl,
+  logo: `${siteUrl}/logo.svg`,
+  description: "South Africa's authenticated luxury marketplace.",
+};
+
+const websiteLd = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: "D&D Luxury",
+  url: siteUrl,
+  potentialAction: {
+    "@type": "SearchAction",
+    target: {
+      "@type": "EntryPoint",
+      urlTemplate: `${siteUrl}/browse?q={search_term_string}`,
+    },
+    "query-input": "required name=search_term_string",
+  },
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -56,6 +81,8 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${cormorant.variable} ${raleway.variable}`}>
       <body>
+        <JsonLd data={organizationLd} />
+        <JsonLd data={websiteLd} />
         {children}
         <CookieConsent />
       </body>

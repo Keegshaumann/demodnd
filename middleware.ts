@@ -9,7 +9,7 @@ export const config = {
   matcher: [
     /*
      * Run on all paths except API routes (which handle their own auth — keeps
-     * the Stripe webhook untouched), static assets, and image files.
+     * the PayFast ITN webhook untouched), static assets, and image files.
      * Session refresh + role gating happen here.
      */
     "/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",

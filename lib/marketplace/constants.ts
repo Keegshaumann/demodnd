@@ -65,3 +65,16 @@ export const BRANDS = [
 export function categoryLabel(value: string): string {
   return CATEGORIES.find((c) => c.value === value)?.label ?? value;
 }
+
+/** South African provinces — delivery address (checkout). */
+export const SA_PROVINCES = [
+  "Eastern Cape",
+  "Free State",
+  "Gauteng",
+  "KwaZulu-Natal",
+  "Limpopo",
+  "Mpumalanga",
+  "Northern Cape",
+  "North West",
+  "Western Cape",
+] as const;

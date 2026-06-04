@@ -25,6 +25,8 @@ export function HeroSearch() {
       </span>
       <input
         type="text"
+        name="q"
+        aria-label="Search the collection"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         placeholder="Search for Hermès, Rolex, Chanel, Cartier..."

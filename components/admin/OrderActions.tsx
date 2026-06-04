@@ -103,7 +103,7 @@ export function OrderActions({
       </div>
       <p className="mt-2 text-[11.5px] text-ink-dim">
         Recording a refund sets the order status only — process the actual refund
-        in Stripe.
+        in PayFast.
       </p>
       {error && <p className="mt-1.5 text-[12px] text-[#e85d5d]">{error}</p>}
     </div>

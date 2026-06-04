@@ -18,9 +18,59 @@ SVGs — was removed on 2026-06-03 once the Next.js app became the source of tru
 in git history if ever needed as a visual reference.)
 
 **Build order is the 14 steps in `BUILD_PROMPT.md`. ✅ ALL 14 STEPS COMPLETE.**
-Remaining work is *provisioning + deploy* (real Supabase/Stripe/Resend keys, apply
+Remaining work is *provisioning + deploy* (real Supabase/PayFast/Resend keys, apply
 migrations, assign an admin, deploy to Vercel) — see §5 and §11. No build steps left.
 
+> **🟢 Session 2026-06-03 — payments switched from Stripe → PayFast (SA gateway).**
+> Stripe was dropped: it requires a registered company, and D&D is a **sole proprietor**.
+> After multi-agent research we moved to **PayFast** (accredited PCI-DSS Level 1, PASA TPPP,
+> Absa/Nedbank sponsors; sole-proprietor friendly; ZAR cards + Instant EFT) using its
+> **hosted-redirect "Custom" flow** (no Node SDK exists — the signature + ITN are
+> hand-implemented and unit-tested).
+> • **New code**: `lib/payfast/` — `config.ts` (sandbox/live URLs + valid ITN hosts),
+>   `signature.ts` (MD5 over the **ordered** `key=urlencode(trim(value))` string, spaces→`+`,
+>   passphrase appended last — 6 unit tests in `tests/unit/payfast-signature.test.ts`),
+>   `checkout.ts` (builds the signed form fields), `itn.ts` (**4-check** ITN validation:
+>   signature, source-IP/DNS, postback to `/eng/query/validate`→"VALID", status COMPLETE +
+>   amount), `fulfill.ts` (ported from the old Stripe fulfilment — idempotent, anti-tamper
+>   amount check, atomic active→sold claim, commission split, buyer+seller emails).
+> • **Webhook**: `app/api/payfast/itn/route.ts` (raw body, returns 200 to ack / 5xx to make
+>   PayFast retry on transient failures). **Checkout**: `app/(marketplace)/checkout/[listingId]`
+>   is now a server-rendered **signed `<form method="POST">`** that redirects to PayFast;
+>   success page reads the order by `m_payment_id`.
+> • **DB**: `orders.stripe_payment_intent_id` → **`gateway_reference`** (migration
+>   `20260603140000_payfast_gateway_reference.sql`, applied; `database.types.ts` updated).
+> • **Env**: `STRIPE_*` → `PAYFAST_MODE|MERCHANT_ID|MERCHANT_KEY|PASSPHRASE`. `lib/env.ts`
+>   **defaults to the public sandbox creds** (merchant `10000100`), so the app works
+>   pre-onboarding; production needs `PAYFAST_MODE=live` + real creds.
+> • **CSP** (`next.config.ts`): Stripe origins removed; `form-action` now allows
+>   `www.payfast.co.za` + `sandbox.payfast.co.za` (the redirect POST target).
+> • **Removed**: `lib/stripe/*`, `app/api/stripe/webhook`, the `stripe`/`@stripe/*` npm
+>   deps. All user-facing copy now says "PayFast".
+> • **Delivery address** (PayFast's hosted flow doesn't collect one): the checkout page now
+>   captures the buyer's SA delivery address, a server action (`lib/checkout/actions.ts`)
+>   validates it (Zod) + stores it in a new **`checkout_intents`** table keyed by
+>   `m_payment_id` (migration `20260604120000`; RLS on, **no policies + no anon/authenticated
+>   grants** → server-only, addresses never hit the Data API), then auto-POSTs the signed
+>   fields to PayFast. The ITN handler copies the address onto the order; buyer + admin
+>   (D&D fulfilment) order views render it. Client form: `components/marketplace/CheckoutForm.tsx`.
+> • **Adversarial security review (multi-agent)** of the PayFast + checkout surface found
+>   **6 real issues (1 critical, 2 high, 1 med, 2 low), all fixed** (6 false positives refuted):
+>   - **CRITICAL/HIGH** — fulfilment marked the listing `sold` then inserted the order as two
+>     separate statements; a transient insert failure left the listing sold with NO order
+>     (buyer paid, PayFast told 200 = no retry). Now atomic: `fulfill_payfast_order` SQL
+>     function (migration `20260604130000`, SECURITY DEFINER, service_role-only) does the
+>     idempotency + amount check + active→sold claim + insert in ONE transaction; on error it
+>     rolls back and the route returns 5xx so PayFast retries. **Verified live** (created/
+>     duplicate/already_sold/amount_mismatch/listing_missing all correct, rolled back).
+>   - **HIGH** — suspended/banned buyers could checkout (`/checkout` isn't middleware-gated):
+>     added `status==='active'` checks in the action + page.
+>   - **LOW** — ITN now validates `merchant_id` matches our account (matters with the empty
+>     sandbox passphrase); `x-forwarded-for` now takes the rightmost (proxy-set) IP.
+> • **⚠️ Sandbox testing needs a public URL**: PayFast must reach `notify_url`, so the full
+>   redirect→ITN→fulfilment loop can't run from `localhost` — use an ngrok tunnel or a
+>   deploy. `npm run build` + `npm test` (33 unit, incl. the 6 signature tests) are green.
+>
 > **🟢 Session 2026-06-03 — live wiring + full audit + automated tests (Stripe still deferred).**
 > Live **Supabase + Resend** are provisioned; `.env.local` is wired (Stripe keys remain
 > placeholders by request). **All 8 migrations are APPLIED to the live project.**
@@ -50,6 +100,24 @@ migrations, assign an admin, deploy to Vercel) — see §5 and §11. No build st
 > refund). All gate on `requireRole('admin')` via the service-role client; designed + adversarially
 > verified by multi-agent workflows (0 issues). A demo order + dispute + review are seeded so the
 > tools have content (test data, purge before prod).
+>
+> **Pre-launch hardening (also 2026-06-03, all free / no Stripe):**
+> • **CI** — `.github/workflows/ci.yml` runs typecheck → lint → 27 unit → build on every push/PR
+>   (placeholder env; no real DB needed since `sitemap.ts` try/catches its fetch).
+> • **Accessibility** — icon `aria-hidden`/`focusable`, search-input `aria-label`s, hamburger
+>   `aria-expanded`/`aria-controls`, a skip-link → `<main id="main">`, footer/announce contrast +
+>   `ink-dim` darkened to `#6e6e6e` for WCAG AA. An **axe-core** E2E spec (reduced-motion) asserts
+>   **0 serious/critical violations** across the public pages + a listing.
+> • **SEO** — JSON-LD **Product/Offer + BreadcrumbList** (listing), **Organization + WebSite**
+>   (root), plus per-page canonical/openGraph/description. `components/seo/JsonLd.tsx` escapes `<`.
+> • **Real-flow E2E** — 6 mutation flows drive the real UI: seller wizard (4 photo uploads),
+>   admin approve→live, verify/delist toggles, dispute resolve, buyer wishlist add/remove.
+>   Re-runnable via `tests/e2e/global-setup.ts` psql resets (keyed on stable titles/ids).
+>
+> **Running E2E:** `npm run test:e2e` runs in **two passes** (assertions, then the heavier mutation
+> flows) on fresh servers — the repo lives under an iCloud-synced Documents folder that occasionally
+> locks a `.next` chunk mid-run, so `retries: 2` + the split absorb that environment flake. Each
+> project passes green in isolation (`test:e2e:assert` / `test:e2e:flows`).
 >
 > **Local test logins (gitignored, never committed):** admin → `.admin-credentials.local`
 > (`dndadmin@dndluxury.co.za`); seller/buyer test accounts → `test-accounts.secrets.local`.
@@ -145,7 +213,9 @@ Full product spec: `PROJECT.md`.
 - **Supabase** — `@supabase/supabase-js@^2.106` + `@supabase/ssr@^0.10.3`
   - ⚠️ **These two versions MUST stay matched.** An earlier mismatch (`ssr@0.5`) made
     every typed query resolve to `never`. If typed queries break, check version alignment first.
-- **Stripe** — `stripe@^17.7`, API version pinned `2025-02-24.acacia` in `lib/stripe/client.ts`
+- **PayFast** — South African gateway, hosted-redirect "Custom" flow. **No SDK**: the
+  MD5 signature + ITN validation are hand-implemented in `lib/payfast/` (see §0). Sandbox
+  by default (env.ts defaults); `PAYFAST_MODE=live` + real creds for production.
 - **Tailwind CSS v3.4** (NOT v4) — config in `tailwind.config.ts`, design tokens there
 - **Resend** — `resend@^4`
 - **Zod** — env validation + all API/action input validation
@@ -239,9 +309,11 @@ see `.env.example` for the canonical list):
      2. `supabase/migrations/20260602111220_storage.sql`
      3. `supabase/seed.sql`
    - See `supabase/README.md` for details. Then assign yourself admin (SQL above).
-2. **Stripe account (STANDARD — not Connect)** (https://stripe.com)
-   - `STRIPE_SECRET_KEY`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`,
-     and `STRIPE_WEBHOOK_SECRET` (from Developers → Webhooks once Step 7 exists).
+2. **PayFast account** (https://www.payfast.io) — sole-proprietor friendly, no company needed
+   - From Dashboard → Settings → Integration: `PAYFAST_MERCHANT_ID`, `PAYFAST_MERCHANT_KEY`,
+     and a `PAYFAST_PASSPHRASE` (set one in the dashboard; required for live). Set
+     `PAYFAST_MODE=live`. Until you onboard, `env.ts` defaults to the public **sandbox**
+     (merchant `10000100`) so checkout works end-to-end except it can't take real money.
 3. **Resend** (https://resend.com)
    - `RESEND_API_KEY`, plus `EMAIL_FROM` (verified sender) and `ADMIN_NOTIFICATION_EMAIL`.
 4. **App**: `NEXT_PUBLIC_SITE_URL` (e.g. `http://localhost:3000`, or the Vercel URL).
@@ -253,10 +325,11 @@ see `.env.example` for the canonical list):
 - [ ] **Resend: verify the D&D domain** (Resend → Domains) and set `EMAIL_FROM` to a
       real sender like `D&D Luxury <no-reply@dndluxury.co.za>` — the dev `onboarding@resend.dev`
       only delivers to your own Resend account email.
-- [ ] **Stripe: switch to LIVE keys** (`pk_live`/`rk_live`/`sk_live`) + create a real
-      **production webhook** in the Stripe dashboard pointing at
-      `https://<your-domain>/api/stripe/webhook` and use its `whsec_…` as
-      `STRIPE_WEBHOOK_SECRET`. Test-mode keys/CLI are dev-only.
+- [ ] **PayFast: switch to LIVE** — set `PAYFAST_MODE=live` + the real
+      `PAYFAST_MERCHANT_ID`/`PAYFAST_MERCHANT_KEY`/`PAYFAST_PASSPHRASE`. In the PayFast
+      dashboard set the **passphrase** (must match env) and confirm the ITN/notify URL
+      `https://<your-domain>/api/payfast/itn` is reachable. Sandbox creds are dev-only.
+      (Delivery address is captured in-app at checkout — see §0.)
 - [ ] `NEXT_PUBLIC_SITE_URL` = the production URL; update Supabase Auth Site URL +
       redirect URLs to the production domain; re-enable email confirmation if desired.
 - [ ] Assign the real admin account (`update public.users set role='admin' …`).
@@ -280,7 +353,8 @@ see `.env.example` for the canonical list):
   suspend/ban/reactivate, delete (auth.admin.deleteUser → cascade); self-lockout guarded.
 - **Rate limiting** `lib/rate-limit.ts` (DB-backed `rate_limit_hit` fn, serverless-safe,
   fails open) on concierge, sign-in/up, magic-link, submissions.
-- **Security headers + CSP** in `next.config.ts` (Stripe/Supabase-aware; `unsafe-inline`
+- **Security headers + CSP** in `next.config.ts` (Supabase-aware; PayFast redirect allowed
+  via `form-action`; `unsafe-inline`
   for Next hydration — nonce-based CSP is a future hardening). A multi-agent
   `/security-review` over this batch returned **0 high-confidence findings**.
 

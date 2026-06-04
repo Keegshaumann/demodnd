@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Cancel superseded runs on the same branch/PR.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Typecheck · Lint · Unit · Build
+    runs-on: ubuntu-latest
+    env:
+      # Placeholder env so `lib/env.ts` validation and `next build` succeed in CI.
+      # No real services are contacted at build time — the only build-time fetch
+      # (app/sitemap.ts) is wrapped in try/catch and falls back to static routes.
+      NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder-anon-key
+      SUPABASE_SERVICE_ROLE_KEY: ci-placeholder-service-role-key
+      # PayFast: env.ts defaults to the public sandbox creds, so CI needs nothing
+      # here. Pinned explicitly to document intent and keep the build hermetic.
+      PAYFAST_MODE: sandbox
+      RESEND_API_KEY: re_ci_placeholder
+      EMAIL_FROM: "D&D Luxury <ci@example.com>"
+      ADMIN_NOTIFICATION_EMAIL: ci@example.com
+      NEXT_PUBLIC_SITE_URL: http://localhost:3000
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+# ---------------------------------------------------------------------------
+# End-to-end tests (Playwright) are NOT run in CI by default: they need the live
+# Supabase project (real secrets) plus the gitignored local credential files
+# (`.admin-credentials.local`, `test-accounts.secrets.local`) that the auth
+# setup reads. Run them locally with `npm run test:e2e`. To enable in CI later,
+# add a second job that: provisions those env vars/files from GitHub secrets,
+# runs `npx playwright install --with-deps chromium`, then `npm run test:e2e`.
+# ---------------------------------------------------------------------------

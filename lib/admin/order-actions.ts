@@ -63,9 +63,8 @@ export async function flagOrderDisputedAction(
 }
 
 /**
- * Record that an order was refunded (status only). STRIPE DEFERRED: this does
- * NOT move money — process the actual refund against the PaymentIntent in
- * Stripe; this just keeps the ledger status accurate.
+ * Record that an order was refunded (status only). This does NOT move money —
+ * process the actual refund in PayFast; this just keeps the ledger accurate.
  */
 export async function recordOrderRefundedAction(
   orderId: string,

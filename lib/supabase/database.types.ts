@@ -366,7 +366,7 @@ export interface Database {
           buyer_id: string;
           listing_id: string;
           seller_id: string;
-          stripe_payment_intent_id: string | null;
+          gateway_reference: string | null;
           gross_amount_cents: number;
           commission_amount_cents: number;
           seller_payout_amount_cents: number;
@@ -383,7 +383,7 @@ export interface Database {
           buyer_id: string;
           listing_id: string;
           seller_id: string;
-          stripe_payment_intent_id?: string | null;
+          gateway_reference?: string | null;
           gross_amount_cents: number;
           commission_amount_cents: number;
           seller_payout_amount_cents: number;
@@ -400,7 +400,7 @@ export interface Database {
           buyer_id?: string;
           listing_id?: string;
           seller_id?: string;
-          stripe_payment_intent_id?: string | null;
+          gateway_reference?: string | null;
           gross_amount_cents?: number;
           commission_amount_cents?: number;
           seller_payout_amount_cents?: number;
@@ -411,6 +411,33 @@ export interface Database {
           created_at?: string;
           paid_at?: string | null;
           delivered_at?: string | null;
+        };
+        Relationships: [];
+      };
+      checkout_intents: {
+        Row: {
+          m_payment_id: string;
+          listing_id: string;
+          buyer_id: string;
+          shipping_name: string;
+          shipping_address: string;
+          created_at: string;
+        };
+        Insert: {
+          m_payment_id: string;
+          listing_id: string;
+          buyer_id: string;
+          shipping_name: string;
+          shipping_address: string;
+          created_at?: string;
+        };
+        Update: {
+          m_payment_id?: string;
+          listing_id?: string;
+          buyer_id?: string;
+          shipping_name?: string;
+          shipping_address?: string;
+          created_at?: string;
         };
         Relationships: [];
       };
@@ -533,6 +560,20 @@ export interface Database {
         Args: { p_key: string; p_max: number; p_window: number };
         Returns: boolean;
       };
+      fulfill_payfast_order: {
+        Args: {
+          p_gateway_reference: string;
+          p_listing_id: string;
+          p_buyer_id: string;
+          p_gross_cents: number;
+          p_commission_cents: number;
+          p_payout_cents: number;
+          p_fee_rate_bps: number;
+          p_shipping_name: string | null;
+          p_shipping_address: string | null;
+        };
+        Returns: string;
+      };
     };
     Enums: Record<never, never>;
     CompositeTypes: Record<never, never>;
@@ -557,6 +598,7 @@ export type Listing = Tables<"listings">;
 export type ListingImage = Tables<"listing_images">;
 export type Wishlist = Tables<"wishlists">;
 export type Order = Tables<"orders">;
+export type CheckoutIntent = Tables<"checkout_intents">;
 export type Dispute = Tables<"disputes">;
 export type Review = Tables<"reviews">;
 export type Notification = Tables<"notifications">;

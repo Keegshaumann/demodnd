@@ -25,7 +25,7 @@ export default async function AdminDisputesPage() {
         <p className="mt-2 max-w-[640px] text-sm text-ink-muted">
           Review disputes raised by buyers and sellers and record a resolution.
           Resolving logs the decision only — any refund is processed separately
-          via Stripe.
+          via PayFast.
         </p>
       </header>
 

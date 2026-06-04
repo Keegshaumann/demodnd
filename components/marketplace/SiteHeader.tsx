@@ -86,6 +86,7 @@ export function SiteHeader({ user = null }: { user?: NavUser | null }) {
           <input
             type="text"
             name="q"
+            aria-label="Search pieces"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search pieces..."
@@ -119,6 +120,8 @@ export function SiteHeader({ user = null }: { user?: NavUser | null }) {
           <button
             type="button"
             aria-label="Menu"
+            aria-expanded={menuOpen}
+            aria-controls="mobile-menu"
             onClick={() => setMenuOpen((v) => !v)}
             className="rounded-[3px] border border-border p-2.5 text-ink lg:hidden"
           >
@@ -132,13 +135,15 @@ export function SiteHeader({ user = null }: { user?: NavUser | null }) {
       </div>
 
       {menuOpen && (
-        <div className="border-t border-border-soft bg-bg px-6 py-4 lg:hidden">
+        <div id="mobile-menu" className="border-t border-border-soft bg-bg px-6 py-4 lg:hidden">
           <form
             onSubmit={submitSearch}
             className="mb-4 flex items-center overflow-hidden rounded-[3px] border border-border bg-surface focus-within:border-gold"
           >
             <input
               type="text"
+              name="q"
+              aria-label="Search pieces"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search pieces..."

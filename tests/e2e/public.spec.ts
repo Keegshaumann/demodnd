@@ -48,8 +48,8 @@ test("verified seller shows the ID-verified badge; pending seller does not (SELL
   page,
 }) => {
   await page.goto("/seller/verified-atelier");
-  await expect(page.getByLabel("ID-verified by D&D")).toBeVisible();
+  await expect(page.getByTitle("ID-verified by D&D")).toBeVisible();
 
   await page.goto("/seller/pending-seller");
-  await expect(page.getByLabel("ID-verified by D&D")).toHaveCount(0);
+  await expect(page.getByTitle("ID-verified by D&D")).toHaveCount(0);
 });

@@ -15,9 +15,15 @@ export default async function MarketplaceLayout({
   const user = await getNavUser();
   return (
     <>
+      <a
+        href="#main"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[200] focus:rounded focus:bg-gold focus:px-4 focus:py-2 focus:text-[13px] focus:text-white"
+      >
+        Skip to content
+      </a>
       <AnnounceBar />
       <SiteHeader user={user} />
-      <main>{children}</main>
+      <main id="main">{children}</main>
       <SiteFooter />
     </>
   );

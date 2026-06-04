@@ -115,8 +115,7 @@ export async function getDisputes(): Promise<{
 
 /**
  * Record an admin's resolution for a dispute. This logs the DECISION only —
- * the actual refund (money movement via Stripe) is handled separately and is
- * deferred until Stripe is live.
+ * the actual refund (money movement via PayFast) is handled separately.
  */
 export async function resolveDisputeAction(
   disputeId: string,

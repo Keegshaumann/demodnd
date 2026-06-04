@@ -38,7 +38,7 @@ export default function TermsPage() {
       <ul>
         <li>All prices are shown in South African Rand (ZAR).</li>
         <li>
-          Payment is processed securely by Stripe. D&amp;D Luxury is the merchant
+          Payment is processed securely by PayFast. D&amp;D Luxury is the merchant
           of record for every sale.
         </li>
         <li>
@@ -79,7 +79,7 @@ export default function TermsPage() {
       <h2>7. Disputes &amp; refunds</h2>
       <p>
         Disputes are handled by D&amp;D Luxury directly. Where a refund is
-        warranted it is processed via Stripe, and the corresponding seller payout
+        warranted it is processed via PayFast, and the corresponding seller payout
         may be withheld. Please contact our concierge to raise an issue.
       </p>
 

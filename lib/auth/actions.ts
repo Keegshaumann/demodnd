@@ -101,7 +101,11 @@ export async function signUpAction(
     },
   });
   if (error) {
-    return { error: error.message };
+    // Don't surface the raw Supabase message — it can leak whether an email is
+    // already registered or other internals. Mirror signInAction's generic copy.
+    return {
+      error: "We couldn't create your account. Please check your details and try again.",
+    };
   }
 
   // If email confirmation is required, there is no session yet.

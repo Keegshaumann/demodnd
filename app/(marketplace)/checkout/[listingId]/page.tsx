@@ -5,7 +5,7 @@ import { redirect, notFound } from "next/navigation";
 import { getListingById } from "@/lib/marketplace/listings";
 import { getCurrentUser } from "@/lib/auth/guards";
 import { roleCanAccess } from "@/lib/auth/roles";
-import { createListingPaymentIntent } from "@/lib/stripe/checkout";
+import { payfast } from "@/lib/payfast/config";
 import { formatZar } from "@/lib/money";
 import { categoryLabel } from "@/lib/marketplace/constants";
 import { CheckoutForm } from "@/components/marketplace/CheckoutForm";
@@ -23,9 +23,10 @@ export default async function CheckoutPage({
   const user = await getCurrentUser();
   if (!user) redirect(`/signin?redirect=/checkout/${listingId}`);
   // BUY-1: only buyer accounts (admins pass as superuser) may purchase — the
-  // order + "confirm receipt" views live under the buyer-only area, so a
-  // seller-role buyer would be locked out of the very order they paid for.
+  // order + "confirm receipt" views live under the buyer-only area.
   if (!roleCanAccess(user.role, "buyer")) redirect(`/listing/${listingId}`);
+  // Suspended/banned accounts can't transact (this route isn't middleware-gated).
+  if (user.status !== "active") redirect(`/listing/${listingId}`);
 
   const listing = await getListingById(listingId);
   if (!listing) notFound();
@@ -33,11 +34,6 @@ export default async function CheckoutPage({
   // Can't buy your own piece; only active listings are purchasable.
   if (listing.seller_id === user.id) redirect(`/listing/${listing.id}`);
   if (listing.status !== "active") redirect(`/listing/${listing.id}`);
-
-  const { clientSecret, amountCents } = await createListingPaymentIntent({
-    listing,
-    buyerId: user.id,
-  });
 
   const cover = listing.images[0]?.url ?? null;
 
@@ -105,7 +101,18 @@ export default async function CheckoutPage({
 
         {/* Payment */}
         <div className="surface-card p-7 sm:p-8">
-          <CheckoutForm clientSecret={clientSecret} amountCents={amountCents} />
+          <h2 className="mb-2 font-serif text-2xl">Delivery &amp; payment</h2>
+          <p className="mb-6 text-[13.5px] leading-relaxed text-ink-muted">
+            Enter where we should deliver, then complete payment on{" "}
+            <strong>PayFast</strong> — South Africa&apos;s trusted gateway — by
+            card or Instant EFT.
+          </p>
+
+          <CheckoutForm
+            listingId={listing.id}
+            priceCents={listing.price_cents}
+            sandbox={payfast.mode === "sandbox"}
+          />
         </div>
       </div>
     </div>

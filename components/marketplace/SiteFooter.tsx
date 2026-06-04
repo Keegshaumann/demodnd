@@ -16,7 +16,7 @@ export function SiteFooter() {
                 height={42}
               />
             </Link>
-            <p className="mt-5 max-w-[340px] text-sm leading-relaxed text-white/45">
+            <p className="mt-5 max-w-[340px] text-sm leading-relaxed text-white/65">
               South Africa&apos;s authenticated luxury marketplace. Buy and sell
               timeless pieces — every item independently authenticated and
               handled with the discretion it deserves.
@@ -51,7 +51,7 @@ export function SiteFooter() {
           />
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-4 border-t border-white/10 pt-8 text-xs text-white/35">
+        <div className="flex flex-wrap items-center justify-between gap-4 border-t border-white/10 pt-8 text-xs text-white/60">
           <span>© 2026 D&amp;D Luxury (Pty) Ltd. All rights reserved.</span>
           <div className="flex items-center gap-4">
             <Link href="/terms" className="hover:text-white">
@@ -84,7 +84,7 @@ function FooterCol({
           <li key={l.href + l.label}>
             <Link
               href={l.href}
-              className="text-sm text-white/45 transition-colors hover:text-white"
+              className="text-sm text-white/65 transition-colors hover:text-white"
             >
               {l.label}
             </Link>

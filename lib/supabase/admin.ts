@@ -7,7 +7,7 @@ import type { Database } from "@/lib/supabase/database.types";
  * Service-role Supabase client — BYPASSES RLS.
  *
  * Use only in trusted server contexts that have already performed their own
- * authorization checks: Stripe webhooks, admin actions verified via `is_admin`,
+ * authorization checks: payment webhooks (PayFast ITN), admin actions verified via `is_admin`,
  * and the `handle_new_user` flows. Never expose this client to the browser.
  */
 export function createAdminClient() {

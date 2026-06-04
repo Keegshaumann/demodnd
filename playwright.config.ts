@@ -10,7 +10,10 @@ export default defineConfig({
   testDir: "./tests/e2e",
   fullyParallel: false,
   workers: 1,
-  retries: 0,
+  // Retries absorb an environment flake: on this machine the repo lives under an
+  // iCloud-synced Documents folder, which occasionally locks/half-syncs a .next
+  // chunk mid-run and yields an empty page body. Real failures still fail thrice.
+  retries: 2,
   timeout: 45_000,
   expect: { timeout: 10_000 },
   reporter: [["list"]],
@@ -41,6 +44,11 @@ export default defineConfig({
       use: { browserName: "chromium", viewport: { width: 390, height: 844 }, hasTouch: true },
     },
     {
+      name: "a11y",
+      testMatch: /a11y\.spec\.ts/,
+      use: { ...devices["Desktop Chrome"] },
+    },
+    {
       name: "admin",
       testMatch: /admin\.spec\.ts/,
       dependencies: ["setup"],
@@ -66,6 +74,14 @@ export default defineConfig({
         ...devices["Desktop Chrome"],
         storageState: "tests/e2e/.auth/buyer.json",
       },
+    },
+    {
+      // MUTATION flows run LAST so the baseline-assertion specs above see the
+      // seeded state first. Each describe sets its own role storageState.
+      name: "flows",
+      testMatch: /flows\.spec\.ts/,
+      dependencies: ["setup"],
+      use: { ...devices["Desktop Chrome"] },
     },
   ],
 });

@@ -35,7 +35,19 @@ export async function generateMetadata({
   const { username } = await params;
   const seller = await lookupSeller(username);
   const name = seller?.display_name ?? seller?.username ?? "Seller";
-  return { title: `${name} — Seller` };
+  const description =
+    `${name} — authenticated luxury pieces for sale on D&D Luxury.`.slice(0, 160);
+  return {
+    title: `${name} — Seller`,
+    description,
+    alternates: { canonical: `/seller/${username}` },
+    openGraph: {
+      title: `${name} — Seller`,
+      description,
+      url: `/seller/${username}`,
+      type: "profile",
+    },
+  };
 }
 
 function initials(name: string): string {
@@ -113,12 +125,13 @@ export default async function SellerProfilePage({
                 {/* SELL-3: only show the badge for sellers D&D has actually
                     ID-verified — not every seller. */}
                 {rep?.verified && (
-                  <CheckCircleIcon
-                    width={18}
-                    height={18}
-                    className="text-gold"
-                    aria-label="ID-verified by D&D"
-                  />
+                  <span
+                    className="inline-flex items-center text-gold"
+                    title="ID-verified by D&D"
+                  >
+                    <CheckCircleIcon width={18} height={18} />
+                    <span className="sr-only">ID-verified by D&amp;D</span>
+                  </span>
                 )}
               </div>
               <div className="mt-1 flex flex-wrap items-center gap-3 text-[13px] text-ink-muted">

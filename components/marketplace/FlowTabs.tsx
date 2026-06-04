@@ -25,7 +25,7 @@ const BUYER_STEPS: Step[] = [
   {
     icon: LockIcon,
     title: "Purchase securely",
-    body: "Check out with Stripe. Your payment is protected and white-glove delivery is arranged by D&D, fully insured in transit.",
+    body: "Check out with PayFast — pay by card or Instant EFT. Your payment is protected and white-glove delivery is arranged by D&D, fully insured in transit.",
   },
   {
     icon: CheckCircleIcon,

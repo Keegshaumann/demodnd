@@ -13,6 +13,14 @@ export const metadata: Metadata = {
   title: "Shop the Collection",
   description:
     "Browse authenticated bags, watches, jewellery and shoes available to buy.",
+  alternates: { canonical: "/browse" },
+  openGraph: {
+    title: "Shop the Collection — D&D Luxury",
+    description:
+      "Browse authenticated bags, watches, jewellery and shoes available to buy.",
+    url: "/browse",
+    type: "website",
+  },
 };
 
 const VALID_METHODS: AuthMethod[] = ["photo", "courier", "dropoff"];

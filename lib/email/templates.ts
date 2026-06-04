@@ -217,10 +217,10 @@ export function conciergeMessageEmail(args: {
     heading: "New concierge enquiry",
     bodyHtml: `
       <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;border-top:1px solid #EFEFEF;border-bottom:1px solid #EFEFEF;margin:8px 0 20px;">
-        ${detailRow("From", escapeHtml(args.name))}
-        ${detailRow("Email", escapeHtml(args.email))}
-        ${args.phone ? detailRow("Phone", escapeHtml(args.phone)) : ""}
-        ${detailRow("Reason", escapeHtml(args.reason))}
+        ${detailRow("From", args.name)}
+        ${detailRow("Email", args.email)}
+        ${args.phone ? detailRow("Phone", args.phone) : ""}
+        ${detailRow("Reason", args.reason)}
       </table>
       <div style="background:#F8F8F8;border:1px solid #E5E5E5;border-radius:3px;padding:16px 18px;color:#1A1A1A;font-size:14px;line-height:1.7;white-space:pre-wrap;">${escapeHtml(args.message)}</div>
     `,
