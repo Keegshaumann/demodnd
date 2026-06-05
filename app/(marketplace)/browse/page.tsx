@@ -2,11 +2,15 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { getActiveListingsPage, type BrowseFilters } from "@/lib/marketplace/listings";
 import { ListingCard } from "@/components/marketplace/ListingCard";
-import { BrowseFilters as FiltersSidebar } from "@/components/marketplace/BrowseFilters";
+import {
+  BrowseFilters as FiltersSidebar,
+  BrowseFilterDrawer,
+  ActiveFilterChips,
+} from "@/components/marketplace/BrowseFilters";
 import { BrowseToolbar } from "@/components/marketplace/BrowseToolbar";
 import { Pagination } from "@/components/marketplace/Pagination";
 import { Reveal } from "@/components/ui/Reveal";
-import { ChevronRightIcon } from "@/components/ui/icons";
+import { ChevronRightIcon, SearchIcon, ArrowRightIcon } from "@/components/ui/icons";
 import type { AuthMethod } from "@/lib/supabase/database.types";
 
 export const metadata: Metadata = {
@@ -15,7 +19,7 @@ export const metadata: Metadata = {
     "Browse authenticated bags, watches, jewellery and shoes available to buy.",
   alternates: { canonical: "/browse" },
   openGraph: {
-    title: "Shop the Collection — D&D Luxury",
+    title: "Shop the Collection · D&D Luxury",
     description:
       "Browse authenticated bags, watches, jewellery and shoes available to buy.",
     url: "/browse",
@@ -83,7 +87,7 @@ export default async function BrowsePage({
 
   return (
     <>
-      <header className="border-b border-border-soft" style={{ padding: "72px 0 48px" }}>
+      <header className="border-b border-border-soft" style={{ padding: "64px 0 44px" }}>
         <div className="dnd-container">
           <nav className="mb-5 flex items-center gap-2 text-[12px] text-ink-dim">
             <Link href="/" className="hover:text-ink">
@@ -93,34 +97,56 @@ export default async function BrowsePage({
             <span className="text-ink-muted">Shop</span>
           </nav>
           <div className="eyebrow mb-4">The collection</div>
-          <h1 style={{ fontSize: "clamp(34px,4.5vw,56px)" }}>Pieces in residence.</h1>
-          <p className="mt-4 max-w-[620px] text-[15px] text-ink-muted">
-            Every item authenticated, photographed and insured up to R500,000 —
+          <h1 className="text-balance" style={{ fontSize: "clamp(34px,4.5vw,56px)" }}>
+            Pieces in residence.
+          </h1>
+          <p className="mt-4 max-w-[620px] text-pretty text-[15px] text-ink-muted">
+            Every item authenticated, photographed and insured to R500,000,
             available to purchase outright.
           </p>
         </div>
       </header>
 
       <div className="dnd-container">
-        <div className="grid grid-cols-1 items-start gap-10 py-16 lg:grid-cols-[280px_1fr] lg:gap-14">
+        <div className="grid grid-cols-1 items-start gap-10 py-12 lg:grid-cols-[270px_1fr] lg:gap-14 lg:py-14">
           <FiltersSidebar />
 
           <main className="min-w-0">
-            <div className="mb-9 flex flex-wrap items-center justify-between gap-4 border-b border-border-soft pb-5">
+            <div className="mb-7 flex flex-wrap items-center justify-between gap-3 border-b border-border-soft pb-5">
               <div className="text-[14px] text-ink-muted">
-                <strong className="text-ink">{total}</strong>{" "}
+                <strong className="text-ink tabular-nums">{total}</strong>{" "}
                 {total === 1 ? "piece" : "pieces"}
               </div>
-              <BrowseToolbar />
+              <div className="flex items-center gap-2.5">
+                <BrowseFilterDrawer />
+                <BrowseToolbar />
+              </div>
             </div>
 
+            <ActiveFilterChips />
+
             {listings.length === 0 ? (
-              <div className="rounded-[3px] border border-dashed border-border px-6 py-24 text-center text-ink-muted">
-                No pieces match your filters yet. Try widening your search.
+              <div className="flex flex-col items-center rounded-[3px] border border-dashed border-border bg-surface px-6 py-20 text-center">
+                <span className="mb-5 flex h-12 w-12 items-center justify-center rounded-full border border-border text-ink-dim">
+                  <SearchIcon width={20} height={20} />
+                </span>
+                <h2 className="font-serif text-2xl">Nothing matches yet.</h2>
+                <p className="mt-2 max-w-[360px] text-[14px] text-ink-muted">
+                  No pieces fit these filters right now. Widen your search, or tell
+                  our concierge what you&apos;re hunting for.
+                </p>
+                <div className="mt-6 flex flex-wrap justify-center gap-3">
+                  <Link href="/browse" className="btn btn-outline btn-sm">
+                    Clear filters
+                  </Link>
+                  <Link href="/concierge" className="btn btn-primary btn-sm">
+                    Ask the concierge <ArrowRightIcon width={15} height={15} />
+                  </Link>
+                </div>
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-1 gap-9 sm:grid-cols-2 xl:grid-cols-3">
+                <div className="grid grid-cols-1 gap-x-7 gap-y-10 sm:grid-cols-2 xl:grid-cols-3">
                   {listings.map((l, i) => (
                     <Reveal key={l.id} delay={Math.min(i, 6) * 45}>
                       <ListingCard listing={l} />

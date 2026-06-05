@@ -18,7 +18,7 @@ export function SiteFooter() {
             </Link>
             <p className="mt-5 max-w-[340px] text-sm leading-relaxed text-white/65">
               South Africa&apos;s authenticated luxury marketplace. Buy and sell
-              timeless pieces — every item independently authenticated and
+              timeless pieces, every item independently authenticated and
               handled with the discretion it deserves.
             </p>
           </div>

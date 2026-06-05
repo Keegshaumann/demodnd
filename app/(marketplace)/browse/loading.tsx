@@ -11,7 +11,7 @@ export default function BrowseLoading() {
         </div>
       </header>
       <div className="dnd-container">
-        <div className="grid grid-cols-1 items-start gap-10 py-16 lg:grid-cols-[280px_1fr] lg:gap-14">
+        <div className="grid grid-cols-1 items-start gap-10 py-12 lg:grid-cols-[270px_1fr] lg:gap-14 lg:py-14">
           <aside className="hidden space-y-8 lg:block">
             {Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className="space-y-3">

@@ -9,9 +9,18 @@ import { payfast } from "@/lib/payfast/config";
 import { formatZar } from "@/lib/money";
 import { categoryLabel } from "@/lib/marketplace/constants";
 import { CheckoutForm } from "@/components/marketplace/CheckoutForm";
-import { CertificateIcon, ChevronRightIcon } from "@/components/ui/icons";
+import {
+  CertificateIcon,
+  ChevronRightIcon,
+  LockIcon,
+  TruckIcon,
+  RotateIcon,
+  CheckIcon,
+} from "@/components/ui/icons";
 
 export const metadata: Metadata = { title: "Checkout" };
+
+const STEPS = ["Selected", "Your details", "Secure payment"] as const;
 
 export default async function CheckoutPage({
   params,
@@ -38,32 +47,63 @@ export default async function CheckoutPage({
   const cover = listing.images[0]?.url ?? null;
 
   return (
-    <div className="dnd-container py-12">
-      <nav className="mb-8 flex items-center gap-2 text-[12px] text-ink-dim">
+    <div className="dnd-container py-10 lg:py-12">
+      <nav className="mb-6 flex items-center gap-2 text-[12px] text-ink-dim">
         <Link href="/browse" className="hover:text-ink">
           Shop
         </Link>
         <ChevronRightIcon width={13} height={13} />
-        <Link href={`/listing/${listing.id}`} className="hover:text-ink">
+        <Link href={`/listing/${listing.id}`} className="truncate hover:text-ink">
           {listing.brand}
         </Link>
         <ChevronRightIcon width={13} height={13} />
         <span className="text-ink-muted">Checkout</span>
       </nav>
 
-      <div className="grid grid-cols-1 items-start gap-12 lg:grid-cols-[1fr_1.1fr] lg:gap-16">
+      {/* Step indicator */}
+      <ol className="mb-10 flex flex-wrap items-center gap-x-3 gap-y-2 text-[11px] uppercase tracking-[0.16em]">
+        {STEPS.map((label, i) => {
+          const current = i === 1; // address-entry step
+          const done = i < 1;
+          return (
+            <li key={label} className="flex items-center gap-3">
+              <span
+                className={`flex items-center gap-2 ${
+                  current ? "text-ink" : done ? "text-ink-muted" : "text-ink-dim"
+                }`}
+              >
+                <span
+                  className={`flex h-5 w-5 items-center justify-center rounded-full border text-[10px] ${
+                    current
+                      ? "border-gold bg-gold text-white"
+                      : "border-border text-ink-dim"
+                  }`}
+                >
+                  {done ? <CheckIcon width={11} height={11} /> : i + 1}
+                </span>
+                {label}
+              </span>
+              {i < STEPS.length - 1 && (
+                <span aria-hidden className="h-px w-6 bg-border sm:w-10" />
+              )}
+            </li>
+          );
+        })}
+      </ol>
+
+      <div className="grid grid-cols-1 items-start gap-10 lg:grid-cols-[1fr_1.1fr] lg:gap-16">
         {/* Order summary */}
         <div className="lg:sticky lg:top-24">
           <div className="eyebrow mb-5">Your order</div>
           <div className="surface-card overflow-hidden">
             <div className="flex gap-5 p-5">
-              <div className="relative h-28 w-24 flex-shrink-0 overflow-hidden rounded-[3px] bg-deep">
+              <div className="relative h-32 w-[104px] flex-shrink-0 overflow-hidden rounded-[3px] bg-deep">
                 {cover ? (
                   <Image
                     src={cover}
                     alt={`${listing.brand} ${listing.title}`}
                     fill
-                    sizes="96px"
+                    sizes="104px"
                     className="object-cover"
                   />
                 ) : (
@@ -71,41 +111,60 @@ export default async function CheckoutPage({
                     <CertificateIcon width={24} height={24} />
                   </div>
                 )}
+                <span className="pill pill-glass absolute left-2 top-2 !px-2 !py-1 !text-[8px]">
+                  <CertificateIcon width={9} height={9} />
+                </span>
               </div>
               <div className="min-w-0 flex-1">
                 <div className="text-[10.5px] uppercase tracking-[0.24em] text-gold">
                   {listing.brand}
                 </div>
-                <div className="font-serif text-xl">{listing.title}</div>
-                <div className="mt-1 text-[12px] text-ink-dim">
+                <div className="font-serif text-xl leading-tight">{listing.title}</div>
+                <div className="mt-1.5 text-[12px] text-ink-dim">
                   {categoryLabel(listing.category)} · {listing.condition}
+                </div>
+                <div className="price mt-3 text-[19px]">
+                  {formatZar(listing.price_cents)}
                 </div>
               </div>
             </div>
-            <dl className="space-y-2 border-t border-border-soft p-5 text-sm">
+            <dl className="space-y-2.5 border-t border-border-soft p-5 text-sm">
               <Row label="Item" value={formatZar(listing.price_cents)} />
-              <Row label="Delivery" value="White-glove · included" />
-              <div className="flex items-center justify-between border-t border-border-soft pt-3">
-                <dt className="font-medium">Total</dt>
-                <dd className="font-serif text-2xl text-silver">
+              <Row label="White-glove delivery" value="Included" />
+              <Row label="Insurance in transit" value="Included" />
+              <div className="mt-1 flex items-center justify-between border-t border-border-soft pt-4">
+                <dt className="font-medium uppercase tracking-[0.14em] text-[11px] text-ink-muted">
+                  Total
+                </dt>
+                <dd className="price text-[26px] leading-none">
                   {formatZar(listing.price_cents)}
                 </dd>
               </div>
             </dl>
           </div>
-          <p className="mt-4 flex items-start gap-2 text-[12.5px] text-ink-muted">
-            <CertificateIcon width={15} height={15} className="mt-0.5 text-gold" />
-            Authenticated by D&amp;D Luxury and insured in transit. 14-day returns.
-          </p>
+
+          <ul className="mt-5 space-y-2.5">
+            {[
+              { icon: CertificateIcon, text: "Certificate of Authenticity included" },
+              { icon: LockIcon, text: "Insured to R500,000 in transit" },
+              { icon: TruckIcon, text: "White-glove delivery, nationwide" },
+              { icon: RotateIcon, text: "14-day returns if not as described" },
+            ].map(({ icon: Icon, text }) => (
+              <li key={text} className="flex items-start gap-2.5 text-[12.5px] text-ink-muted">
+                <Icon width={14} height={14} className="mt-0.5 flex-shrink-0 text-gold" />
+                {text}
+              </li>
+            ))}
+          </ul>
         </div>
 
         {/* Payment */}
-        <div className="surface-card p-7 sm:p-8">
-          <h2 className="mb-2 font-serif text-2xl">Delivery &amp; payment</h2>
-          <p className="mb-6 text-[13.5px] leading-relaxed text-ink-muted">
-            Enter where we should deliver, then complete payment on{" "}
-            <strong>PayFast</strong> — South Africa&apos;s trusted gateway — by
-            card or Instant EFT.
+        <div className="surface-card p-7 sm:p-9">
+          <h1 className="mb-2 font-serif text-[28px]">Delivery &amp; payment</h1>
+          <p className="mb-7 max-w-[48ch] text-[13.5px] leading-relaxed text-ink-muted">
+            Tell us where to deliver, then complete payment on{" "}
+            <strong className="text-ink">PayFast</strong>, South Africa&apos;s
+            trusted gateway, by card or Instant EFT.
           </p>
 
           <CheckoutForm
@@ -123,7 +182,7 @@ function Row({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between text-ink-muted">
       <dt>{label}</dt>
-      <dd className="text-ink">{value}</dd>
+      <dd className="font-medium text-ink">{value}</dd>
     </div>
   );
 }

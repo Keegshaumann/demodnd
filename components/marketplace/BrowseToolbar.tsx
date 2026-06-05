@@ -34,7 +34,7 @@ export function BrowseToolbar() {
             else p.delete("q");
           });
         }}
-        className="flex items-center gap-2 rounded-[3px] border border-border bg-card px-3.5 py-2 transition-colors focus-within:border-gold"
+        className="hidden items-center gap-2 rounded-[3px] border border-border bg-card px-3.5 py-2 transition-colors focus-within:border-gold sm:flex"
       >
         <SearchIcon width={14} height={14} className="text-ink-dim" />
         <input

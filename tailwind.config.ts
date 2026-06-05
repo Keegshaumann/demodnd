@@ -22,6 +22,11 @@ const config: Config = {
         gold: "#0D0D0D",
         "gold-soft": "#1A1A1A",
         "gold-bright": "#000000",
+        // Semantic alias for the near-black used as a deliberate dark surface
+        // (footer, the home authentication band). Same value as `gold`, clearer
+        // intent at the call site.
+        onyx: "#0D0D0D",
+        "onyx-soft": "#161616",
         silver: "#777777",
         "silver-bright": "#888888",
         ink: "#1A1A1A",
@@ -55,6 +60,7 @@ const config: Config = {
         sm: "0 4px 16px rgba(0, 0, 0, 0.08)",
         md: "0 12px 32px rgba(0, 0, 0, 0.12)",
         lg: "0 20px 48px rgba(0, 0, 0, 0.16)",
+        xl: "0 30px 64px rgba(0, 0, 0, 0.18)",
       },
       letterSpacing: {
         eyebrow: "0.32em",

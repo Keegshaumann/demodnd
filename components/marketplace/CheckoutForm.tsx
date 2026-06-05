@@ -74,6 +74,7 @@ export function CheckoutForm({
 
   return (
     <form onSubmit={onSubmit} noValidate>
+      <div className="caption mb-4 text-gold">Delivery address</div>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field className="sm:col-span-2" label="Recipient full name" name="recipient" autoComplete="name" />
         <Field className="sm:col-span-2" label="Contact number" name="phone" type="tel" autoComplete="tel" placeholder="e.g. 082 123 4567" />
@@ -108,20 +109,20 @@ export function CheckoutForm({
         </p>
       )}
 
-      <button type="submit" disabled={pending} className="btn btn-primary btn-block mt-6">
+      <button type="submit" disabled={pending} className="btn btn-primary btn-lg btn-block mt-7">
         {pending ? "Redirecting to PayFast…" : `Pay ${formatZar(priceCents)} with PayFast`}
         {!pending && <ArrowRightIcon width={16} height={16} />}
       </button>
 
       {sandbox && (
         <p className="mt-4 rounded-[3px] border border-amber-200 bg-amber-50 px-3.5 py-2.5 text-[12px] leading-relaxed text-amber-800">
-          <strong>Sandbox mode</strong> — no real payment is taken. Use PayFast&apos;s
+          <strong>Sandbox mode.</strong> No real payment is taken. Use PayFast&apos;s
           test card to complete a dry-run.
         </p>
       )}
 
       <p className="mt-4 flex items-center gap-2 text-[12px] text-ink-dim">
-        <CertificateIcon width={14} height={14} /> PCI-DSS Level 1 — secured by PayFast.
+        <CertificateIcon width={14} height={14} /> PCI-DSS Level 1, secured by PayFast.
         Your card details are entered on PayFast and never touch our servers.
       </p>
     </form>

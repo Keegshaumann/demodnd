@@ -16,31 +16,38 @@ export function ListingGallery({
 
   return (
     <div>
-      <div className="mb-4 aspect-[4/5] overflow-hidden rounded-[3px] border border-border-soft bg-card">
+      <div className="group relative mb-4 aspect-[4/5] overflow-hidden rounded-[3px] border border-border-soft bg-card">
         {main ? (
           <Image
             src={main}
             alt={alt}
-            width={900}
-            height={1125}
+            width={1000}
+            height={1250}
             priority
-            className="h-full w-full object-cover"
+            className="h-full w-full object-cover transition-transform duration-[1100ms] ease-out-soft group-hover:scale-[1.04]"
           />
         ) : (
           <div className="flex h-full items-center justify-center text-ink-dim">
             <CertificateIcon width={48} height={48} />
           </div>
         )}
+        <span className="pill pill-glass absolute left-4 top-4">
+          <CertificateIcon width={11} height={11} /> Authenticated
+        </span>
       </div>
       {images.length > 1 && (
-        <div className="grid grid-cols-4 gap-3.5">
+        <div className="grid grid-cols-5 gap-3">
           {images.map((src, i) => (
             <button
               key={src + i}
               type="button"
               onClick={() => setActive(i)}
-              className={`aspect-square overflow-hidden rounded-[3px] border bg-card transition-colors ${
-                i === active ? "border-gold" : "border-border-soft hover:border-gold"
+              aria-label={`View image ${i + 1}`}
+              aria-current={i === active}
+              className={`aspect-square overflow-hidden rounded-[3px] border bg-card transition-all duration-300 ${
+                i === active
+                  ? "border-gold ring-1 ring-gold"
+                  : "border-border-soft opacity-70 hover:opacity-100"
               }`}
             >
               <Image
