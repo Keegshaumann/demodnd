@@ -1,10 +1,12 @@
 import Link from "next/link";
 import Image from "next/image";
-import { HeroDeco } from "@/components/marketplace/HeroDeco";
+import { CategoryRail } from "@/components/marketplace/CategoryRail";
 import { HeroSearch } from "@/components/marketplace/HeroSearch";
 import { ListingCard } from "@/components/marketplace/ListingCard";
 import { Reveal } from "@/components/ui/Reveal";
-import { getActiveListings } from "@/lib/marketplace/listings";
+import { getActiveListingsPage } from "@/lib/marketplace/listings";
+import { getCurrentUser } from "@/lib/auth/guards";
+import { getSavedListingIds } from "@/lib/marketplace/saved";
 import {
   ShieldIcon,
   LockIcon,
@@ -17,11 +19,19 @@ import {
 } from "@/components/ui/icons";
 
 const QUICK_LINKS = [
-  { href: "/browse?category=bags", label: "Handbags" },
-  { href: "/browse?category=watches", label: "Watches" },
+  { href: "/browse?category=bags", label: "Bags" },
   { href: "/browse?category=jewellery", label: "Jewellery" },
+  { href: "/browse?category=watches", label: "Watches" },
   { href: "/browse?category=shoes", label: "Shoes" },
+  { href: "/browse?category=accessories", label: "Accessories" },
+  { href: "/browse?category=apparel", label: "Apparel" },
 ];
+
+// Large editorial hero image — already-whitelisted images.unsplash.com host
+// (next.config.ts). Reuses the same monochrome luxury photography palette as
+// CategoryRail; w=1600 for a crisp split-layout frame.
+const HERO_IMAGE =
+  "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=1600&q=80";
 
 const TRUST = [
   { icon: ShieldIcon, label: "100% Authenticated" },
@@ -46,41 +56,6 @@ const MARQUEE = [
   "Bvlgari",
 ];
 
-const CATEGORIES = [
-  {
-    href: "/browse?category=bags",
-    name: "Handbags",
-    note: "Hermès, Chanel, Bottega",
-    img: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=900&q=80",
-    cls: "col-span-2 lg:col-span-1 lg:row-span-2",
-    aspect: "aspect-[16/11] lg:aspect-auto",
-  },
-  {
-    href: "/browse?category=watches",
-    name: "Watches",
-    note: "Rolex, Patek, AP",
-    img: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=1100&q=80",
-    cls: "col-span-2 lg:col-span-2",
-    aspect: "aspect-[16/10] lg:aspect-auto",
-  },
-  {
-    href: "/browse?category=jewellery",
-    name: "Jewellery",
-    note: "Cartier, Bvlgari",
-    img: "https://images.unsplash.com/photo-1611652022419-a9419f74343d?w=700&q=80",
-    cls: "col-span-1",
-    aspect: "aspect-[4/5] lg:aspect-auto",
-  },
-  {
-    href: "/browse?category=shoes",
-    name: "Shoes",
-    note: "Dior, Valentino",
-    img: "https://images.unsplash.com/photo-1614252369475-531eba835eb1?w=700&q=80",
-    cls: "col-span-1",
-    aspect: "aspect-[4/5] lg:aspect-auto",
-  },
-];
-
 const STEPS = [
   {
     icon: CameraIcon,
@@ -100,55 +75,105 @@ const STEPS = [
 ];
 
 export default async function HomePage() {
-  const featured = await getActiveListings({ sort: "featured" });
-  const latest = featured.slice(0, 8);
+  // Featured-first, newest after — fetch exactly the 8 cards the grid shows.
+  // getCurrentUser is React-cache'd, so hydrating per-card saved-state costs one
+  // cheap saved_listings read (empty Set for guests).
+  const [{ items: latest }, user] = await Promise.all([
+    getActiveListingsPage({ sort: "featured" }, 1, 8),
+    getCurrentUser(),
+  ]);
+  const savedIds = await getSavedListingIds(user?.id ?? null);
 
   return (
     <>
-      {/* Hero */}
-      <header className="relative isolate" style={{ padding: "116px 0 92px" }}>
+      {/* Hero — bold editorial split: confident serif headline + SHOP NOW on the
+          left, a large luxury image on the right. Monochrome / Cormorant. */}
+      <header className="relative isolate overflow-hidden">
         <div
           className="absolute inset-0 -z-10"
           style={{
             background:
-              "radial-gradient(ellipse 60% 80% at 72% 38%, rgba(0,0,0,0.03), transparent 68%), linear-gradient(135deg, #F8F8F8 0%, #F0F0F0 60%, #F8F8F8 100%)",
+              "radial-gradient(ellipse 70% 90% at 18% 30%, rgba(0,0,0,0.035), transparent 66%), linear-gradient(135deg, #F8F8F8 0%, #F0F0F0 62%, #F8F8F8 100%)",
           }}
         />
-        <HeroDeco />
-        <div className="dnd-container relative z-[3] flex flex-col items-center text-center">
-          <span className="eyebrow mb-6">Authenticated · Insured · South African</span>
-          <h1
-            className="mb-6 max-w-[15ch] text-balance"
-            style={{
-              fontSize: "clamp(44px, 6vw, 86px)",
-              letterSpacing: "-0.022em",
-              lineHeight: 1.04,
-            }}
-          >
-            The luxury you want, <em>proven real.</em>
-          </h1>
-          <p className="mb-10 max-w-[600px] text-pretty text-[17px] leading-relaxed text-ink-muted">
-            South Africa&apos;s authenticated marketplace for pre-owned luxury.
-            Every piece examined by hand, insured to R500,000, delivered to your
-            door.
-          </p>
-          <HeroSearch />
-          <div className="flex flex-wrap items-center justify-center gap-2">
-            <span className="mr-1 text-[11px] uppercase tracking-[0.14em] text-ink-dim">
-              Browse:
-            </span>
-            {QUICK_LINKS.map((l) => (
-              <Link
-                key={l.href}
-                href={l.href}
-                className="rounded-full border border-border px-3.5 py-1.5 text-[11.5px] uppercase tracking-[0.1em] text-ink-muted transition-colors hover:border-gold hover:text-gold"
+        <div className="dnd-container">
+          <div className="grid grid-cols-1 items-center gap-12 py-16 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16 lg:py-24">
+            {/* Text column */}
+            <Reveal className="order-2 lg:order-1">
+              <span className="eyebrow mb-7">D&amp;D · All things luxury</span>
+              <h1
+                className="mb-7 max-w-[16ch] text-balance"
+                style={{
+                  fontSize: "clamp(40px, 6.4vw, 88px)",
+                  letterSpacing: "-0.022em",
+                  lineHeight: 1.03,
+                }}
               >
-                {l.label}
-              </Link>
-            ))}
+                Welcome to the largest luxury marketplace{" "}
+                <em>in the world.</em>
+              </h1>
+              <p className="mb-9 max-w-[520px] text-pretty text-[17px] leading-relaxed text-ink-muted">
+                Authenticated, evaluated and insured. Every piece examined by
+                hand before it ever reaches you — the counterfeit risk of private
+                resale, removed.
+              </p>
+              <div className="flex flex-wrap items-center gap-4">
+                <Link href="/browse" className="btn btn-primary btn-lg">
+                  Shop now <ArrowRightIcon width={17} height={17} />
+                </Link>
+                <Link href="/sell" className="btn btn-outline btn-lg">
+                  Sell with D&amp;D
+                </Link>
+              </div>
+              <div className="mt-9 flex flex-wrap items-center gap-2">
+                <span className="mr-1 text-[11px] uppercase tracking-[0.14em] text-ink-dim">
+                  Browse:
+                </span>
+                {QUICK_LINKS.map((l) => (
+                  <Link
+                    key={l.href}
+                    href={l.href}
+                    className="rounded-full border border-border px-3.5 py-1.5 text-[11.5px] uppercase tracking-[0.1em] text-ink-muted transition-colors hover:border-gold hover:text-gold"
+                  >
+                    {l.label}
+                  </Link>
+                ))}
+              </div>
+            </Reveal>
+
+            {/* Image column */}
+            <Reveal delay={120} className="order-1 lg:order-2">
+              <div className="relative aspect-[4/5] w-full overflow-hidden rounded-[3px] border border-border-soft bg-card shadow-[0_30px_60px_-32px_rgba(0,0,0,0.32)] sm:aspect-[5/5] lg:aspect-[4/5]">
+                <Image
+                  src={HERO_IMAGE}
+                  alt="A curated selection of authenticated luxury handbags from D&D Luxury"
+                  fill
+                  priority
+                  sizes="(max-width: 1024px) 100vw, 48vw"
+                  className="object-cover brightness-[0.97]"
+                />
+                <div
+                  aria-hidden="true"
+                  className="absolute inset-0"
+                  style={{
+                    background:
+                      "linear-gradient(180deg, transparent 55%, rgba(13,13,13,0.18) 100%)",
+                  }}
+                />
+              </div>
+            </Reveal>
           </div>
         </div>
       </header>
+
+      {/* Search band — kept reachable in its own slim bordered strip below the
+          hero, so the editorial headline stays uncrowded. Single top border;
+          the trust strip below provides the next divider. */}
+      <div className="border-t border-border bg-surface pb-2 pt-7">
+        <div className="dnd-container flex justify-center">
+          <HeroSearch />
+        </div>
+      </div>
 
       {/* Trust strip */}
       <div className="border-y border-border bg-surface py-6">
@@ -181,54 +206,8 @@ export default async function HomePage() {
         </div>
       </div>
 
-      {/* Category bento */}
-      <section style={{ padding: "76px 0 84px" }}>
-        <div className="dnd-container">
-          <div className="mb-9 flex flex-wrap items-end justify-between gap-4">
-            <h2 style={{ fontSize: "clamp(28px,3.4vw,40px)" }}>Shop by category.</h2>
-            <Link
-              href="/browse"
-              className="link-underline self-end text-[12px] uppercase tracking-[0.18em] text-ink-muted hover:text-gold"
-            >
-              View everything
-            </Link>
-          </div>
-          <div className="grid grid-cols-2 gap-3.5 lg:h-[600px] lg:grid-cols-3 lg:grid-rows-2">
-            {CATEGORIES.map((cat, i) => (
-              <Reveal key={cat.href} delay={i * 70} className={`${cat.cls} min-h-0`}>
-                <Link
-                  href={cat.href}
-                  className={`group relative block h-full w-full overflow-hidden rounded-[3px] border border-border-soft bg-card ${cat.aspect}`}
-                >
-                  <Image
-                    src={cat.img}
-                    alt={cat.name}
-                    fill
-                    sizes="(max-width: 1024px) 100vw, 33vw"
-                    className="object-cover brightness-[0.62] transition-[transform,filter] duration-[1100ms] ease-out-soft group-hover:scale-[1.05] group-hover:brightness-[0.5]"
-                  />
-                  <div
-                    className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 px-5 pb-5 pt-16"
-                    style={{ background: "linear-gradient(transparent, rgba(0,0,0,0.78))" }}
-                  >
-                    <div>
-                      <span className="block font-serif text-2xl font-medium text-white">
-                        {cat.name}
-                      </span>
-                      <span className="mt-0.5 block text-[11px] uppercase tracking-[0.16em] text-white/65">
-                        {cat.note}
-                      </span>
-                    </div>
-                    <span className="mb-1 translate-x-[-6px] text-white opacity-0 transition-all duration-500 ease-out-soft group-hover:translate-x-0 group-hover:opacity-100">
-                      <ArrowRightIcon width={18} height={18} />
-                    </span>
-                  </div>
-                </Link>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* Category rail */}
+      <CategoryRail />
 
       {/* Latest pieces */}
       {latest.length > 0 && (
@@ -248,7 +227,7 @@ export default async function HomePage() {
             <div className="grid grid-cols-1 gap-9 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {latest.map((l, i) => (
                 <Reveal key={l.id} delay={Math.min(i, 7) * 55}>
-                  <ListingCard listing={l} />
+                  <ListingCard listing={l} isSaved={savedIds.has(l.id)} />
                 </Reveal>
               ))}
             </div>

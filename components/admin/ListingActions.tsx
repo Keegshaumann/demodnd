@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import {
   delistListingAction,
   relistListingAction,
+  setListingFeaturedAction,
   setListingPriceAction,
   deleteListingAction,
   type AdminListingActionResult,
@@ -15,10 +16,12 @@ import type { ListingStatus } from "@/lib/supabase/database.types";
 export function ListingActions({
   id,
   status,
+  featured,
   priceCents,
 }: {
   id: string;
   status: ListingStatus;
+  featured: boolean;
   priceCents: number;
 }) {
   const router = useRouter();
@@ -84,6 +87,29 @@ export function ListingActions({
             Edit price
           </button>
         )}
+
+        {/* Feature / unfeature — only active pieces surface publicly, so
+            featuring is offered for active stock; unfeaturing always works
+            (cleanup after a delist/sale). */}
+        {featured ? (
+          <button
+            type="button"
+            disabled={pending}
+            onClick={() => run(() => setListingFeaturedAction(id, false))}
+            className="btn btn-outline btn-sm"
+          >
+            Unfeature
+          </button>
+        ) : status === "active" ? (
+          <button
+            type="button"
+            disabled={pending}
+            onClick={() => run(() => setListingFeaturedAction(id, true))}
+            className="btn btn-outline btn-sm"
+          >
+            Feature
+          </button>
+        ) : null}
 
         {/* Delist / relist — locked once sold */}
         {isSold ? (

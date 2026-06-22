@@ -55,39 +55,43 @@ export async function getSellerReputation(
 ): Promise<SellerReputation | null> {
   const db = createAdminClient();
 
-  const { data: profile } = await db
-    .from("seller_profiles")
-    .select("username, display_name, bio, reputation_score, verified, created_at")
-    .eq("user_id", sellerId)
-    .maybeSingle();
-
-  const [{ count: itemsListed }, { count: completedTransactions }, { count: reviewsCount }] =
-    await Promise.all([
-      db
-        .from("listings")
-        .select("id", { count: "exact", head: true })
-        .eq("seller_id", sellerId)
-        .eq("status", "active"),
-      db
-        .from("orders")
-        .select("id", { count: "exact", head: true })
-        .eq("seller_id", sellerId)
-        .in("status", ["paid", "delivered"]),
-      db
-        .from("reviews")
-        .select("id", { count: "exact", head: true })
-        .eq("seller_id", sellerId),
-    ]);
-
-  // Primary auth method = that of the most recent active listing.
-  const { data: recent } = await db
-    .from("listings")
-    .select("auth_method")
-    .eq("seller_id", sellerId)
-    .eq("status", "active")
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  // All five queries key off sellerId alone, so run them in parallel
+  // (`recent` = primary auth method, taken from the most recent active listing).
+  const [
+    { data: profile },
+    { count: itemsListed },
+    { count: completedTransactions },
+    { count: reviewsCount },
+    { data: recent },
+  ] = await Promise.all([
+    db
+      .from("seller_profiles")
+      .select("username, display_name, bio, reputation_score, verified, created_at")
+      .eq("user_id", sellerId)
+      .maybeSingle(),
+    db
+      .from("listings")
+      .select("id", { count: "exact", head: true })
+      .eq("seller_id", sellerId)
+      .eq("status", "active"),
+    db
+      .from("orders")
+      .select("id", { count: "exact", head: true })
+      .eq("seller_id", sellerId)
+      .in("status", ["paid", "delivered"]),
+    db
+      .from("reviews")
+      .select("id", { count: "exact", head: true })
+      .eq("seller_id", sellerId),
+    db
+      .from("listings")
+      .select("auth_method")
+      .eq("seller_id", sellerId)
+      .eq("status", "active")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+  ]);
 
   return {
     userId: sellerId,

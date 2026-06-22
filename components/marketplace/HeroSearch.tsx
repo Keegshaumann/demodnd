@@ -34,7 +34,7 @@ export function HeroSearch() {
       />
       <button
         type="submit"
-        className="flex-shrink-0 whitespace-nowrap bg-gold px-7 py-4 text-xs font-semibold uppercase tracking-[0.18em] text-white transition-colors hover:bg-gold-bright"
+        className="flex-shrink-0 self-stretch whitespace-nowrap bg-gold px-7 py-4 text-xs font-semibold uppercase tracking-[0.18em] text-white transition-colors hover:bg-gold-bright"
       >
         Search
       </button>

@@ -55,7 +55,9 @@ export async function getSalesLedger(
   if (filters.dateFrom) query = query.gte("created_at", filters.dateFrom);
   if (filters.dateTo) query = query.lte("created_at", `${filters.dateTo}T23:59:59.999Z`);
 
-  const { data: orders } = await query;
+  const { data: orders, error } = await query;
+  // Throw on a real DB error so the ledger doesn't silently render R0 totals.
+  if (error) throw new Error(`getSalesLedger: ${error.message}`);
   const rowsRaw = orders ?? [];
 
   const listingIds = [...new Set(rowsRaw.map((o) => o.listing_id))];

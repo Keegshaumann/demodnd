@@ -35,10 +35,13 @@ export async function getDisputes(): Promise<{
   await requireRole("admin");
   const db = createAdminClient();
 
-  const { data: disputes } = await db
+  const { data: disputes, error } = await db
     .from("disputes")
     .select("*")
     .order("created_at", { ascending: false });
+  // Throw on a real DB error so the admin route shows an error boundary rather
+  // than a misleading "no disputes" empty state.
+  if (error) throw new Error(`getDisputes: ${error.message}`);
   const list = disputes ?? [];
   if (list.length === 0) return { open: [], resolved: [] };
 

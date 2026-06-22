@@ -26,11 +26,14 @@ export async function getReviews(
   await requireRole("admin");
   const db = createAdminClient();
 
-  const { data: reviews } = await db
+  const { data: reviews, error } = await db
     .from("reviews")
     .select("*")
     .order("created_at", { ascending: false })
     .limit(100);
+  // Throw on a real DB error so the admin route shows an error boundary rather
+  // than a misleading "no reviews" empty state.
+  if (error) throw new Error(`getReviews: ${error.message}`);
   const list = reviews ?? [];
   if (list.length === 0) return [];
 

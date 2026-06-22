@@ -11,6 +11,7 @@ import { ArrowRightIcon, EyeIcon } from "@/components/ui/icons";
 
 type Mode = "signin" | "register" | "magic";
 const EMPTY: AuthState = {};
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 export function AuthPanels({
   redirectTo,
@@ -87,6 +88,15 @@ function FieldError({ state }: { state: AuthState }) {
   return <p className="mb-3 text-[13px] text-[#e85d5d]">{state.error}</p>;
 }
 
+function InlineFieldError({ id, error }: { id: string; error?: string }) {
+  if (!error) return null;
+  return (
+    <p id={id} className="mt-2 text-[12px] text-[#e85d5d]">
+      {error}
+    </p>
+  );
+}
+
 function FieldMessage({ state }: { state: AuthState }) {
   if (!state.message) return null;
   return (
@@ -105,6 +115,21 @@ function SignInPanel({
 }) {
   const [state, formAction, pending] = useActionState(signInAction, EMPTY);
   const [showPw, setShowPw] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<{
+    email?: string;
+    password?: string;
+  }>({});
+
+  function validateSubmit(e: React.FormEvent<HTMLFormElement>) {
+    const data = new FormData(e.currentTarget);
+    const errs: typeof fieldErrors = {};
+    if (!EMAIL_RE.test(String(data.get("email") ?? "")))
+      errs.email = "Enter a valid email address.";
+    if (!String(data.get("password") ?? ""))
+      errs.password = "Enter your password.";
+    setFieldErrors(errs);
+    if (errs.email || errs.password) e.preventDefault();
+  }
 
   return (
     <div className="animate-fadeIn">
@@ -112,7 +137,7 @@ function SignInPanel({
       <p className="mb-7 text-sm text-ink-muted">
         Sign in to manage your account.
       </p>
-      <form action={formAction}>
+      <form action={formAction} onSubmit={validateSubmit} noValidate>
         {redirectTo && <input type="hidden" name="redirect" value={redirectTo} />}
         <div className="mb-[18px]">
           <label className="field-label" htmlFor="si-email">
@@ -124,9 +149,13 @@ function SignInPanel({
             type="email"
             autoComplete="email"
             required
+            defaultValue={state.values?.email}
             placeholder="you@example.co.za"
             className="field-input"
+            aria-invalid={fieldErrors.email ? true : undefined}
+            aria-describedby={fieldErrors.email ? "si-email-error" : undefined}
           />
+          <InlineFieldError id="si-email-error" error={fieldErrors.email} />
         </div>
         <div className="mb-[18px]">
           <label className="field-label" htmlFor="si-password">
@@ -141,6 +170,10 @@ function SignInPanel({
               required
               placeholder="••••••••"
               className="field-input pr-11"
+              aria-invalid={fieldErrors.password ? true : undefined}
+              aria-describedby={
+                fieldErrors.password ? "si-password-error" : undefined
+              }
             />
             <button
               type="button"
@@ -151,6 +184,7 @@ function SignInPanel({
               <EyeIcon width={16} height={16} />
             </button>
           </div>
+          <InlineFieldError id="si-password-error" error={fieldErrors.password} />
         </div>
         <FieldError state={state} />
         <button
@@ -185,6 +219,16 @@ function MagicPanel({
   onBack: () => void;
 }) {
   const [state, formAction, pending] = useActionState(magicLinkAction, EMPTY);
+  const [emailError, setEmailError] = useState<string | undefined>(undefined);
+
+  function validateSubmit(e: React.FormEvent<HTMLFormElement>) {
+    const data = new FormData(e.currentTarget);
+    const err = EMAIL_RE.test(String(data.get("email") ?? ""))
+      ? undefined
+      : "Enter a valid email address.";
+    setEmailError(err);
+    if (err) e.preventDefault();
+  }
 
   return (
     <div className="animate-fadeIn">
@@ -192,7 +236,7 @@ function MagicPanel({
       <p className="mb-7 text-sm text-ink-muted">
         We&apos;ll email you a secure, single-use sign-in link.
       </p>
-      <form action={formAction}>
+      <form action={formAction} onSubmit={validateSubmit} noValidate>
         {redirectTo && <input type="hidden" name="redirect" value={redirectTo} />}
         <div className="mb-[18px]">
           <label className="field-label" htmlFor="ml-email">
@@ -204,9 +248,13 @@ function MagicPanel({
             type="email"
             autoComplete="email"
             required
+            defaultValue={state.values?.email}
             placeholder="you@example.co.za"
             className="field-input"
+            aria-invalid={emailError ? true : undefined}
+            aria-describedby={emailError ? "ml-email-error" : undefined}
           />
+          <InlineFieldError id="ml-email-error" error={emailError} />
         </div>
         <FieldError state={state} />
         <FieldMessage state={state} />
@@ -232,6 +280,29 @@ function MagicPanel({
 function RegisterPanel({ redirectTo }: { redirectTo?: string }) {
   const [state, formAction, pending] = useActionState(signUpAction, EMPTY);
   const [role, setRole] = useState<"buyer" | "seller">("buyer");
+  const [showPw, setShowPw] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<{
+    fullName?: string;
+    email?: string;
+    password?: string;
+    terms?: string;
+  }>({});
+
+  function validateSubmit(e: React.FormEvent<HTMLFormElement>) {
+    const data = new FormData(e.currentTarget);
+    const errs: typeof fieldErrors = {};
+    if (!String(data.get("fullName") ?? "").trim())
+      errs.fullName = "Enter your name.";
+    if (!EMAIL_RE.test(String(data.get("email") ?? "")))
+      errs.email = "Enter a valid email address.";
+    if (String(data.get("password") ?? "").length < 8)
+      errs.password = "Password must be at least 8 characters.";
+    if (data.get("terms") !== "on")
+      errs.terms =
+        "Please agree to the Terms & Conditions and Privacy Policy.";
+    setFieldErrors(errs);
+    if (Object.keys(errs).length > 0) e.preventDefault();
+  }
 
   return (
     <div className="animate-fadeIn">
@@ -239,7 +310,7 @@ function RegisterPanel({ redirectTo }: { redirectTo?: string }) {
       <p className="mb-7 text-sm text-ink-muted">
         Join to buy authenticated pieces, or to sell your own.
       </p>
-      <form action={formAction}>
+      <form action={formAction} onSubmit={validateSubmit} noValidate>
         {redirectTo && <input type="hidden" name="redirect" value={redirectTo} />}
         <input type="hidden" name="role" value={role} />
 
@@ -268,9 +339,13 @@ function RegisterPanel({ redirectTo }: { redirectTo?: string }) {
             type="text"
             autoComplete="name"
             required
+            defaultValue={state.values?.fullName}
             placeholder="Thandi Khumalo"
             className="field-input"
+            aria-invalid={fieldErrors.fullName ? true : undefined}
+            aria-describedby={fieldErrors.fullName ? "su-name-error" : undefined}
           />
+          <InlineFieldError id="su-name-error" error={fieldErrors.fullName} />
         </div>
         <div className="mb-[18px]">
           <label className="field-label" htmlFor="su-email">
@@ -282,28 +357,54 @@ function RegisterPanel({ redirectTo }: { redirectTo?: string }) {
             type="email"
             autoComplete="email"
             required
+            defaultValue={state.values?.email}
             placeholder="you@example.co.za"
             className="field-input"
+            aria-invalid={fieldErrors.email ? true : undefined}
+            aria-describedby={fieldErrors.email ? "su-email-error" : undefined}
           />
+          <InlineFieldError id="su-email-error" error={fieldErrors.email} />
         </div>
         <div className="mb-[18px]">
           <label className="field-label" htmlFor="su-password">
             Password
           </label>
-          <input
-            id="su-password"
-            name="password"
-            type="password"
-            autoComplete="new-password"
-            required
-            minLength={8}
-            placeholder="At least 8 characters"
-            className="field-input"
-          />
+          <div className="relative">
+            <input
+              id="su-password"
+              name="password"
+              type={showPw ? "text" : "password"}
+              autoComplete="new-password"
+              required
+              minLength={8}
+              placeholder="At least 8 characters"
+              className="field-input pr-11"
+              aria-invalid={fieldErrors.password ? true : undefined}
+              aria-describedby={
+                fieldErrors.password ? "su-password-error" : undefined
+              }
+            />
+            <button
+              type="button"
+              aria-label="Toggle password visibility"
+              onClick={() => setShowPw((v) => !v)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-muted hover:text-ink"
+            >
+              <EyeIcon width={16} height={16} />
+            </button>
+          </div>
+          <InlineFieldError id="su-password-error" error={fieldErrors.password} />
         </div>
 
         <label className="mb-5 flex items-start gap-2.5 text-[13px] text-ink-muted">
-          <input type="checkbox" required className="mt-1" />
+          <input
+            type="checkbox"
+            name="terms"
+            required
+            defaultChecked={state.values?.terms}
+            className="mt-1"
+            aria-invalid={fieldErrors.terms ? true : undefined}
+          />
           <span>
             I agree to the{" "}
             <a href="/terms" target="_blank" className="text-gold underline">
@@ -314,6 +415,11 @@ function RegisterPanel({ redirectTo }: { redirectTo?: string }) {
               Privacy Policy
             </a>
             .
+            {fieldErrors.terms && (
+              <span className="mt-1.5 block text-[12px] text-[#e85d5d]">
+                {fieldErrors.terms}
+              </span>
+            )}
           </span>
         </label>
 

@@ -1,13 +1,33 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getListingById, getSimilarListings } from "@/lib/marketplace/listings";
+import {
+  getListingById,
+  getSimilarListings,
+  type ListingDetail,
+} from "@/lib/marketplace/listings";
 import { getCurrentUser } from "@/lib/auth/guards";
+import { getSavedListingIds } from "@/lib/marketplace/saved";
+import { getOfferForPdp, type PdpOfferState } from "@/lib/offers/queries";
+import { offerFloorCents } from "@/lib/offers/expiry";
+import { roleCanAccess } from "@/lib/auth/roles";
 import { formatZar } from "@/lib/money";
-import { categoryLabel, AUTH_METHOD_LABELS } from "@/lib/marketplace/constants";
+import {
+  brandedTitle,
+  categoryLabel,
+  AUTH_METHOD_LABELS,
+  categoryProcess,
+  processBadgeLabel,
+  processNoun,
+} from "@/lib/marketplace/constants";
 import { ListingGallery } from "@/components/marketplace/ListingGallery";
-import { SellerReputation } from "@/components/marketplace/SellerReputation";
 import { ListingCard } from "@/components/marketplace/ListingCard";
+import { FavouriteButton } from "@/components/marketplace/FavouriteButton";
+import {
+  MakeOfferButton,
+  type OfferDisabledReason,
+} from "@/components/marketplace/MakeOfferButton";
+import { ConditionInfo } from "@/components/marketplace/ConditionInfo";
 import { MobileBuyBar } from "@/components/marketplace/MobileBuyBar";
 import { Reveal } from "@/components/ui/Reveal";
 import { JsonLd } from "@/components/seo/JsonLd";
@@ -30,10 +50,11 @@ export async function generateMetadata({
   const { id } = await params;
   const listing = await getListingById(id);
   if (!listing) return { title: "Listing" };
-  const title = `${listing.brand} ${listing.title}`;
+  const title = brandedTitle(listing);
+  const guarantee = processBadgeLabel(listing.category); // "Authenticated" | "Evaluated"
   const description = (
     listing.description ??
-    `${title}. Authenticated luxury, fully insured and delivered by hand. Available on D&D Luxury.`
+    `${title}. ${guarantee} luxury, fully insured and delivered by hand. Available on D&D Luxury.`
   ).slice(0, 160);
   const path = `/listing/${listing.id}`;
   const image = listing.images[0]?.url;
@@ -57,8 +78,12 @@ export async function generateMetadata({
   };
 }
 
-const FEATURES = [
-  { icon: CertificateIcon, text: "Authenticated by D&D Luxury" },
+/**
+ * Trust features for the buy card. The first row is process-aware
+ * (authenticated vs evaluated/appraised — see {@link processBadgeLabel}); the
+ * rest are constant.
+ */
+const FEATURES_REST = [
   { icon: LockIcon, text: "Insured to R500,000 in transit" },
   { icon: TruckIcon, text: "White-glove delivery nationwide" },
   { icon: RotateIcon, text: "14-day returns" },
@@ -76,6 +101,11 @@ export default async function ListingPage({
   ]);
   if (!listing) notFound();
 
+  // Saved-state for this piece + the "similar" rail, in one cheap query (empty
+  // Set for guests). FavouriteButton hydrates from it; the optimistic island
+  // takes over from there.
+  const savedIds = await getSavedListingIds(user?.id ?? null);
+
   const isOwner = user?.id === listing.seller_id;
   const isAdmin = user?.role === "admin";
   const visible =
@@ -84,17 +114,72 @@ export default async function ListingPage({
 
   const isSold = listing.status === "sold";
   const isGuest = !user;
+  // Mirrors the /checkout guards (BUY-1 role check + account status): these
+  // accounts would be silently redirected back here, so show an explanatory
+  // disabled state instead of a dead-end "Proceed to checkout" CTA.
+  const buyBlocked: BuyBlocked =
+    !user || isOwner
+      ? null
+      : !roleCanAccess(user.role, "buyer")
+        ? "role"
+        : user.status !== "active"
+          ? "status"
+          : null;
   const imageUrls = listing.images.map((img) => img.url);
-  const similar = await getSimilarListings(listing);
-  const cta = buyCta({ id: listing.id, isSold, isOwner, isGuest });
+  const cta = buyCta({ id: listing.id, isSold, isOwner, isGuest, buyBlocked });
+
+  // Process-aware trust model (single source of truth in constants): jewellery
+  // is *evaluated* (appraisal), everything else *authenticated*. Drives the
+  // gallery/inline badge label and the provenance/trust copy below.
+  const badgeLabel = processBadgeLabel(listing.category);
+  const isEvaluated = categoryProcess(listing.category) === "evaluated";
+  const processNounWord = processNoun(listing.category);
+  const features = [
+    {
+      icon: CertificateIcon,
+      text: isEvaluated
+        ? "Evaluated by D&D Luxury"
+        : "Authenticated by D&D Luxury",
+    },
+    ...FEATURES_REST,
+  ];
+
+  // --- Make-an-offer eligibility (Stage 2) -------------------------------
+  // Mirrors the buy-card gating so offers and purchases stay in lockstep. The
+  // owner, a sold piece, or a non-buyer/ineligible account can't offer (the
+  // control hides); guests get a sign-in prompt; eligible buyers can offer (and
+  // see their open offer's state if they already have one). The floor is the
+  // shared 70%-of-price lower bound. Only an eligible buyer pays the extra
+  // offer read — everyone else short-circuits with a null offer.
+  const offerFloorC = offerFloorCents(listing.price_cents);
+  const offerDisabledReason: OfferDisabledReason = isSold
+    ? "sold"
+    : isOwner
+      ? "owner"
+      : isGuest
+        ? "guest"
+        : buyBlocked === "role"
+          ? "role"
+          : buyBlocked === "status"
+            ? "status"
+            : null;
+  const existingOffer: PdpOfferState | null =
+    user && offerDisabledReason === null
+      ? await getOfferForPdp(user.id, listing.id)
+      : null;
+  // Whether to surface the "Make an offer" affordance in the mobile buy bar:
+  // only when an offer is actually possible (eligible buyer or a guest who can
+  // sign in to make one) — not for owner/sold/role/status.
+  const offerAvailable =
+    offerDisabledReason === null || offerDisabledReason === "guest";
 
   const productLd = {
     "@context": "https://schema.org",
     "@type": "Product",
-    name: `${listing.brand} ${listing.title}`,
+    name: brandedTitle(listing),
     brand: { "@type": "Brand", name: listing.brand },
     category: categoryLabel(listing.category),
-    description: listing.description ?? `${listing.brand} ${listing.title}`,
+    description: listing.description ?? brandedTitle(listing),
     ...(imageUrls.length ? { image: imageUrls } : {}),
     itemCondition: "https://schema.org/UsedCondition",
     offers: {
@@ -123,13 +208,26 @@ export default async function ListingPage({
     ],
   };
 
+  // Trim empty inclusions defensively (seller free-text can leave blanks).
+  const inclusions = (listing.inclusions ?? [])
+    .map((i) => i.trim())
+    .filter(Boolean);
   const specs: { label: string; value: string }[] = [
     { label: "Maison", value: listing.brand },
     ...(listing.model ? [{ label: "Model", value: listing.model }] : []),
     { label: "Category", value: categoryLabel(listing.category) },
     { label: "Condition", value: listing.condition },
+    ...(listing.measurements
+      ? [{ label: "Measurements", value: listing.measurements }]
+      : []),
+    ...(inclusions.length
+      ? [{ label: "Comes with", value: inclusions.join(", ") }]
+      : []),
     ...(listing.year ? [{ label: "Year", value: String(listing.year) }] : []),
-    { label: "Authentication", value: AUTH_METHOD_LABELS[listing.auth_method] },
+    {
+      label: isEvaluated ? "Evaluation" : "Authentication",
+      value: AUTH_METHOD_LABELS[listing.auth_method],
+    },
   ];
 
   return (
@@ -142,7 +240,8 @@ export default async function ListingPage({
           {/* Gallery */}
           <ListingGallery
             images={imageUrls}
-            alt={`${listing.brand} ${listing.title}`}
+            alt={brandedTitle(listing)}
+            badge={badgeLabel}
           />
 
           {/* Sticky purchase panel */}
@@ -176,7 +275,7 @@ export default async function ListingPage({
 
             <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[12.5px] text-ink-muted">
               <span className="inline-flex items-center gap-1.5 text-gold">
-                <CertificateIcon width={14} height={14} /> Authenticated
+                <CertificateIcon width={14} height={14} /> {badgeLabel}
               </span>
               <span aria-hidden className="text-border">·</span>
               <span>{listing.condition}</span>
@@ -208,9 +307,32 @@ export default async function ListingPage({
                 isSold={isSold}
                 isOwner={isOwner}
                 isGuest={isGuest}
+                buyBlocked={buyBlocked}
+              />
+              {/* Save beside the buy CTA. Hidden for the owner (who sees
+                  "Manage your listing"); guests get a sign-in prompt on click
+                  via the island, so no auth gating is needed here. */}
+              {!isOwner && (
+                <div className="mt-3">
+                  <FavouriteButton
+                    listingId={listing.id}
+                    isSavedInitial={savedIds.has(listing.id)}
+                    variant="panel"
+                  />
+                </div>
+              )}
+              {/* Make an offer (Stage 2) — under the buy CTA + Save. Renders the
+                  buyer's existing-offer state, a guest sign-in prompt, or the
+                  offer button; hides itself for owner/sold/role/status. */}
+              <MakeOfferButton
+                listingId={listing.id}
+                priceCents={listing.price_cents}
+                floorCents={offerFloorC}
+                existingOffer={existingOffer}
+                disabledReason={offerDisabledReason}
               />
               <ul className="mt-6 grid gap-2.5 border-t border-border-soft pt-6">
-                {FEATURES.map(({ icon: Icon, text }) => (
+                {features.map(({ icon: Icon, text }) => (
                   <li
                     key={text}
                     className="flex items-start gap-2.5 text-[13.5px] text-ink-muted"
@@ -222,8 +344,20 @@ export default async function ListingPage({
               </ul>
             </div>
 
-            <div className="mt-7">
-              <SellerReputation sellerId={listing.seller_id} />
+            {/* Buyer-facing anonymity: D&D never reveals the seller. The
+                authentication/evaluation guarantee carries the trust — no name,
+                rating, or profile link. The seller's own dashboard + admin keep
+                full identity. */}
+            <div className="mt-7 flex items-start gap-3 rounded-[3px] border border-border-soft bg-card p-5">
+              <LockIcon width={18} height={18} className="mt-0.5 flex-shrink-0 text-gold" />
+              <div>
+                <div className="text-[13.5px] font-medium text-ink">Verified Seller</div>
+                <p className="mt-1 text-[12.5px] leading-relaxed text-ink-muted">
+                  Sellers stay anonymous. Every piece is{" "}
+                  {isEvaluated ? "evaluated" : "authenticated"} and held in custody
+                  by D&amp;D Luxury — you transact only with us.
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -242,15 +376,39 @@ export default async function ListingPage({
                 </p>
               ) : (
                 <p className="max-w-[60ch] text-[15.5px] leading-[1.85] text-ink-dim">
-                  A considered piece from {listing.brand}, authenticated and
-                  prepared for sale by D&amp;D Luxury.
+                  A considered piece from {listing.brand},{" "}
+                  {isEvaluated ? "evaluated" : "authenticated"} and prepared for
+                  sale by D&amp;D Luxury.
                 </p>
               )}
 
+              {/* Condition report — the graded condition with the seller's notes
+                  (set post-approval). The grade always shows; the notes block
+                  only appears when notes were provided. The info affordance
+                  links to the condition guide on /how-it-works. */}
+              <div className="mt-10 max-w-[60ch] rounded-[3px] border border-border-soft bg-card p-6">
+                <div className="caption mb-3 text-gold">Condition report</div>
+                <div className="flex items-center gap-2">
+                  <span className="font-serif text-[22px] leading-none text-ink">
+                    {listing.condition}
+                  </span>
+                  <ConditionInfo grade={listing.condition} />
+                </div>
+                {listing.condition_notes && (
+                  <p className="mt-3.5 text-[14px] leading-relaxed text-ink-muted">
+                    {listing.condition_notes}
+                  </p>
+                )}
+              </div>
+
               <div className="mt-10 max-w-[60ch] divide-y divide-border-soft border-y border-border-soft">
                 <Disclosure
-                  title="Authentication & provenance"
-                  body={`Examined in person by D&D specialists and listed only after passing review (${AUTH_METHOD_LABELS[listing.auth_method]}). Each sale carries a D&D Certificate of Authenticity. We take custody of every piece, so you never transact with an unverified stranger.`}
+                  title={
+                    isEvaluated
+                      ? "Evaluation & provenance"
+                      : "Authentication & provenance"
+                  }
+                  body={`Examined in person by D&D specialists and listed only after passing ${processNounWord} (${AUTH_METHOD_LABELS[listing.auth_method]}). Each sale carries a D&D Certificate of ${isEvaluated ? "Evaluation" : "Authenticity"}. We take custody of every piece, so you never transact with an unverified stranger.`}
                   defaultOpen
                 />
                 <Disclosure
@@ -285,7 +443,9 @@ export default async function ListingPage({
                 <CertificateIcon width={22} height={22} className="mt-0.5 flex-shrink-0 text-white/85" />
                 <div>
                   <div className="text-[13.5px] font-medium">
-                    Certificate of Authenticity
+                    {isEvaluated
+                      ? "Certificate of Evaluation"
+                      : "Certificate of Authenticity"}
                   </div>
                   <p className="mt-1 text-[12.5px] leading-relaxed text-white/60">
                     Issued by D&amp;D Luxury and included with this piece.
@@ -298,49 +458,82 @@ export default async function ListingPage({
       </section>
 
       {/* Similar */}
-      {similar.length > 0 && (
-        <section className="border-t border-border-soft py-20">
-          <div className="dnd-container">
-            <div className="mb-12 flex items-end justify-between gap-4">
-              <div>
-                <div className="eyebrow mb-3">You may also consider</div>
-                <h2 className="font-serif text-[clamp(26px,3vw,34px)]">Similar pieces.</h2>
-              </div>
-              <Link href="/browse" className="btn btn-outline btn-sm">
-                View collection <ArrowRightIcon width={16} height={16} />
-              </Link>
-            </div>
-            <div className="grid grid-cols-1 gap-x-7 gap-y-10 sm:grid-cols-2 xl:grid-cols-4">
-              {similar.map((l, i) => (
-                <Reveal key={l.id} delay={Math.min(i, 4) * 55}>
-                  <ListingCard listing={l} />
-                </Reveal>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
+      <SimilarPieces listing={listing} savedIds={savedIds} />
 
-      <MobileBuyBar priceCents={listing.price_cents} cta={cta} />
+      <MobileBuyBar
+        priceCents={listing.price_cents}
+        cta={cta}
+        secondary={
+          offerAvailable
+            ? { label: "Make an offer", href: "#buy-card" }
+            : undefined
+        }
+      />
     </>
   );
 }
+
+/**
+ * "Similar pieces" rail. Fetches its own data so the query runs as a streamed
+ * child instead of extending the page's sequential waterfall.
+ */
+async function SimilarPieces({
+  listing,
+  savedIds,
+}: {
+  listing: Pick<ListingDetail, "id" | "category">;
+  savedIds: Set<string>;
+}) {
+  const similar = await getSimilarListings(listing);
+  if (similar.length === 0) return null;
+  return (
+    <section className="border-t border-border-soft py-20">
+      <div className="dnd-container">
+        <div className="mb-12 flex items-end justify-between gap-4">
+          <div>
+            <div className="eyebrow mb-3">You may also consider</div>
+            <h2 className="font-serif text-[clamp(26px,3vw,34px)]">Similar pieces.</h2>
+          </div>
+          <Link href="/browse" className="btn btn-outline btn-sm">
+            View collection <ArrowRightIcon width={16} height={16} />
+          </Link>
+        </div>
+        <div className="grid grid-cols-1 gap-x-7 gap-y-10 sm:grid-cols-2 xl:grid-cols-4">
+          {similar.map((l, i) => (
+            <Reveal key={l.id} delay={Math.min(i, 4) * 55}>
+              <ListingCard listing={l} isSaved={savedIds.has(l.id)} />
+            </Reveal>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/** Why a signed-in, non-owner account can't check out (null = it can). */
+type BuyBlocked = "role" | "status" | null;
 
 function buyCta({
   id,
   isSold,
   isOwner,
   isGuest,
+  buyBlocked,
 }: {
   id: string;
   isSold: boolean;
   isOwner: boolean;
   isGuest: boolean;
+  buyBlocked: BuyBlocked;
 }): { label: string; href?: string; disabled?: boolean } {
   if (isSold) return { label: "Sold", disabled: true };
   if (isOwner) return { label: "Manage listing", href: "/seller" };
   if (isGuest)
     return { label: "Sign in to purchase", href: `/signin?redirect=/listing/${id}` };
+  if (buyBlocked === "role")
+    return { label: "Buyer account required", disabled: true };
+  if (buyBlocked === "status")
+    return { label: "Purchasing unavailable", disabled: true };
   return { label: "Proceed to checkout", href: `/checkout/${id}` };
 }
 
@@ -349,11 +542,13 @@ function BuyPanel({
   isSold,
   isOwner,
   isGuest,
+  buyBlocked,
 }: {
   listingId: string;
   isSold: boolean;
   isOwner: boolean;
   isGuest: boolean;
+  buyBlocked: BuyBlocked;
 }) {
   if (isSold) {
     return (
@@ -377,6 +572,20 @@ function BuyPanel({
       >
         Sign in to purchase <ArrowRightIcon width={16} height={16} />
       </Link>
+    );
+  }
+  if (buyBlocked) {
+    return (
+      <div>
+        <button disabled className="btn btn-primary btn-lg btn-block" type="button">
+          {buyBlocked === "role" ? "Buyer account required" : "Purchasing unavailable"}
+        </button>
+        <p className="mt-3 text-[12.5px] leading-relaxed text-ink-dim">
+          {buyBlocked === "role"
+            ? "You're signed in with a seller account — purchases require a buyer account."
+            : "This account isn't currently eligible to make purchases."}
+        </p>
+      </div>
     );
   }
   return (

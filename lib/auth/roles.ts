@@ -24,6 +24,7 @@ export const PROTECTED_PREFIXES: { prefix: string; role: UserRole }[] = [
 const SELLER_DASHBOARD_SECTIONS = [
   "/seller/listings",
   "/seller/sales",
+  "/seller/offers",
   "/seller/subscription",
   "/seller/profile",
 ];

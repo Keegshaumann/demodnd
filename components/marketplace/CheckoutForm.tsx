@@ -17,10 +17,13 @@ import { ArrowRightIcon, CertificateIcon } from "@/components/ui/icons";
 export function CheckoutForm({
   listingId,
   priceCents,
+  offerId,
   sandbox,
 }: {
   listingId: string;
   priceCents: number;
+  /** Accepted-offer id; when set, the buyer pays the agreed price (server-validated). */
+  offerId?: string;
   sandbox: boolean;
 }) {
   const [error, setError] = useState<string | null>(null);
@@ -34,6 +37,9 @@ export function CheckoutForm({
     const fd = new FormData(e.currentTarget);
     const input: CheckoutStartInput = {
       listingId,
+      // Forward the accepted-offer id; the action re-validates it server-side
+      // (only the offering buyer, offer 'accepted' + unexpired, agreed amount).
+      ...(offerId ? { offerId } : {}),
       recipient: String(fd.get("recipient") ?? ""),
       line1: String(fd.get("line1") ?? ""),
       line2: String(fd.get("line2") ?? ""),

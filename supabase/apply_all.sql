@@ -1009,6 +1009,408 @@ grant execute on function public.fulfill_payfast_order(
   text, uuid, uuid, integer, integer, integer, integer, text, text
 ) to service_role;
 
+-- >>> migrations/20260612120000_featured_listings.sql
+-- ============================================================================
+-- Featured listings (2026-06-12) — admin-curated highlighting (PROJECT.md
+-- "Featured listings management"). Surfacing is silent: the browse "Featured"
+-- sort and the homepage grid order featured pieces first; no public badge.
+-- ============================================================================
+alter table public.listings
+  add column featured boolean not null default false;
+
+comment on column public.listings.featured is
+  'Admin-curated highlight, surfaced first on browse/homepage. Admin-only writable: the column-scoped UPDATE grant for authenticated (init + SELL-1) deliberately omits it; admins write it via the service-role client.';
+
+-- Serves the default browse/homepage query exactly:
+--   where status = 'active' order by featured desc, created_at desc
+create index listings_active_featured_idx
+  on public.listings (featured desc, created_at desc)
+  where status = 'active';
+
+-- GRANTS: intentionally NONE.
+--   • SELECT on listings is table-level for anon/authenticated (init) — it
+--     covers the new column, so the public client can order by it.
+--   • UPDATE for authenticated is column-scoped (init.sql) and does NOT list
+--     `featured`, so sellers cannot self-feature via updateListingPriceAction /
+--     setListingStatusAction or a crafted supabase-js call, even though the
+--     "listings: owner or admin update" row policy matches their rows.
+--   • service_role already holds table-level ALL (20260603130000), so the
+--     admin client writes `featured` with no further grants.
+
+-- >>> migrations/20260616120000_stage1_favourites_richer_search.sql
+-- ============================================================================
+-- Stage 1 (2026-06-16) — buyer favourites, richer listing detail fields, and
+-- fuzzy/trigram search. Single schema-owning migration for the whole stage:
+--   (A) saved_listings join table + owner-scoped RLS + grants (mirrors wishlists)
+--   (B) richer nullable listings columns + an EXTENDED seller column-grant
+--   (D) pg_trgm extension + trigram indexes + closest-match search RPCs
+-- All additive: a new table, new nullable columns, a new extension/indexes/
+-- functions, and one GRANT re-issue that is a strict superset of the prior one.
+-- ============================================================================
+
+-- ============================================================================
+-- (A) FAVOURITES — saved_listings (mirrors wishlists owner-scoped RLS/grants)
+-- ============================================================================
+create table public.saved_listings (
+  buyer_id    uuid not null references public.users (id) on delete cascade,
+  listing_id  uuid not null references public.listings (id) on delete cascade,
+  created_at  timestamptz not null default now(),
+  primary key (buyer_id, listing_id)
+);
+create index saved_listings_buyer_idx on public.saved_listings (buyer_id, created_at desc);
+alter table public.saved_listings enable row level security;
+
+create policy "saved_listings: owner or admin read"
+  on public.saved_listings for select to authenticated
+  using ((select auth.uid()) = buyer_id or public.is_admin());
+create policy "saved_listings: owner insert"
+  on public.saved_listings for insert to authenticated
+  with check ((select auth.uid()) = buyer_id);
+create policy "saved_listings: owner or admin delete"
+  on public.saved_listings for delete to authenticated
+  using ((select auth.uid()) = buyer_id or public.is_admin());
+-- (no UPDATE policy/grant — a save is insert/delete only, like a join row)
+
+grant select, insert, delete on public.saved_listings to authenticated;
+-- service_role already holds table-level ALL via 20260603130000 pattern; add explicitly for parity:
+grant select, insert, update, delete on public.saved_listings to service_role;
+
+-- ============================================================================
+-- (B) RICHER LISTINGS — nullable detail columns + SELLER column-grant extension
+-- ============================================================================
+alter table public.listings
+  add column condition_notes text,
+  add column measurements   text,
+  add column inclusions      text[];
+-- Sellers must edit these on their OWN listings only. The row policy
+-- "listings: owner or admin update" (init.sql) already scopes to the owner;
+-- the column-scoped UPDATE grant must be re-issued to include the new columns
+-- (mirrors how price_cents is seller-editable). Re-grant the full set:
+grant update (title, description, condition, model, year, price_cents, status,
+              condition_notes, measurements, inclusions)
+  on public.listings to authenticated;
+-- NOTE: `featured` and fee_rate_bps/seller_id/auth_method remain OMITTED (still admin-only).
+-- SELECT on listings is table-level (init) so it already covers the new columns.
+
+-- ============================================================================
+-- (D) FUZZY SEARCH — pg_trgm + indexes + closest-match RPC
+-- ============================================================================
+create extension if not exists pg_trgm;
+create index listings_title_trgm_idx on public.listings using gin (title gin_trgm_ops);
+create index listings_brand_trgm_idx on public.listings using gin (brand gin_trgm_ops);
+create index listings_model_trgm_idx on public.listings using gin (model gin_trgm_ops);
+
+-- Trigram fuzzy search over active listings, applying the SAME structured
+-- filters as the browse grid, ordered by similarity. SECURITY INVOKER so RLS
+-- (public reads active) still governs. Returns full listing rows so the caller
+-- maps them exactly like getActiveListingsPage.
+create or replace function public.search_listings_fuzzy(
+  p_q          text,
+  p_threshold  real    default 0.18,
+  p_categories text[]  default null,
+  p_brands     text[]  default null,
+  p_conditions text[]  default null,
+  p_methods    text[]  default null,
+  p_min_cents  integer default null,
+  p_max_cents  integer default null,
+  p_seller_id  uuid    default null,
+  p_limit      integer default 24,
+  p_offset     integer default 0
+) returns setof public.listings
+language sql stable security invoker
+set search_path = public
+as $$
+  select l.*
+  from public.listings l
+  where l.status = 'active'
+    and (p_seller_id  is null or l.seller_id = p_seller_id)
+    and (p_categories is null or l.category = any(p_categories))
+    and (p_brands     is null or l.brand    = any(p_brands))
+    and (p_conditions is null or l.condition = any(p_conditions))
+    and (p_methods    is null or l.auth_method = any(p_methods))
+    and (p_min_cents  is null or l.price_cents >= p_min_cents)
+    and (p_max_cents  is null or l.price_cents <= p_max_cents)
+    and (
+      l.title ilike '%'||p_q||'%' or l.brand ilike '%'||p_q||'%' or l.model ilike '%'||p_q||'%'
+      or greatest(
+           similarity(l.title, p_q),
+           similarity(l.brand, p_q),
+           similarity(coalesce(l.model,''), p_q)
+         ) >= p_threshold
+    )
+  order by
+    greatest(
+      similarity(l.title, p_q),
+      similarity(l.brand, p_q),
+      similarity(coalesce(l.model,''), p_q)
+    ) desc,
+    l.featured desc,
+    l.created_at desc
+  limit greatest(p_limit,1) offset greatest(p_offset,0);
+$$;
+
+-- A second RPC returning the total fuzzy count (for pagination), same WHERE:
+create or replace function public.search_listings_fuzzy_count(
+  p_q text, p_threshold real default 0.18,
+  p_categories text[] default null, p_brands text[] default null,
+  p_conditions text[] default null, p_methods text[] default null,
+  p_min_cents integer default null, p_max_cents integer default null,
+  p_seller_id uuid default null
+) returns integer language sql stable security invoker set search_path = public as $$
+  select count(*)::int from public.listings l
+  where l.status='active'
+    and (p_seller_id is null or l.seller_id=p_seller_id)
+    and (p_categories is null or l.category=any(p_categories))
+    and (p_brands is null or l.brand=any(p_brands))
+    and (p_conditions is null or l.condition=any(p_conditions))
+    and (p_methods is null or l.auth_method=any(p_methods))
+    and (p_min_cents is null or l.price_cents>=p_min_cents)
+    and (p_max_cents is null or l.price_cents<=p_max_cents)
+    and ( l.title ilike '%'||p_q||'%' or l.brand ilike '%'||p_q||'%' or l.model ilike '%'||p_q||'%'
+          or greatest(similarity(l.title,p_q),similarity(l.brand,p_q),similarity(coalesce(l.model,''),p_q)) >= p_threshold );
+$$;
+
+grant execute on function public.search_listings_fuzzy(text,real,text[],text[],text[],text[],integer,integer,uuid,integer,integer) to anon, authenticated;
+grant execute on function public.search_listings_fuzzy_count(text,real,text[],text[],text[],text[],integer,integer,uuid) to anon, authenticated;
+
+-- >>> migrations/20260617120000_offers.sql
+-- ============================================================================
+-- offers (2026-06-17) — structured (Vestiaire-style) buyer offers
+-- ============================================================================
+-- Buyers make a structured offer on an active listing; sellers accept, counter,
+-- or decline. ONE open offer per (listing, buyer) — enforced by a partial unique
+-- index over the states a buyer can still act on (pending/countered/accepted).
+--
+-- Conventions (match the rest of the schema):
+--   • Money is integer ZAR cents (matches listings.price_cents). Never floats.
+--   • All timestamps are timestamptz.
+--   • RLS is ON. Buyers/sellers READ their own rows via the Data API; ALL writes
+--     go through the service-role client in 'use server' actions (after
+--     requireUser + zod + guards), exactly like orders / checkout_intents.
+--     RLS-on + no write policy = authenticated cannot tamper with amounts/state
+--     directly via the Data API.
+--
+-- State machine (enforced in lib/offers actions, not in SQL):
+--   pending   → accepted | countered | declined | expired | withdrawn
+--   countered → accepted | declined | expired | withdrawn
+--   accepted is terminal for the offer lifecycle (the 24h pay window governs
+--   checkout, not further offer transitions); declined/expired/withdrawn terminal.
+-- ============================================================================
+create table public.offers (
+  id                   uuid primary key default gen_random_uuid(),
+  listing_id           uuid not null references public.listings (id) on delete cascade,
+  buyer_id             uuid not null references public.users (id)    on delete cascade,
+  seller_id            uuid not null references public.users (id),               -- denormalised from listing at insert; drives seller-dashboard RLS + reads
+  amount_cents         integer not null check (amount_cents > 0),                -- buyer's offered price
+  counter_amount_cents integer check (counter_amount_cents is null or counter_amount_cents > 0), -- seller counter; null unless state='countered'
+  agreed_amount_cents  integer check (agreed_amount_cents is null or agreed_amount_cents > 0),   -- frozen price the buyer may pay; set on ACCEPT only
+  state                text not null default 'pending'
+                         check (state in ('pending','countered','accepted','declined','expired','withdrawn')),
+  expires_at           timestamptz not null,                                     -- 48h response deadline (pending/countered); recomputed on counter
+  pay_deadline_at      timestamptz,                                              -- 24h pay window; set on ACCEPT only
+  created_at           timestamptz not null default now(),
+  countered_at         timestamptz,
+  decided_at           timestamptz                                              -- when it reached a terminal state (accepted/declined/expired/withdrawn)
+);
+
+-- ONE open offer per (listing, buyer): only states the buyer can still act on.
+-- A lazy expiry sweep (lib/offers/queries.ts) flips stale pending/countered rows
+-- to 'expired', freeing this slot so a buyer whose 48h lapsed can offer again.
+create unique index offers_one_open_per_buyer_listing
+  on public.offers (listing_id, buyer_id)
+  where state in ('pending','countered','accepted');
+
+create index offers_listing_idx on public.offers (listing_id);
+create index offers_buyer_idx   on public.offers (buyer_id);
+create index offers_seller_idx  on public.offers (seller_id);
+create index offers_state_idx   on public.offers (state);
+create index offers_expires_idx on public.offers (expires_at);
+
+-- RLS ----------------------------------------------------------------------
+alter table public.offers enable row level security;
+
+-- buyer reads own; seller reads offers on own listings; admin all.
+create policy "offers: buyer, seller, or admin read"
+  on public.offers for select to authenticated
+  using (
+    (select auth.uid()) = buyer_id
+    or (select auth.uid()) = seller_id
+    or public.is_admin()
+  );
+-- Intentionally NO insert/update/delete policies for authenticated: ALL writes
+-- go through the service-role client in 'use server' actions (after requireUser
+-- + zod + guards), exactly like orders / checkout_intents. RLS-on + no write
+-- policy = authenticated cannot tamper with amounts/state via the Data API.
+
+-- GRANTS -------------------------------------------------------------------
+-- Data API: authenticated may SELECT (RLS scopes rows); writes are service-role.
+grant select on public.offers to authenticated;
+-- service_role already holds table-level ALL via 20260603130000 default
+-- privileges; grant explicitly for clarity (mirrors checkout_intents migration).
+grant select, insert, update, delete on public.offers to service_role;
+
+-- >>> migrations/20260617120010_offer_checkout.sql
+-- ============================================================================
+-- offer_checkout (2026-06-17) — bind a checkout intent to an accepted offer
+-- ============================================================================
+-- An accepted offer is paid through the EXACT existing PayFast flow, charging the
+-- frozen agreed amount instead of the listing price. To do that idempotently and
+-- with anti-tamper validation in fulfilment, the checkout intent must carry:
+--
+--   • offer_id     — the accepted offer this payment is bound to (null = full price)
+--   • amount_cents — the price this intent must charge (null = full listing price;
+--                    when set it is the AUTHORITATIVE charged/agreed amount the ITN
+--                    handler re-validates under the listing+offer row lock).
+--
+-- Both columns are NULLABLE, so existing full-price intents are unaffected: the
+-- checkout action leaves offer_id null and the flow behaves exactly as before.
+--
+-- GRANTS/RLS unchanged: checkout_intents stays RLS-on with NO policies and NO Data
+-- API grants — only the service-role client (server) reads/writes it. The new
+-- offer link + frozen amount never reach the Data API.
+-- ============================================================================
+alter table public.checkout_intents
+  add column offer_id     uuid references public.offers (id) on delete set null,
+  add column amount_cents integer;
+
+-- >>> migrations/20260617120020_fulfill_offer.sql
+-- ============================================================================
+-- fulfill_payfast_order (2026-06-17) — widen for accepted-offer pricing
+-- ============================================================================
+-- The 2026-06-04 fulfilment RPC always anti-tampers against the LISTING price.
+-- An accepted-offer order is paid at the frozen AGREED amount, so the charged
+-- amount legitimately differs from the listing price. This migration widens the
+-- RPC with two NULL-default params:
+--
+--   p_offer_id    uuid    — the accepted offer the payment is bound to (null = full price)
+--   p_agreed_cents integer — the frozen agreed amount (null = full listing price)
+--
+-- and replaces the anti-tamper check so the EXPECTED price is the agreed amount
+-- when an offer is present, else the listing price:
+--
+--   v_expected := coalesce(p_agreed_cents, v_listing.price_cents);
+--   if v_expected <> p_gross_cents then return 'amount_mismatch'; end if;
+--
+-- When p_offer_id is not null it ALSO re-validates the offer UNDER THE LISTING
+-- LOCK (a third, DB-level guard on top of the server action + checkout page): the
+-- offer must be the offering buyer's, for this listing, still 'accepted', within
+-- its pay window, with agreed_amount == charged amount. Any mismatch → the DB
+-- itself refuses to record a mispriced or hijacked offer order ('amount_mismatch').
+--
+-- Commission/payout are passed in (computed by the caller from the actual charged
+-- amount) and recorded as before — automatically correct on the agreed price.
+-- gateway_reference idempotency, the active->sold claim, and the atomic insert are
+-- UNCHANGED, so the function stays idempotent and one-order-per-listing.
+--
+-- We DROP the old 9-arg signature and recreate WITH the two default-valued params
+-- in ONE transaction (every migration runs in a transaction) so there is never an
+-- ambiguous-overload window between the old and new signatures. The existing
+-- 9-arg call site keeps working because the two new params default to null; the
+-- checkout/fulfil TS caller passes p_offer_id/p_agreed_cents in the same release.
+--
+-- Returns one of:
+--   'created'         — order inserted, listing claimed
+--   'duplicate'       — this payment was already fulfilled (idempotent no-op)
+--   'already_sold'    — a DIFFERENT payment claimed the piece (double sale)
+--   'amount_mismatch' — charged amount != expected price, or offer re-validation
+--                       failed (wrong buyer/listing/state/expired/agreed mismatch)
+--   'listing_missing' — listing vanished
+-- ============================================================================
+drop function if exists public.fulfill_payfast_order(
+  text, uuid, uuid, integer, integer, integer, integer, text, text
+);
+
+create or replace function public.fulfill_payfast_order(
+  p_gateway_reference text,
+  p_listing_id uuid,
+  p_buyer_id uuid,
+  p_gross_cents integer,
+  p_commission_cents integer,
+  p_payout_cents integer,
+  p_fee_rate_bps integer,
+  p_shipping_name text,
+  p_shipping_address text,
+  p_offer_id uuid default null,
+  p_agreed_cents integer default null
+)
+returns text
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_listing  public.listings%rowtype;
+  v_offer    public.offers%rowtype;
+  v_expected integer;
+begin
+  -- Lock the listing row: concurrent ITNs for the same piece serialize here.
+  select * into v_listing from public.listings where id = p_listing_id for update;
+  if not found then
+    return 'listing_missing';
+  end if;
+
+  -- Idempotency (re-checked under the lock): a duplicate ITN for THIS payment.
+  if exists (
+    select 1 from public.orders where gateway_reference = p_gateway_reference
+  ) then
+    return 'duplicate';
+  end if;
+
+  -- Anti-tamper: the charged amount must equal the EXPECTED price — the frozen
+  -- agreed amount when paying an accepted offer, else the listing price.
+  v_expected := coalesce(p_agreed_cents, v_listing.price_cents);
+  if v_expected <> p_gross_cents then
+    return 'amount_mismatch';
+  end if;
+
+  -- Accepted-offer order: re-validate the offer UNDER THE LISTING LOCK so the DB
+  -- itself refuses to record a mispriced or hijacked offer order. The offer must
+  -- be the offering buyer's, for THIS listing, still 'accepted', within its pay
+  -- window, with the frozen agreed amount equal to the charged amount.
+  if p_offer_id is not null then
+    select * into v_offer from public.offers where id = p_offer_id for update;
+    if not found
+       or v_offer.buyer_id <> p_buyer_id
+       or v_offer.listing_id <> p_listing_id
+       or v_offer.state <> 'accepted'
+       or v_offer.agreed_amount_cents is distinct from p_gross_cents
+       or v_offer.pay_deadline_at is null
+       or now() > v_offer.pay_deadline_at
+    then
+      return 'amount_mismatch';
+    end if;
+  end if;
+
+  -- A different payment already claimed this one-of-a-kind piece -> double sale.
+  if v_listing.status <> 'active' then
+    return 'already_sold';
+  end if;
+
+  -- Claim + create the order atomically.
+  update public.listings set status = 'sold' where id = p_listing_id;
+
+  insert into public.orders (
+    buyer_id, listing_id, seller_id, gateway_reference,
+    gross_amount_cents, commission_amount_cents, seller_payout_amount_cents,
+    fee_rate_bps, status, shipping_name, shipping_address, paid_at
+  ) values (
+    p_buyer_id, p_listing_id, v_listing.seller_id, p_gateway_reference,
+    p_gross_cents, p_commission_cents, p_payout_cents,
+    p_fee_rate_bps, 'paid', p_shipping_name, p_shipping_address, now()
+  );
+
+  return 'created';
+end;
+$$;
+
+-- Only the service role (ITN handler via the admin client) may call this.
+revoke all on function public.fulfill_payfast_order(
+  text, uuid, uuid, integer, integer, integer, integer, text, text, uuid, integer
+) from public;
+grant execute on function public.fulfill_payfast_order(
+  text, uuid, uuid, integer, integer, integer, integer, text, text, uuid, integer
+) to service_role;
+
 -- >>> seed.sql
 -- ============================================================================
 -- Seed: subscription tiers (from PROJECT.md).

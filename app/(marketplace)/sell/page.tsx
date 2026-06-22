@@ -27,7 +27,7 @@ const BENEFITS = [
   },
   {
     icon: CertificateIcon,
-    text: "In-person or photo authentication and condition grading at no cost.",
+    text: "Expert authentication — or, for jewellery, an independent appraisal — and condition grading at no cost.",
   },
   { icon: LockIcon, text: "Every buyer is verified — ID, address and references." },
   {
@@ -75,8 +75,9 @@ export default async function SellPage() {
           </h1>
           <p className="mt-4 max-w-[620px] text-[15px] text-ink-muted">
             Tell us about your item, upload photos, and choose how you&apos;d
-            like it authenticated. Our team responds within three working days
-            with an outcome.
+            like it verified — bags, watches, shoes, accessories and apparel are
+            authenticated; jewellery is independently appraised. Our team
+            responds within three working days with an outcome.
           </p>
         </div>
       </header>

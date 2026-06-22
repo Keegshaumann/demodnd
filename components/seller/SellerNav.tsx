@@ -7,6 +7,8 @@ const LINKS = [
   { href: "/seller", label: "Overview" },
   { href: "/seller/listings", label: "Listings" },
   { href: "/seller/sales", label: "Sales" },
+  { href: "/seller/offers", label: "Offers" },
+  { href: "/seller/earnings", label: "Rewards" },
   { href: "/seller/subscription", label: "Plan" },
   { href: "/seller/profile", label: "Profile" },
 ];

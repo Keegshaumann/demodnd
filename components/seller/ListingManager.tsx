@@ -8,6 +8,7 @@ import {
   updateListingPriceAction,
   setListingStatusAction,
 } from "@/lib/seller/actions";
+import { updateListingDetailsAction } from "@/lib/seller/listing-details";
 import { formatZar, formatBps } from "@/lib/money";
 import { CertificateIcon } from "@/components/ui/icons";
 import type { SellerListingRow } from "@/lib/seller/dashboard";
@@ -26,6 +27,47 @@ export function ListingManager({ listing }: { listing: SellerListingRow }) {
   const [editing, setEditing] = useState(false);
   const [price, setPrice] = useState(String(Math.round(listing.priceCents / 100)));
   const [error, setError] = useState<string | null>(null);
+
+  // Details editor (condition notes / measurements / "comes with").
+  const [editingDetails, setEditingDetails] = useState(false);
+  const [detailsPending, startDetailsTransition] = useTransition();
+  const [conditionNotes, setConditionNotes] = useState(listing.conditionNotes ?? "");
+  const [measurements, setMeasurements] = useState(listing.measurements ?? "");
+  // Inclusions are stored as string[]; edited here as one comma-separated field.
+  const [inclusions, setInclusions] = useState((listing.inclusions ?? []).join(", "));
+  const [detailsError, setDetailsError] = useState<string | null>(null);
+  const [detailsSaved, setDetailsSaved] = useState(false);
+
+  function openDetails() {
+    setDetailsError(null);
+    setDetailsSaved(false);
+    setConditionNotes(listing.conditionNotes ?? "");
+    setMeasurements(listing.measurements ?? "");
+    setInclusions((listing.inclusions ?? []).join(", "));
+    setEditingDetails(true);
+  }
+
+  function saveDetails() {
+    setDetailsError(null);
+    setDetailsSaved(false);
+    const parsedInclusions = inclusions
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    startDetailsTransition(async () => {
+      const res = await updateListingDetailsAction(listing.id, {
+        conditionNotes,
+        measurements,
+        inclusions: parsedInclusions,
+      });
+      if (!res.ok) setDetailsError(res.error);
+      else {
+        setEditingDetails(false);
+        setDetailsSaved(true);
+        router.refresh();
+      }
+    });
+  }
 
   function savePrice() {
     setError(null);
@@ -134,6 +176,15 @@ export function ListingManager({ listing }: { listing: SellerListingRow }) {
                   Edit price
                 </button>
               )}
+              {canManage && !editingDetails && (
+                <button
+                  type="button"
+                  onClick={openDetails}
+                  className="btn btn-ghost btn-sm"
+                >
+                  Edit details
+                </button>
+              )}
               {listing.status === "active" && (
                 <button
                   type="button"
@@ -158,6 +209,100 @@ export function ListingManager({ listing }: { listing: SellerListingRow }) {
           )}
         </div>
         {error && <p className="mt-2 text-[12px] text-[#e85d5d]">{error}</p>}
+
+        {editingDetails ? (
+          <div className="mt-4 space-y-4 border-t border-border-soft pt-4">
+            <label className="block">
+              <span className="field-label">Condition notes</span>
+              <textarea
+                className="field-input"
+                value={conditionNotes}
+                onChange={(e) => setConditionNotes(e.target.value)}
+                placeholder="Any honest detail on wear, patina or service history…"
+                aria-invalid={detailsError ? true : undefined}
+              />
+            </label>
+            <label className="block">
+              <span className="field-label">Measurements</span>
+              <input
+                className="field-input"
+                value={measurements}
+                onChange={(e) => setMeasurements(e.target.value)}
+                placeholder="e.g. 38mm case · 20mm lug · 18cm strap"
+                aria-invalid={detailsError ? true : undefined}
+              />
+            </label>
+            <label className="block">
+              <span className="field-label">Comes with</span>
+              <input
+                className="field-input"
+                value={inclusions}
+                onChange={(e) => setInclusions(e.target.value)}
+                placeholder="Box, papers, spare strap"
+                aria-invalid={detailsError ? true : undefined}
+              />
+              <span className="mt-1 block text-[11px] text-ink-dim">
+                Separate each item with a comma.
+              </span>
+            </label>
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                onClick={saveDetails}
+                disabled={detailsPending}
+                className="btn btn-primary btn-sm"
+              >
+                {detailsPending ? "Saving…" : "Save details"}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setEditingDetails(false);
+                  setDetailsError(null);
+                }}
+                className="btn btn-outline btn-sm"
+              >
+                Cancel
+              </button>
+              {detailsError && (
+                <span className="text-[12px] text-[#e85d5d]">{detailsError}</span>
+              )}
+            </div>
+          </div>
+        ) : (
+          (listing.conditionNotes ||
+            listing.measurements ||
+            (listing.inclusions && listing.inclusions.length > 0) ||
+            detailsSaved) && (
+            <dl className="mt-4 space-y-1.5 border-t border-border-soft pt-4 text-[12px]">
+              {detailsSaved && (
+                <p className="mb-2 text-[12px] text-emerald-700">Details saved.</p>
+              )}
+              {listing.conditionNotes && (
+                <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-2">
+                  <dt className="text-ink-dim sm:w-32 sm:flex-shrink-0">
+                    Condition notes
+                  </dt>
+                  <dd className="text-ink">{listing.conditionNotes}</dd>
+                </div>
+              )}
+              {listing.measurements && (
+                <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-2">
+                  <dt className="text-ink-dim sm:w-32 sm:flex-shrink-0">
+                    Measurements
+                  </dt>
+                  <dd className="text-ink">{listing.measurements}</dd>
+                </div>
+              )}
+              {listing.inclusions && listing.inclusions.length > 0 && (
+                <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-2">
+                  <dt className="text-ink-dim sm:w-32 sm:flex-shrink-0">Comes with</dt>
+                  <dd className="text-ink">{listing.inclusions.join(", ")}</dd>
+                </div>
+              )}
+            </dl>
+          )
+        )}
       </div>
     </article>
   );

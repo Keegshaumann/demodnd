@@ -11,8 +11,16 @@ import {
   CATEGORIES,
   CONDITIONS,
   AUTH_METHODS,
+  categoryProcess,
+  processNoun,
+  processVerb,
 } from "@/lib/marketplace/constants";
 import type { AuthMethod } from "@/lib/supabase/database.types";
+import {
+  estimatePriceAction,
+  type EstimateActionResult,
+} from "@/lib/valuation/actions";
+import { formatZar } from "@/lib/money";
 import {
   ArrowRightIcon,
   CameraIcon,
@@ -55,6 +63,26 @@ export function SubmissionWizard({ userId }: { userId: string }) {
   const [year, setYear] = useState("");
   const [description, setDescription] = useState("");
 
+  // Price estimate ("AI + own comps") — a guidance range, never binding.
+  const [estimating, setEstimating] = useState(false);
+  const [estimate, setEstimate] = useState<EstimateActionResult | null>(null);
+
+  async function handleEstimate() {
+    setEstimating(true);
+    setEstimate(null);
+    const res = await estimatePriceAction({
+      brand: brand.trim(),
+      category,
+      model: model.trim() || undefined,
+      condition,
+      year: year ? Number(year) : null,
+    });
+    setEstimate(res);
+    setEstimating(false);
+  }
+
+  const canEstimate = Boolean(brand.trim() && category && condition);
+
   // Step 2 — photos
   const [photos, setPhotos] = useState<Photo[]>([]);
 
@@ -65,6 +93,11 @@ export function SubmissionWizard({ userId }: { userId: string }) {
   const [consent, setConsent] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<SubmissionResult | null>(null);
+
+  // Process-aware trust copy: jewellery is *evaluated* (appraisal), everything
+  // else is *authenticated*. Derived from the single source of truth so the
+  // method step, review row and success state all stay consistent.
+  const isEvaluated = category ? categoryProcess(category) === "evaluated" : false;
 
   async function handleFiles(files: FileList | null) {
     if (!files) return;
@@ -147,7 +180,11 @@ export function SubmissionWizard({ userId }: { userId: string }) {
       }
     }
     if (step === 3 && !method) {
-      setStepError("Select an authentication method.");
+      setStepError(
+        isEvaluated
+          ? "Select an evaluation method."
+          : "Select an authentication method.",
+      );
       return false;
     }
     return true;
@@ -194,9 +231,9 @@ export function SubmissionWizard({ userId }: { userId: string }) {
         </div>
         <h3 className="mb-3 font-serif text-[28px]">Submission received.</h3>
         <p className="mx-auto mb-6 max-w-[440px] text-[15px] text-ink-muted">
-          Your piece has been submitted as <strong>pending review</strong>. Our
-          authentication team has been notified and will respond within 3 working
-          days.
+          Your piece has been submitted as <strong>pending review</strong>. Our{" "}
+          {isEvaluated ? "evaluation" : "authentication"} team has been notified
+          and will respond within 3 working days.
         </p>
         <div className="mb-7 inline-block rounded-[3px] border border-border-soft bg-bg px-5 py-3 text-sm">
           Reference:{" "}
@@ -286,6 +323,14 @@ export function SubmissionWizard({ userId }: { userId: string }) {
                   </option>
                 ))}
               </select>
+              {category && (
+                // Process-aware hint: jewellery is appraised, the rest authenticated.
+                <p className="mt-2 text-[12px] text-ink-dim">
+                  {isEvaluated
+                    ? `Jewellery is independently ${processVerb(category)} by D&D — an expert ${processNoun(category)}, not authentication.`
+                    : `This piece will be ${processVerb(category)} by D&D before it goes live.`}
+                </p>
+              )}
             </Field>
             <Field label="Item name / title" required>
               <input
@@ -336,6 +381,70 @@ export function SubmissionWizard({ userId }: { userId: string }) {
                 placeholder="e.g. 285000"
                 min={0}
               />
+              {/* Price estimate — AI grounded by comparable D&D pieces. A guide
+                  to help sellers price, never a binding offer. */}
+              <div className="mt-2.5">
+                <button
+                  type="button"
+                  onClick={handleEstimate}
+                  disabled={!canEstimate || estimating}
+                  className="btn btn-outline btn-sm"
+                >
+                  {estimating ? "Estimating…" : "Estimate a fair price"}
+                </button>
+                {!canEstimate && (
+                  <p className="mt-1.5 text-[11.5px] text-ink-dim">
+                    Add the brand, category and condition to get an estimate.
+                  </p>
+                )}
+                {estimate && !estimate.ok && (
+                  <p className="mt-2 text-[12.5px] text-ink-muted">
+                    {estimate.error}
+                  </p>
+                )}
+                {estimate && estimate.ok && (
+                  <div className="mt-2.5 rounded-[3px] border border-border-soft bg-surface px-4 py-3">
+                    <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+                      <span className="text-[11px] font-medium uppercase tracking-[0.16em] text-ink-dim">
+                        Estimated range
+                      </span>
+                      <span className="font-serif text-[18px] text-ink">
+                        {formatZar(estimate.valuation.lowCents)} –{" "}
+                        {formatZar(estimate.valuation.highCents)}
+                      </span>
+                    </div>
+                    <p className="mt-1.5 text-[12.5px] leading-relaxed text-ink-muted">
+                      {estimate.valuation.rationale}
+                    </p>
+                    <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1.5">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setPriceRands(
+                            String(
+                              Math.round(
+                                (estimate.valuation.lowCents +
+                                  estimate.valuation.highCents) /
+                                  2 /
+                                  100,
+                              ),
+                            ),
+                          )
+                        }
+                        className="link-underline text-[12px] uppercase tracking-[0.14em] text-ink-muted hover:text-gold"
+                      >
+                        Use the midpoint
+                      </button>
+                      <span aria-hidden className="text-border">
+                        ·
+                      </span>
+                      <span className="text-[11px] text-ink-dim">
+                        Estimate only — you set the asking price.
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
             </Field>
             <Field label="Description" full>
               <textarea
@@ -370,7 +479,14 @@ export function SubmissionWizard({ userId }: { userId: string }) {
               type="file"
               accept="image/*"
               multiple
-              onChange={(e) => handleFiles(e.target.files)}
+              onChange={(e) => {
+                // SELL-6: handleFiles copies the FileList synchronously, so
+                // reset the input afterwards — otherwise re-selecting the
+                // same file (after a remove or failed upload) fires no
+                // change event and silently does nothing.
+                handleFiles(e.target.files);
+                e.target.value = "";
+              }}
               className="absolute inset-0 cursor-pointer opacity-0"
             />
           </label>
@@ -415,13 +531,17 @@ export function SubmissionWizard({ userId }: { userId: string }) {
         </div>
       )}
 
-      {/* Step 3 — auth method */}
+      {/* Step 3 — auth method (process-aware: jewellery is evaluated/appraised,
+          everything else is authenticated — copy follows categoryProcess). */}
       {step === 3 && (
         <div className="animate-fadeIn">
-          <h3 className="form-section-title">Authentication method</h3>
+          <h3 className="form-section-title">
+            {isEvaluated ? "Evaluation method" : "Authentication method"}
+          </h3>
           <p className="mb-5 text-sm text-ink-muted">
-            Every piece is authenticated by D&amp;D before it goes live. Choose
-            how you&apos;d like yours verified.
+            {isEvaluated
+              ? "Every piece is appraised by D&D before it goes live. Choose how you’d like yours evaluated."
+              : "Every piece is authenticated by D&D before it goes live. Choose how you’d like yours verified."}
           </p>
           <div className="space-y-3">
             {AUTH_METHODS.map((m) => (
@@ -476,7 +596,7 @@ export function SubmissionWizard({ userId }: { userId: string }) {
             {year && <Row label="Year" value={year} />}
             <Row label="Photos" value={`${photos.filter((p) => p.url).length} uploaded`} />
             <Row
-              label="Authentication"
+              label={isEvaluated ? "Evaluation" : "Authentication"}
               value={AUTH_METHODS.find((m) => m.value === method)?.label ?? "—"}
             />
           </dl>
@@ -493,7 +613,7 @@ export function SubmissionWizard({ userId }: { userId: string }) {
               <a href="/terms" target="_blank" className="text-gold underline">
                 Seller Terms
               </a>{" "}
-              and authentication protocol.
+              and {isEvaluated ? "appraisal" : "authentication"} protocol.
             </span>
           </label>
         </div>

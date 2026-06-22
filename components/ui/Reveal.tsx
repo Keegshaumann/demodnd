@@ -70,7 +70,7 @@ export function Reveal({
     <Tag
       ref={ref}
       className={`reveal ${hidden ? "reveal-hidden" : ""} ${className}`}
-      style={hidden && delay ? { transitionDelay: `${delay}ms` } : undefined}
+      style={delay ? { transitionDelay: `${delay}ms` } : undefined}
     >
       {children}
     </Tag>

@@ -200,12 +200,23 @@ export async function requestMoreInfoAction(
 
   const { data: sub } = await db
     .from("auth_submissions")
-    .select("id, seller_id, brand, title")
+    .select("id, seller_id, brand, title, status")
     .eq("id", submissionId)
     .maybeSingle();
   if (!sub) return { ok: false, error: "Submission not found." };
+  // ADM-3: only pending / more_info submissions can be moved. Never re-open an
+  // approved submission (its listing is already live) or a declined one.
+  if (sub.status === "approved") {
+    return { ok: false, error: "This submission is already approved and live." };
+  }
+  if (sub.status === "declined") {
+    return { ok: false, error: "This submission was already declined." };
+  }
 
-  await db
+  // Status-guarded update: surfaces DB errors and only proceeds (email seller,
+  // return ok) when a row was genuinely transitioned out of pending/more_info —
+  // never reports success or emails the seller on a silent write failure.
+  const { data: updated, error: updateError } = await db
     .from("auth_submissions")
     .update({
       status: "more_info",
@@ -213,7 +224,15 @@ export async function requestMoreInfoAction(
       reviewed_by: admin.id,
       reviewed_at: new Date().toISOString(),
     })
-    .eq("id", sub.id);
+    .eq("id", sub.id)
+    .in("status", ["pending", "more_info"])
+    .select("id");
+  if (updateError) {
+    return { ok: false, error: "Could not update the submission." };
+  }
+  if (!updated || updated.length === 0) {
+    return { ok: false, error: "This submission was already actioned." };
+  }
 
   const email = await sellerEmail(db, sub.seller_id);
   if (email) {
@@ -250,12 +269,22 @@ export async function declineSubmissionAction(
 
   const { data: sub } = await db
     .from("auth_submissions")
-    .select("id, seller_id, brand, title")
+    .select("id, seller_id, brand, title, status")
     .eq("id", submissionId)
     .maybeSingle();
   if (!sub) return { ok: false, error: "Submission not found." };
+  // ADM-3: only pending / more_info submissions can be declined. Never decline
+  // an approved submission (its listing is already live) or re-decline one.
+  if (sub.status === "approved") {
+    return { ok: false, error: "This submission is already approved and live." };
+  }
+  if (sub.status === "declined") {
+    return { ok: false, error: "This submission was already declined." };
+  }
 
-  await db
+  // Status-guarded update: surfaces DB errors and only proceeds (email seller,
+  // return ok) when a row was genuinely transitioned out of pending/more_info.
+  const { data: updated, error: updateError } = await db
     .from("auth_submissions")
     .update({
       status: "declined",
@@ -263,7 +292,15 @@ export async function declineSubmissionAction(
       reviewed_by: admin.id,
       reviewed_at: new Date().toISOString(),
     })
-    .eq("id", sub.id);
+    .eq("id", sub.id)
+    .in("status", ["pending", "more_info"])
+    .select("id");
+  if (updateError) {
+    return { ok: false, error: "Could not decline the submission." };
+  }
+  if (!updated || updated.length === 0) {
+    return { ok: false, error: "This submission was already actioned." };
+  }
 
   const email = await sellerEmail(db, sub.seller_id);
   if (email) {

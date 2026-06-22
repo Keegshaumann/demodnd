@@ -9,6 +9,7 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
+    "seed:demo": "node --env-file=.env.local scripts/seed-demo-listings.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test --project=setup --project=public --project=mobile --project=a11y --project=admin --project=seller --project=buyer && playwright test --project=flows",
@@ -16,6 +17,7 @@
     "test:e2e:flows": "playwright test --project=flows"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.105.0",
     "@supabase/ssr": "^0.10.3",
     "@supabase/supabase-js": "^2.106.2",
     "next": "^15.1.6",

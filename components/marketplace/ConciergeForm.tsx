@@ -17,6 +17,10 @@ const REASONS = [
   "Partnership",
 ];
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+type FieldErrors = Partial<Record<keyof ConciergeInput, string>>;
+
 export function ConciergeForm() {
   const [pending, startTransition] = useTransition();
   const [sent, setSent] = useState(false);
@@ -29,22 +33,40 @@ export function ConciergeForm() {
     message: "",
   });
   const [consent, setConsent] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
 
   function set<K extends keyof ConciergeInput>(key: K, v: string) {
     setValues((p) => ({ ...p, [key]: v }));
+    setFieldErrors((p) => (p[key] ? { ...p, [key]: undefined } : p));
   }
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
-    setError(null);
-    if (!consent) {
-      setError("Please agree to be contacted about this enquiry.");
-      return;
-    }
+    const errs: FieldErrors = {};
+    if (!values.name.trim()) errs.name = "Please add your name.";
+    if (!EMAIL_RE.test(values.email.trim()))
+      errs.email = "Enter a valid email address.";
+    if (!values.message.trim()) errs.message = "Please add a message.";
+    setFieldErrors(errs);
+    setError(consent ? null : "Please agree to be contacted about this enquiry.");
+    if (Object.keys(errs).length > 0 || !consent) return;
     startTransition(async () => {
       const res = await sendConciergeMessageAction(values);
-      if (res.ok) setSent(true);
-      else setError(res.error);
+      if (res.ok) {
+        setSent(true);
+        return;
+      }
+      // Anchor server-side validation errors to their fields.
+      const fe = res.fieldErrors ?? {};
+      const anchored: FieldErrors = {
+        name: fe.name,
+        email: fe.email,
+        message: fe.message,
+      };
+      const hasAnchored = Boolean(anchored.name || anchored.email || anchored.message);
+      if (hasAnchored) setFieldErrors(anchored);
+      const hasUnanchored = Boolean(fe.phone || fe.reason);
+      setError(hasAnchored && !hasUnanchored ? null : res.error);
     });
   }
 
@@ -64,7 +86,7 @@ export function ConciergeForm() {
   }
 
   return (
-    <form onSubmit={submit} className="surface-card p-7 sm:p-9">
+    <form onSubmit={submit} noValidate className="surface-card p-7 sm:p-9">
       <div className="eyebrow mb-3">Send us a message</div>
       <h2 className="mb-7 font-serif text-[30px]">How can we help?</h2>
 
@@ -76,7 +98,14 @@ export function ConciergeForm() {
             value={values.name}
             onChange={(e) => set("name", e.target.value)}
             required
+            aria-invalid={fieldErrors.name ? true : undefined}
+            aria-describedby={fieldErrors.name ? "cg-name-error" : undefined}
           />
+          {fieldErrors.name && (
+            <p id="cg-name-error" className="mt-2 text-[12px] text-[#e85d5d]">
+              {fieldErrors.name}
+            </p>
+          )}
         </label>
         <label className="block">
           <span className="field-label">Email</span>
@@ -86,7 +115,14 @@ export function ConciergeForm() {
             value={values.email}
             onChange={(e) => set("email", e.target.value)}
             required
+            aria-invalid={fieldErrors.email ? true : undefined}
+            aria-describedby={fieldErrors.email ? "cg-email-error" : undefined}
           />
+          {fieldErrors.email && (
+            <p id="cg-email-error" className="mt-2 text-[12px] text-[#e85d5d]">
+              {fieldErrors.email}
+            </p>
+          )}
         </label>
         <label className="block">
           <span className="field-label">Mobile (optional)</span>
@@ -117,7 +153,14 @@ export function ConciergeForm() {
             onChange={(e) => set("message", e.target.value)}
             placeholder="Share the piece you have in mind, the occasion, or anything we should know…"
             required
+            aria-invalid={fieldErrors.message ? true : undefined}
+            aria-describedby={fieldErrors.message ? "cg-message-error" : undefined}
           />
+          {fieldErrors.message && (
+            <p id="cg-message-error" className="mt-2 text-[12px] text-[#e85d5d]">
+              {fieldErrors.message}
+            </p>
+          )}
         </label>
       </div>
 
@@ -134,7 +177,11 @@ export function ConciergeForm() {
         </span>
       </label>
 
-      {error && <p className="mb-3 text-[13px] text-[#e85d5d]">{error}</p>}
+      {error && (
+        <p role="alert" className="mb-3 text-[13px] text-[#e85d5d]">
+          {error}
+        </p>
+      )}
       <button type="submit" disabled={pending} className="btn btn-primary btn-block">
         {pending ? "Sending…" : "Send message"}
       </button>

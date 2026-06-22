@@ -36,6 +36,14 @@ const serverEnvSchema = z.object({
   NODE_ENV: z
     .enum(["development", "test", "production"])
     .default("development"),
+
+  // Anthropic (seller price-estimate AI). OPTIONAL — when ANTHROPIC_API_KEY is
+  // absent the estimator gracefully falls back to own-catalogue comps (or an
+  // "unavailable" state), so the app builds and runs without it. Model defaults
+  // to Haiku 4.5 (cheap, ~$0.0015/estimate); set ANTHROPIC_VALUATION_MODEL to
+  // claude-opus-4-8 for higher-quality estimates.
+  ANTHROPIC_API_KEY: z.string().min(1).optional(),
+  ANTHROPIC_VALUATION_MODEL: z.string().min(1).default("claude-haiku-4-5"),
 });
 
 export type ServerEnv = z.infer<typeof serverEnvSchema>;

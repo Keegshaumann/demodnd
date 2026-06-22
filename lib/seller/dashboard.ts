@@ -17,6 +17,9 @@ export interface SellerListingRow {
   feeRateBps: number;
   createdAt: string;
   imageUrl: string | null;
+  conditionNotes: string | null;
+  measurements: string | null;
+  inclusions: string[] | null;
 }
 
 export interface SellerSaleRow {
@@ -73,6 +76,9 @@ export async function getSellerListings(
     feeRateBps: l.fee_rate_bps,
     createdAt: l.created_at,
     imageUrl: cover.get(l.id) ?? null,
+    conditionNotes: l.condition_notes,
+    measurements: l.measurements,
+    inclusions: l.inclusions,
   }));
 }
 

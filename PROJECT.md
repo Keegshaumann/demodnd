@@ -21,7 +21,7 @@ It allows sellers to list authenticated luxury items for resale and buyers to pu
 
 | Role | What They Do |
 |---|---|
-| **Buyer** | Browses authenticated listings, purchases items via Stripe, raises disputes within 48hrs of delivery |
+| **Buyer** | Browses authenticated listings, purchases items via PayFast, raises disputes within 48hrs of delivery |
 | **Seller** | Submits items for authentication, manages listings, tracks earnings, chooses subscription tier |
 | **D&D Admin** | Reviews authentication submissions, approves/declines listings, manages disputes, releases payouts, configures subscription tiers |
 
@@ -29,20 +29,30 @@ It allows sellers to list authenticated luxury items for resale and buyers to pu
 
 ## Payment Flow (Critical — Read Carefully)
 
-**NOT Stripe Connect. No escrow. D&D is the middleman.**
+**PayFast hosted redirect. No split payments. No escrow. D&D is the middleman.**
+
+> **History (only mention of the old gateway):** the original plan was a standard Stripe
+> account, but Stripe requires a registered company and D&D trades as a **sole proprietor**.
+> The gateway was switched to **PayFast** (SA gateway — sole-proprietor friendly, PCI-DSS
+> Level 1, ZAR cards + Instant EFT) on 2026-06-03. See `HANDOFF.md` for the migration
+> detail. Everything below describes the current PayFast reality.
 
 The flow is:
-1. Buyer pays via Stripe → funds land directly in **D&D Luxury's Stripe account**
-2. D&D receives the full payment — they are the seller of record on the platform
-3. D&D pays the seller their cut (minus commission) via EFT/bank transfer in their own time
-4. The platform tracks order status and records that a sale occurred — it does not hold or manage funds beyond that
-5. If a dispute arises → D&D handles it directly (refund via Stripe if needed, seller payout withheld)
+1. Buyer checks out in-app at `/checkout/[listingId]` — the platform captures their SA delivery address (stored server-only in `checkout_intents`, keyed by `m_payment_id`), then auto-POSTs a signed form that redirects them to PayFast's hosted payment page
+2. Buyer pays on PayFast → funds land directly in **D&D Luxury's PayFast account**
+3. D&D receives the full payment — they are the seller of record on the platform
+4. PayFast confirms the payment server-to-server via its **ITN webhook** (`app/api/payfast/itn/route.ts`): `lib/payfast/itn.ts` validates it (signature, source IP, validation postback, status + amount), then `lib/payfast/fulfill.ts` atomically creates the order — idempotent on `orders.gateway_reference` (our `m_payment_id`) — marks the listing sold, copies the delivery address onto the order, and emails buyer + seller
+5. D&D pays the seller their cut (minus commission) via EFT/bank transfer in their own time
+6. The platform tracks order status and records that a sale occurred — it does not hold or manage funds beyond that
+7. If a dispute arises → D&D handles it directly: any refund is processed **manually in the PayFast dashboard**; the admin records it on the platform as an order status change only (seller payout withheld)
 
 **Why this matters for development:**
-- Use a **standard Stripe account** (not Stripe Connect)
+- Use **D&D's own PayFast merchant account** with the hosted-redirect "Custom" flow — no Node SDK exists; the MD5 signature + ITN validation are hand-implemented in `lib/payfast/`
+- Fulfilment happens ONLY in the validated ITN webhook — never trust the browser's return redirect; the success page just reads the order by its reference
 - **No escrow ledger** — do not build held_amount or escrow tracking
 - Orders table tracks payment status (paid/refunded) and delivery status — that's it
 - D&D handles all seller payouts offline (EFT) — the platform does not initiate or track these
+- Refunds are manual in the PayFast dashboard — the platform never moves money; admin only flips the order status
 - Store seller banking details in the admin panel for D&D's reference only
 
 ---
@@ -93,7 +103,7 @@ D&D has 3 working days to review and respond (approve / request more info / decl
 - Browse authenticated listings
 - Filter: brand, category, price range, condition, auth method
 - View seller reputation profile
-- Secure Stripe checkout
+- Secure PayFast checkout (hosted redirect; delivery address captured in-app before redirect)
 - Personalised Wishlist — add items even if not yet listed
 - Wishlist alerts — email + in-platform notification when matching item is listed
 - Order history and delivery tracking
@@ -154,7 +164,7 @@ Preserve the existing visual identity exactly. Do not redesign.
 | Language | TypeScript (strict) |
 | Database | PostgreSQL via Supabase |
 | Auth | Supabase Auth (email/password + magic link) |
-| Payments | Stripe (standard account — D&D collects, not Connect) |
+| Payments | PayFast (hosted-redirect "Custom" flow — D&D's own merchant account collects; no split payments) |
 | Storage | Supabase Storage (item photos, auth certificates) |
 | Email | Resend |
 | Styling | Tailwind CSS |
@@ -173,7 +183,8 @@ auth_submissions    id, seller_id, method (photo|courier|dropoff), status, submi
 listings            id, seller_id, auth_submission_id, title, brand, category, price, condition, status (pending|active|sold|delisted), fee_rate_at_listing
 listing_images      id, listing_id, url, order
 wishlists           id, buyer_id, brand, category, description, keywords
-orders              id, buyer_id, listing_id, stripe_payment_intent_id, gross_amount, commission_amount, seller_payout_amount, status (pending|paid|refunded|disputed)
+checkout_intents    m_payment_id, buyer_id, listing_id, shipping_address (server-only; pre-payment delivery address, copied onto the order by the ITN handler)
+orders              id, buyer_id, listing_id, gateway_reference, gross_amount, commission_amount, seller_payout_amount, status (pending|paid|refunded|disputed)
 disputes            id, order_id, raised_by, reason, status, resolved_at, resolution
 reviews             id, order_id, reviewer_id, seller_id, rating, body
 ```
@@ -184,7 +195,7 @@ reviews             id, order_id, reviewer_id, seller_id, rating, body
 
 ### Phase 1 — Web Marketplace (6 weeks)
 - Weeks 1–2: Architecture, DB, auth system, seller/buyer registration, auth submission portal, listing management, subscription config
-- Weeks 3–4: Checkout (Stripe), order tracking, seller reputation, Wishlist + alerts, dashboards, admin panel
+- Weeks 3–4: Checkout (PayFast), order tracking, seller reputation, Wishlist + alerts, dashboards, admin panel
 - Weeks 5–6: Branding implementation, mobile responsiveness, QA, go-live deployment
 
 ### Phase 2 — Mobile App (separate engagement, post Phase 1 go-live)
@@ -205,7 +216,7 @@ Not in scope for Phase 1 or Phase 2. Do not build rental logic. Do not add renta
 - The rental feature is explicitly excluded from Phase 1 and Phase 2
 - Subscription prices are TBC — the admin panel must allow D&D to configure them without code changes
 - Fee rate is locked at listing creation time — never recalculate based on current tier
-- Stripe is standard (not Connect) — D&D receives payment directly, pays sellers via offline EFT
+- Payments go through D&D's own PayFast merchant account — D&D receives payment directly, pays sellers via offline EFT; refunds are processed manually in the PayFast dashboard
 - Source code maintained in private GitHub repo; D&D added as collaborator on go-live
 
 ---
@@ -213,7 +224,7 @@ Not in scope for Phase 1 or Phase 2. Do not build rental logic. Do not add renta
 ## What NOT to Build
 
 - Rental/lease functionality (future phase only)
-- Stripe Connect or any form of automated seller payouts through Stripe
+- Split payments, gateway-managed payouts, or any form of automated seller payouts through PayFast
 - Escrow ledger or held-funds tracking
 - Social features (follows, feeds, DMs)
 - Auction/bidding mechanism

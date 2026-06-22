@@ -3,11 +3,12 @@ import Link from "next/link";
 import { getActiveListingsPage, type BrowseFilters } from "@/lib/marketplace/listings";
 import { ListingCard } from "@/components/marketplace/ListingCard";
 import {
-  BrowseFilters as FiltersSidebar,
+  BrowseFilterBar,
   BrowseFilterDrawer,
   ActiveFilterChips,
 } from "@/components/marketplace/BrowseFilters";
 import { BrowseToolbar } from "@/components/marketplace/BrowseToolbar";
+import { SaveSearchButton } from "@/components/marketplace/SaveSearchButton";
 import { Pagination } from "@/components/marketplace/Pagination";
 import { Reveal } from "@/components/ui/Reveal";
 import { ChevronRightIcon, SearchIcon, ArrowRightIcon } from "@/components/ui/icons";
@@ -60,18 +61,22 @@ export default async function BrowsePage({
     minCents: Number.isFinite(minRands) && minRands > 0 ? Math.round(minRands * 100) : undefined,
     maxCents: Number.isFinite(maxRands) && maxRands > 0 ? Math.round(maxRands * 100) : undefined,
     sort:
-      sortParam === "price-asc" || sortParam === "price-desc"
+      sortParam === "price-asc" ||
+      sortParam === "price-desc" ||
+      sortParam === "newest"
         ? sortParam
         : "featured",
   };
 
   const page = Math.max(1, Number(first(params.page)) || 1);
   const PAGE_SIZE = 24;
-  const { items: listings, total, totalPages } = await getActiveListingsPage(
-    filters,
-    page,
-    PAGE_SIZE,
-  );
+  const {
+    items: listings,
+    total,
+    totalPages,
+    isFuzzyFallback,
+    query,
+  } = await getActiveListingsPage(filters, page, PAGE_SIZE);
 
   // Build page hrefs that preserve the active filters (everything but `page`).
   const baseQs = new URLSearchParams();
@@ -108,56 +113,71 @@ export default async function BrowsePage({
       </header>
 
       <div className="dnd-container">
-        <div className="grid grid-cols-1 items-start gap-10 py-12 lg:grid-cols-[270px_1fr] lg:gap-14 lg:py-14">
-          <FiltersSidebar />
+        <main className="min-w-0 py-12 lg:py-14">
+          {/* Horizontal filter bar (rebag-style) — facet dropdowns on the left
+              (drawer trigger below lg), search + sort on the right. */}
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-border-soft pb-6 lg:flex-nowrap">
+            <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2.5">
+              <BrowseFilterDrawer />
+              <BrowseFilterBar />
+            </div>
+            <div className="shrink-0">
+              <BrowseToolbar />
+            </div>
+          </div>
 
-          <main className="min-w-0">
-            <div className="mb-7 flex flex-wrap items-center justify-between gap-3 border-b border-border-soft pb-5">
+          <div className="mb-7 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-4">
               <div className="text-[14px] text-ink-muted">
                 <strong className="text-ink tabular-nums">{total}</strong>{" "}
                 {total === 1 ? "piece" : "pieces"}
               </div>
-              <div className="flex items-center gap-2.5">
-                <BrowseFilterDrawer />
-                <BrowseToolbar />
+              <SaveSearchButton />
+            </div>
+          </div>
+
+          <ActiveFilterChips />
+
+          {isFuzzyFallback && query && (
+            <p className="mb-7 -mt-1 text-[13px] text-ink-muted">
+              No exact match for{" "}
+              <span className="text-ink">“{query}”</span> — showing closest
+              matches.
+            </p>
+          )}
+
+          {listings.length === 0 ? (
+            <div className="flex flex-col items-center rounded-[3px] border border-dashed border-border bg-surface px-6 py-20 text-center">
+              <span className="mb-5 flex h-12 w-12 items-center justify-center rounded-full border border-border text-ink-dim">
+                <SearchIcon width={20} height={20} />
+              </span>
+              <h2 className="font-serif text-2xl">Nothing matches yet.</h2>
+              <p className="mt-2 max-w-[360px] text-[14px] text-ink-muted">
+                No pieces fit these filters right now. Widen your search, or tell
+                our concierge what you&apos;re hunting for.
+              </p>
+              <div className="mt-6 flex flex-wrap justify-center gap-3">
+                <Link href="/browse" className="btn btn-outline btn-sm">
+                  Clear filters
+                </Link>
+                <Link href="/concierge" className="btn btn-primary btn-sm">
+                  Ask the concierge <ArrowRightIcon width={15} height={15} />
+                </Link>
               </div>
             </div>
-
-            <ActiveFilterChips />
-
-            {listings.length === 0 ? (
-              <div className="flex flex-col items-center rounded-[3px] border border-dashed border-border bg-surface px-6 py-20 text-center">
-                <span className="mb-5 flex h-12 w-12 items-center justify-center rounded-full border border-border text-ink-dim">
-                  <SearchIcon width={20} height={20} />
-                </span>
-                <h2 className="font-serif text-2xl">Nothing matches yet.</h2>
-                <p className="mt-2 max-w-[360px] text-[14px] text-ink-muted">
-                  No pieces fit these filters right now. Widen your search, or tell
-                  our concierge what you&apos;re hunting for.
-                </p>
-                <div className="mt-6 flex flex-wrap justify-center gap-3">
-                  <Link href="/browse" className="btn btn-outline btn-sm">
-                    Clear filters
-                  </Link>
-                  <Link href="/concierge" className="btn btn-primary btn-sm">
-                    Ask the concierge <ArrowRightIcon width={15} height={15} />
-                  </Link>
-                </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 gap-x-7 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {listings.map((l, i) => (
+                  <Reveal key={l.id} delay={Math.min(i, 6) * 45}>
+                    <ListingCard listing={l} priority={i < 3} />
+                  </Reveal>
+                ))}
               </div>
-            ) : (
-              <>
-                <div className="grid grid-cols-1 gap-x-7 gap-y-10 sm:grid-cols-2 xl:grid-cols-3">
-                  {listings.map((l, i) => (
-                    <Reveal key={l.id} delay={Math.min(i, 6) * 45}>
-                      <ListingCard listing={l} />
-                    </Reveal>
-                  ))}
-                </div>
-                <Pagination page={page} totalPages={totalPages} hrefFor={hrefFor} />
-              </>
-            )}
-          </main>
-        </div>
+              <Pagination page={page} totalPages={totalPages} hrefFor={hrefFor} />
+            </>
+          )}
+        </main>
       </div>
     </>
   );

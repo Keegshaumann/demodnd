@@ -19,6 +19,7 @@ export interface AdminListingRow {
   category: string;
   priceCents: number;
   status: ListingStatus;
+  featured: boolean;
   createdAt: string;
   sellerName: string;
   sellerEmail: string;
@@ -51,7 +52,10 @@ export async function getAdminListings(
       query = query.or(`title.ilike.%${s}%,brand.ilike.%${s}%,model.ilike.%${s}%`);
     }
   }
-  const { data: listings } = await query;
+  const { data: listings, error } = await query;
+  // Throw on a real DB error so the admin route shows an error boundary rather
+  // than a misleading empty catalogue.
+  if (error) throw new Error(`getAdminListings: ${error.message}`);
   const list = listings ?? [];
   if (list.length === 0) return [];
 
@@ -88,6 +92,7 @@ export async function getAdminListings(
       category: l.category,
       priceCents: l.price_cents,
       status: l.status,
+      featured: l.featured,
       createdAt: l.created_at,
       sellerName: p?.display_name ?? u?.full_name ?? u?.email ?? "—",
       sellerEmail: u?.email ?? "—",
@@ -147,6 +152,31 @@ export async function relistListingAction(
   if (error) return { ok: false, error: "Could not relist the listing." };
   revalidatePath("/admin/listings");
   revalidatePath("/browse");
+  return { ok: true };
+}
+
+export async function setListingFeaturedAction(
+  listingId: string,
+  featured: boolean,
+): Promise<AdminListingActionResult> {
+  await requireRole("admin");
+  const db = createAdminClient();
+  const status = await listingStatus(db, listingId);
+  if (!status) return { ok: false, error: "Listing not found." };
+  // Featured pieces lead browse and the homepage, which only show active
+  // stock — featuring anything else would be invisible, confusing state.
+  // Unfeaturing is always allowed (cleanup of delisted/sold pieces).
+  if (featured && status !== "active") {
+    return { ok: false, error: "Only active listings can be featured." };
+  }
+  const { error } = await db
+    .from("listings")
+    .update({ featured })
+    .eq("id", listingId);
+  if (error) return { ok: false, error: "Could not update the listing." };
+  revalidatePath("/admin/listings");
+  revalidatePath("/browse");
+  revalidatePath("/"); // homepage grid surfaces featured first
   return { ok: true };
 }
 

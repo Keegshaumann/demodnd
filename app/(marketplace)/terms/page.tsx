@@ -78,9 +78,11 @@ export default function TermsPage() {
 
       <h2>7. Disputes &amp; refunds</h2>
       <p>
-        Disputes are handled by D&amp;D Luxury directly. Where a refund is
-        warranted it is processed via PayFast, and the corresponding seller payout
-        may be withheld. Please contact our concierge to raise an issue.
+        If something is wrong with a delivered item, you may raise a dispute from
+        your order page within 48 hours of delivery. Disputes are handled by
+        D&amp;D Luxury directly. Where a refund is warranted it is processed via
+        PayFast, and the corresponding seller payout may be withheld. Outside the
+        dispute window, please contact our concierge to raise an issue.
       </p>
 
       <h2>8. Limitation of liability</h2>

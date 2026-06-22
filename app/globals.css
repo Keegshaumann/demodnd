@@ -78,9 +78,13 @@
    Motion — restrained, luxury-appropriate. transform/opacity only.
    =========================================================================== */
 @layer utilities {
-  /* Per-navigation entrance (used by app/template.tsx). */
+  /* Per-navigation entrance (used by app/template.tsx). `backwards` (not
+     `both`) so the finished animation releases its transform — a retained
+     transform turns the wrapper into a containing block + stacking context,
+     which breaks `position: fixed` descendants (filter drawer, mobile buy
+     bar) and lets the cookie banner paint above open overlays. */
   .page-in {
-    animation: pageIn 420ms cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation: pageIn 420ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
   }
 
   /* Scroll reveal — enhance-an-already-visible-default.
@@ -271,6 +275,9 @@
     outline: none;
     border-color: #0d0d0d;
   }
+  .field-input[aria-invalid="true"] {
+    border-color: #e85d5d;
+  }
   textarea.field-input {
     min-height: 110px;
     resize: vertical;
@@ -291,6 +298,24 @@
     @apply bg-card;
     border: 1px solid #e5e5e5;
     border-radius: 3px;
+  }
+
+  /* Submission wizard card + step heading --------------------------------- */
+  .form-card {
+    @apply bg-card;
+    border: 1px solid #e5e5e5;
+    border-radius: 3px;
+    padding: 40px;
+  }
+  @media (min-width: 640px) {
+    .form-card {
+      padding: 48px;
+    }
+  }
+  .form-section-title {
+    @apply font-serif text-ink;
+    font-size: 22px;
+    margin-bottom: 22px;
   }
 
   /* Pill badge (auth method / status) ------------------------------------- */

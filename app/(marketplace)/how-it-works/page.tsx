@@ -3,6 +3,7 @@ import Link from "next/link";
 import { FlowTabs } from "@/components/marketplace/FlowTabs";
 import { FaqAccordion, type FaqItem } from "@/components/marketplace/FaqAccordion";
 import { ChevronRightIcon } from "@/components/ui/icons";
+import { CONDITION_DEFINITIONS } from "@/lib/marketplace/constants";
 
 export const metadata: Metadata = {
   title: "How It Works",
@@ -30,6 +31,10 @@ const FAQ: FaqItem[] = [
   {
     q: "Do I need an account to buy?",
     a: "Yes. Purchasing requires a verified account — it keeps the marketplace trusted on both sides and takes only a couple of minutes to set up.",
+  },
+  {
+    q: "What if something's wrong when my piece arrives?",
+    a: "Confirm receipt only once you're satisfied. If something is wrong, raise a dispute from your order page within 48 hours of delivery — D&D Luxury handles every dispute directly, including refunds where warranted. Beyond that window, our concierge team remains at your disposal.",
   },
   {
     q: "How long does authentication take?",
@@ -66,6 +71,33 @@ export default function HowItWorksPage() {
       <section style={{ padding: "72px 0 96px" }}>
         <div className="dnd-container">
           <FlowTabs />
+        </div>
+      </section>
+
+      <section
+        id="condition-guide"
+        className="scroll-mt-28 border-t border-border-soft bg-surface"
+        style={{ padding: "80px 0" }}
+      >
+        <div className="dnd-container">
+          <div className="mb-14 max-w-[600px]">
+            <div className="eyebrow mb-3">The grading</div>
+            <h2 className="font-serif text-[34px]">Condition grades.</h2>
+            <p className="mt-4 text-[15px] text-ink-muted">
+              Every piece is graded by hand against the same four-point scale, so
+              the word on the listing always means the same thing.
+            </p>
+          </div>
+          <dl className="grid grid-cols-1 gap-px overflow-hidden rounded-[3px] border border-border-soft bg-border-soft sm:grid-cols-2">
+            {CONDITION_DEFINITIONS.map((c) => (
+              <div key={c.grade} className="bg-surface p-7">
+                <dt className="font-serif text-2xl">{c.grade}</dt>
+                <dd className="mt-2.5 text-[14px] leading-relaxed text-ink-muted">
+                  {c.definition}
+                </dd>
+              </div>
+            ))}
+          </dl>
         </div>
       </section>
 

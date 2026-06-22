@@ -8,9 +8,14 @@ import { buildPayfastCheckout } from "@/lib/payfast/checkout";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { rateLimit } from "@/lib/rate-limit";
 import { SA_PROVINCES } from "@/lib/marketplace/constants";
+import type { TablesInsert } from "@/lib/supabase/database.types";
 
 const addressSchema = z.object({
   listingId: z.string().uuid(),
+  // Pay for an accepted offer at the agreed price (optional). When present, the
+  // checkout is bound to the offer and the charged amount is the agreed amount —
+  // validated server-side below and again, under a row lock, in fulfilment.
+  offerId: z.string().uuid().optional(),
   recipient: z.string().trim().min(2, "Enter the recipient's full name.").max(120),
   line1: z.string().trim().min(3, "Enter a street address.").max(160),
   line2: z.string().trim().max(160).optional().default(""),
@@ -98,22 +103,75 @@ export async function startPayfastCheckoutAction(
     return { ok: false, error: "This piece is no longer available." };
   }
 
+  const db = createAdminClient();
+
+  // ---- Accepted-offer pricing (validated server-side; never trust the client).
+  // Default: full listing price, no offer link.
+  let chargeCents = listing.price_cents;
+  let offerId: string | undefined;
+  if (a.offerId) {
+    const { data: offer, error: offerErr } = await db
+      .from("offers")
+      .select(
+        "id, listing_id, buyer_id, state, agreed_amount_cents, pay_deadline_at",
+      )
+      .eq("id", a.offerId)
+      .maybeSingle();
+    if (offerErr) {
+      console.error("checkout: failed to load offer", offerErr);
+      return { ok: false, error: "Could not start checkout. Please try again." };
+    }
+    // GUARD: only the offering buyer may pay the agreed price, only while the
+    // offer is 'accepted' with a frozen agreed amount and an open pay window,
+    // and only for THIS still-active listing. Any failure → no agreed-price path.
+    const payWindowOpen =
+      offer?.pay_deadline_at != null &&
+      Date.now() <= new Date(offer.pay_deadline_at).getTime();
+    if (
+      !offer ||
+      offer.buyer_id !== user.id ||
+      offer.listing_id !== listing.id ||
+      offer.state !== "accepted" ||
+      offer.agreed_amount_cents == null ||
+      !payWindowOpen
+      // listing.status === 'active' already enforced above (someone else may
+      // have bought it at full price; then the offer can no longer be paid).
+    ) {
+      return {
+        ok: false,
+        error: "This offer can no longer be paid at the agreed price.",
+      };
+    }
+    chargeCents = offer.agreed_amount_cents;
+    offerId = offer.id;
+  }
+
   // Build the signed checkout FIRST so we persist the intent under the exact
-  // m_payment_id that PayFast will echo back in the ITN.
+  // m_payment_id that PayFast will echo back in the ITN. For an accepted offer
+  // we charge the frozen agreed amount and bind the payment to the offer.
   const checkout = buildPayfastCheckout({
     listing,
     buyerEmail: user.email,
     buyerId: user.id,
+    amountCentsOverride: chargeCents,
+    offerId,
   });
 
-  const db = createAdminClient();
-  const { error } = await db.from("checkout_intents").insert({
+  // The intent carries the frozen charged amount + offer link so fulfilment
+  // (under the listing+offer row lock) records the order at the agreed price and
+  // computes commission on it. offer_id/amount_cents (added to checkout_intents by
+  // SCHEMA migration 20260617120010_offer_checkout.sql) are nullable: a full-price
+  // checkout leaves offer_id null and behaves exactly as before.
+  const intentRow: TablesInsert<"checkout_intents"> = {
     m_payment_id: checkout.mPaymentId,
     listing_id: listing.id,
     buyer_id: user.id,
     shipping_name: a.recipient,
     shipping_address: formatShippingAddress(a),
-  });
+    offer_id: offerId ?? null,
+    amount_cents: chargeCents,
+  };
+  const { error } = await db.from("checkout_intents").insert(intentRow);
   if (error) {
     console.error("checkout: failed to store delivery address", error);
     return { ok: false, error: "Could not start checkout. Please try again." };

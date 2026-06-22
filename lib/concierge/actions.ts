@@ -8,7 +8,11 @@ import {
 import { conciergeMessageEmail } from "@/lib/email/templates";
 import { rateLimitByIp } from "@/lib/rate-limit";
 
-export type ConciergeResult = { ok: true } | { ok: false; error: string };
+export type ConciergeFieldErrors = Partial<Record<keyof ConciergeInput, string>>;
+
+export type ConciergeResult =
+  | { ok: true }
+  | { ok: false; error: string; fieldErrors?: ConciergeFieldErrors };
 
 const conciergeSchema = z.object({
   name: z.string().trim().min(1, "Please add your name.").max(120),
@@ -34,7 +38,17 @@ export async function sendConciergeMessageAction(
 
   const parsed = conciergeSchema.safeParse(input);
   if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input." };
+    // Key every issue by its field so the form can anchor errors to inputs.
+    const fieldErrors: ConciergeFieldErrors = {};
+    for (const issue of parsed.error.issues) {
+      const key = issue.path[0] as keyof ConciergeInput | undefined;
+      if (key && !fieldErrors[key]) fieldErrors[key] = issue.message;
+    }
+    return {
+      ok: false,
+      error: parsed.error.issues[0]?.message ?? "Invalid input.",
+      fieldErrors,
+    };
   }
   const d = parsed.data;
 

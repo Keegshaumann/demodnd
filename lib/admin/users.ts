@@ -32,11 +32,14 @@ export async function searchUsers(query: string): Promise<AdminUserRow[]> {
   let baseUsers: User[] = [];
 
   if (!q) {
-    const { data } = await db
+    const { data, error } = await db
       .from("users")
       .select("*")
       .order("created_at", { ascending: false })
       .limit(50);
+    // Throw on a real DB error so the admin route shows an error rather than a
+    // misleading empty user list.
+    if (error) throw new Error(`searchUsers: ${error.message}`);
     baseUsers = data ?? [];
   } else {
     const s = q.replace(/[,()*%]/g, "");
@@ -50,7 +53,7 @@ export async function searchUsers(query: string): Promise<AdminUserRow[]> {
       .limit(50);
     (profs ?? []).forEach((p) => ids.add(p.user_id));
 
-    const [{ data: byText }, byIdRes] = await Promise.all([
+    const [{ data: byText, error: byTextError }, byIdRes] = await Promise.all([
       db
         .from("users")
         .select("*")
@@ -60,6 +63,9 @@ export async function searchUsers(query: string): Promise<AdminUserRow[]> {
         ? db.from("users").select("*").in("id", [...ids])
         : Promise.resolve({ data: [] }),
     ]);
+    // Throw on a real DB error so a failed search shows an error rather than
+    // silently returning "no matches".
+    if (byTextError) throw new Error(`searchUsers: ${byTextError.message}`);
 
     const merged = new Map<string, User>();
     [...(byText ?? []), ...(byIdRes.data ?? [])].forEach((u) =>
@@ -188,6 +194,20 @@ export async function deleteUserAction(
     .maybeSingle();
   if (target?.role === "admin") {
     return { ok: false, error: "You can't delete another admin's account." };
+  }
+  // orders.buyer_id / seller_id are non-cascading FKs, so deleting a user with
+  // order history otherwise fails with an opaque FK violation. Pre-check and
+  // explain it (mirrors the listings "has orders → delist instead" guard).
+  const { count: orderCount } = await db
+    .from("orders")
+    .select("id", { count: "exact", head: true })
+    .or(`buyer_id.eq.${userId},seller_id.eq.${userId}`);
+  if ((orderCount ?? 0) > 0) {
+    return {
+      ok: false,
+      error:
+        "This account has order history and can't be deleted — suspend or ban it instead.",
+    };
   }
   const { error } = await db.auth.admin.deleteUser(userId);
   if (error) return { ok: false, error: "Could not delete the account." };

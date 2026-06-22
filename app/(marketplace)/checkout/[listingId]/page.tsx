@@ -6,6 +6,7 @@ import { getListingById } from "@/lib/marketplace/listings";
 import { getCurrentUser } from "@/lib/auth/guards";
 import { roleCanAccess } from "@/lib/auth/roles";
 import { payfast } from "@/lib/payfast/config";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { formatZar } from "@/lib/money";
 import { categoryLabel } from "@/lib/marketplace/constants";
 import { CheckoutForm } from "@/components/marketplace/CheckoutForm";
@@ -24,13 +25,21 @@ const STEPS = ["Selected", "Your details", "Secure payment"] as const;
 
 export default async function CheckoutPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ listingId: string }>;
+  searchParams: Promise<{ offer?: string }>;
 }) {
   const { listingId } = await params;
+  const { offer: offerParam } = await searchParams;
 
   const user = await getCurrentUser();
-  if (!user) redirect(`/signin?redirect=/checkout/${listingId}`);
+  if (!user) {
+    const target = offerParam
+      ? `/checkout/${listingId}?offer=${offerParam}`
+      : `/checkout/${listingId}`;
+    redirect(`/signin?redirect=${encodeURIComponent(target)}`);
+  }
   // BUY-1: only buyer accounts (admins pass as superuser) may purchase — the
   // order + "confirm receipt" views live under the buyer-only area.
   if (!roleCanAccess(user.role, "buyer")) redirect(`/listing/${listingId}`);
@@ -43,6 +52,46 @@ export default async function CheckoutPage({
   // Can't buy your own piece; only active listings are purchasable.
   if (listing.seller_id === user.id) redirect(`/listing/${listing.id}`);
   if (listing.status !== "active") redirect(`/listing/${listing.id}`);
+
+  // Accepted-offer checkout: re-validate the offer server-side (SAME predicate as
+  // startPayfastCheckoutAction) and render the order at the agreed price. A
+  // tampered/hijacked ?offer= link simply falls back to the full-price flow — the
+  // server action and the fulfilment RPC re-check this independently, so the page
+  // render is purely for display. We never trust the link for pricing.
+  let offerId: string | undefined;
+  let agreedCents: number | null = null;
+  if (offerParam) {
+    const db = createAdminClient();
+    const { data: offer } = await db
+      .from("offers")
+      .select(
+        "id, listing_id, buyer_id, state, agreed_amount_cents, pay_deadline_at",
+      )
+      .eq("id", offerParam)
+      .maybeSingle();
+    const payWindowOpen =
+      offer?.pay_deadline_at != null &&
+      Date.now() <= new Date(offer.pay_deadline_at).getTime();
+    if (
+      offer &&
+      offer.buyer_id === user.id &&
+      offer.listing_id === listing.id &&
+      offer.state === "accepted" &&
+      offer.agreed_amount_cents != null &&
+      payWindowOpen
+    ) {
+      offerId = offer.id;
+      agreedCents = offer.agreed_amount_cents;
+    }
+    // If validation fails we silently render the full-price checkout. (The buyer
+    // can still buy at list price; they'd reach this page from the offer "Pay"
+    // link only while the window is open, so a fall-through means it lapsed.)
+  }
+
+  // Price shown + charged: the agreed amount when paying a valid accepted offer,
+  // otherwise the listing price.
+  const chargeCents = agreedCents ?? listing.price_cents;
+  const isAgreedOffer = offerId != null;
 
   const cover = listing.images[0]?.url ?? null;
 
@@ -123,13 +172,25 @@ export default async function CheckoutPage({
                 <div className="mt-1.5 text-[12px] text-ink-dim">
                   {categoryLabel(listing.category)} · {listing.condition}
                 </div>
-                <div className="price mt-3 text-[19px]">
-                  {formatZar(listing.price_cents)}
-                </div>
+                {isAgreedOffer ? (
+                  <div className="mt-3 flex items-baseline gap-2">
+                    <span className="price text-[19px]">{formatZar(chargeCents)}</span>
+                    <span className="text-[12px] text-ink-dim line-through">
+                      {formatZar(listing.price_cents)}
+                    </span>
+                  </div>
+                ) : (
+                  <div className="price mt-3 text-[19px]">
+                    {formatZar(listing.price_cents)}
+                  </div>
+                )}
               </div>
             </div>
             <dl className="space-y-2.5 border-t border-border-soft p-5 text-sm">
-              <Row label="Item" value={formatZar(listing.price_cents)} />
+              <Row
+                label={isAgreedOffer ? "Agreed offer" : "Item"}
+                value={formatZar(chargeCents)}
+              />
               <Row label="White-glove delivery" value="Included" />
               <Row label="Insurance in transit" value="Included" />
               <div className="mt-1 flex items-center justify-between border-t border-border-soft pt-4">
@@ -137,11 +198,19 @@ export default async function CheckoutPage({
                   Total
                 </dt>
                 <dd className="price text-[26px] leading-none">
-                  {formatZar(listing.price_cents)}
+                  {formatZar(chargeCents)}
                 </dd>
               </div>
             </dl>
           </div>
+
+          {isAgreedOffer && (
+            <p className="mt-4 rounded-[3px] border border-border-soft bg-deep px-3.5 py-2.5 text-[12px] leading-relaxed text-ink-muted">
+              You&apos;re paying the agreed offer price. This price is reserved for
+              you only while your 24-hour window is open — complete payment to
+              secure the piece.
+            </p>
+          )}
 
           <ul className="mt-5 space-y-2.5">
             {[
@@ -169,7 +238,8 @@ export default async function CheckoutPage({
 
           <CheckoutForm
             listingId={listing.id}
-            priceCents={listing.price_cents}
+            priceCents={chargeCents}
+            offerId={offerId}
             sandbox={payfast.mode === "sandbox"}
           />
         </div>

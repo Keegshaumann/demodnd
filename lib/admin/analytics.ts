@@ -56,6 +56,17 @@ export async function getAdminAnalytics(
     db.from("wishlists").select("brand, category"),
   ]);
 
+  // Throw if any query failed so the dashboard shows an error rather than a
+  // misleading all-zeros state on a DB outage.
+  const firstError = [
+    ordersRes.error,
+    activeListingsRes.error,
+    pendingSubsRes.error,
+    sellersRes.error,
+    wishlistsRes.error,
+  ].find(Boolean);
+  if (firstError) throw new Error(`getAdminAnalytics: ${firstError.message}`);
+
   const orders = ordersRes.data ?? [];
   let gmvAll = 0;
   let gmvMonth = 0;

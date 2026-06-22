@@ -12,6 +12,18 @@ import type { UserRole } from "@/lib/supabase/database.types";
 export interface AuthState {
   error?: string;
   message?: string;
+  // Non-sensitive submitted values, echoed back on failure so React 19's
+  // post-action form reset doesn't wipe what the user typed.
+  values?: {
+    email?: string;
+    fullName?: string;
+    terms?: boolean;
+  };
+}
+
+function fieldValue(formData: FormData, key: string): string {
+  const value = formData.get(key);
+  return typeof value === "string" ? value : "";
 }
 
 const credentialsSchema = z.object({
@@ -37,23 +49,24 @@ export async function signInAction(
   _prev: AuthState,
   formData: FormData,
 ): Promise<AuthState> {
+  const values = { email: fieldValue(formData, "email") };
   // Brute-force protection: 10 sign-in attempts per 15 min per IP.
   // Fail CLOSED on a limiter error — never silently drop auth abuse protection.
   if (!(await rateLimitByIp("signin", 10, 900, true))) {
-    return { error: "Too many attempts. Please wait a few minutes and try again." };
+    return { error: "Too many attempts. Please wait a few minutes and try again.", values };
   }
   const parsed = credentialsSchema.safeParse({
     email: formData.get("email"),
     password: formData.get("password"),
   });
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid input." };
+    return { error: parsed.error.issues[0]?.message ?? "Invalid input.", values };
   }
 
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signInWithPassword(parsed.data);
   if (error) {
-    return { error: "Incorrect email or password. Please try again." };
+    return { error: "Incorrect email or password. Please try again.", values };
   }
 
   const redirectTo = safeInternalRedirect(formData.get("redirect"));
@@ -77,9 +90,14 @@ export async function signUpAction(
   _prev: AuthState,
   formData: FormData,
 ): Promise<AuthState> {
+  const values = {
+    email: fieldValue(formData, "email"),
+    fullName: fieldValue(formData, "fullName"),
+    terms: formData.get("terms") === "on",
+  };
   // 10 sign-ups per hour per IP. Fail CLOSED on a limiter error.
   if (!(await rateLimitByIp("signup", 10, 3600, true))) {
-    return { error: "Too many sign-up attempts. Please try again later." };
+    return { error: "Too many sign-up attempts. Please try again later.", values };
   }
   const parsed = signUpSchema.safeParse({
     email: formData.get("email"),
@@ -88,7 +106,7 @@ export async function signUpAction(
     role: formData.get("role"),
   });
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid input." };
+    return { error: parsed.error.issues[0]?.message ?? "Invalid input.", values };
   }
 
   const supabase = await createClient();
@@ -105,6 +123,7 @@ export async function signUpAction(
     // already registered or other internals. Mirror signInAction's generic copy.
     return {
       error: "We couldn't create your account. Please check your details and try again.",
+      values,
     };
   }
 
@@ -126,13 +145,14 @@ export async function magicLinkAction(
   _prev: AuthState,
   formData: FormData,
 ): Promise<AuthState> {
+  const values = { email: fieldValue(formData, "email") };
   // 5 magic-link requests per 15 min per IP. Fail CLOSED on a limiter error.
   if (!(await rateLimitByIp("magiclink", 5, 900, true))) {
-    return { error: "Too many requests. Please wait a few minutes." };
+    return { error: "Too many requests. Please wait a few minutes.", values };
   }
   const parsed = emailOnlySchema.safeParse({ email: formData.get("email") });
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid input." };
+    return { error: parsed.error.issues[0]?.message ?? "Invalid input.", values };
   }
   const next = safeInternalRedirect(formData.get("redirect")) ?? "/";
 
@@ -144,7 +164,7 @@ export async function magicLinkAction(
     },
   });
   if (error) {
-    return { error: error.message };
+    return { error: error.message, values };
   }
   return { message: "Check your email for a secure sign-in link." };
 }

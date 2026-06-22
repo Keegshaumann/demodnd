@@ -35,6 +35,13 @@ export type OrderStatus =
   | "disputed";
 export type SubscriptionStatus = "active" | "cancelled" | "past_due";
 export type DisputeStatus = "open" | "resolved";
+export type OfferState =
+  | "pending"
+  | "countered"
+  | "accepted"
+  | "declined"
+  | "expired"
+  | "withdrawn";
 
 export interface Database {
   public: {
@@ -263,6 +270,10 @@ export interface Database {
           price_cents: number;
           year: number | null;
           status: ListingStatus;
+          featured: boolean;
+          condition_notes: string | null;
+          measurements: string | null;
+          inclusions: string[] | null;
           fee_rate_bps: number;
           auth_method: AuthMethod;
           created_at: string;
@@ -281,6 +292,10 @@ export interface Database {
           price_cents: number;
           year?: number | null;
           status?: ListingStatus;
+          featured?: boolean;
+          condition_notes?: string | null;
+          measurements?: string | null;
+          inclusions?: string[] | null;
           fee_rate_bps: number;
           auth_method: AuthMethod;
           created_at?: string;
@@ -299,6 +314,10 @@ export interface Database {
           price_cents?: number;
           year?: number | null;
           status?: ListingStatus;
+          featured?: boolean;
+          condition_notes?: string | null;
+          measurements?: string | null;
+          inclusions?: string[] | null;
           fee_rate_bps?: number;
           auth_method?: AuthMethod;
           created_at?: string;
@@ -356,6 +375,24 @@ export interface Database {
           category?: string | null;
           keywords?: string | null;
           max_price_cents?: number | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      saved_listings: {
+        Row: {
+          buyer_id: string;
+          listing_id: string;
+          created_at: string;
+        };
+        Insert: {
+          buyer_id: string;
+          listing_id: string;
+          created_at?: string;
+        };
+        Update: {
+          buyer_id?: string;
+          listing_id?: string;
           created_at?: string;
         };
         Relationships: [];
@@ -422,6 +459,8 @@ export interface Database {
           shipping_name: string;
           shipping_address: string;
           created_at: string;
+          offer_id: string | null;
+          amount_cents: number | null;
         };
         Insert: {
           m_payment_id: string;
@@ -430,6 +469,8 @@ export interface Database {
           shipping_name: string;
           shipping_address: string;
           created_at?: string;
+          offer_id?: string | null;
+          amount_cents?: number | null;
         };
         Update: {
           m_payment_id?: string;
@@ -438,6 +479,56 @@ export interface Database {
           shipping_name?: string;
           shipping_address?: string;
           created_at?: string;
+          offer_id?: string | null;
+          amount_cents?: number | null;
+        };
+        Relationships: [];
+      };
+      offers: {
+        Row: {
+          id: string;
+          listing_id: string;
+          buyer_id: string;
+          seller_id: string;
+          amount_cents: number;
+          counter_amount_cents: number | null;
+          agreed_amount_cents: number | null;
+          state: OfferState;
+          expires_at: string;
+          pay_deadline_at: string | null;
+          created_at: string;
+          countered_at: string | null;
+          decided_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          listing_id: string;
+          buyer_id: string;
+          seller_id: string;
+          amount_cents: number;
+          counter_amount_cents?: number | null;
+          agreed_amount_cents?: number | null;
+          state?: OfferState;
+          expires_at: string;
+          pay_deadline_at?: string | null;
+          created_at?: string;
+          countered_at?: string | null;
+          decided_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          listing_id?: string;
+          buyer_id?: string;
+          seller_id?: string;
+          amount_cents?: number;
+          counter_amount_cents?: number | null;
+          agreed_amount_cents?: number | null;
+          state?: OfferState;
+          expires_at?: string;
+          pay_deadline_at?: string | null;
+          created_at?: string;
+          countered_at?: string | null;
+          decided_at?: string | null;
         };
         Relationships: [];
       };
@@ -571,8 +662,40 @@ export interface Database {
           p_fee_rate_bps: number;
           p_shipping_name: string | null;
           p_shipping_address: string | null;
+          p_offer_id?: string | null;
+          p_agreed_cents?: number | null;
         };
         Returns: string;
+      };
+      search_listings_fuzzy: {
+        Args: {
+          p_q: string;
+          p_threshold?: number;
+          p_categories?: string[] | null;
+          p_brands?: string[] | null;
+          p_conditions?: string[] | null;
+          p_methods?: string[] | null;
+          p_min_cents?: number | null;
+          p_max_cents?: number | null;
+          p_seller_id?: string | null;
+          p_limit?: number;
+          p_offset?: number;
+        };
+        Returns: Database["public"]["Tables"]["listings"]["Row"][];
+      };
+      search_listings_fuzzy_count: {
+        Args: {
+          p_q: string;
+          p_threshold?: number;
+          p_categories?: string[] | null;
+          p_brands?: string[] | null;
+          p_conditions?: string[] | null;
+          p_methods?: string[] | null;
+          p_min_cents?: number | null;
+          p_max_cents?: number | null;
+          p_seller_id?: string | null;
+        };
+        Returns: number;
       };
     };
     Enums: Record<never, never>;
@@ -597,8 +720,10 @@ export type AuthSubmission = Tables<"auth_submissions">;
 export type Listing = Tables<"listings">;
 export type ListingImage = Tables<"listing_images">;
 export type Wishlist = Tables<"wishlists">;
+export type Saved = Tables<"saved_listings">;
 export type Order = Tables<"orders">;
 export type CheckoutIntent = Tables<"checkout_intents">;
+export type Offer = Tables<"offers">;
 export type Dispute = Tables<"disputes">;
 export type Review = Tables<"reviews">;
 export type Notification = Tables<"notifications">;

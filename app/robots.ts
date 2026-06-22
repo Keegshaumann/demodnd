@@ -7,8 +7,9 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: "*",
       allow: "/",
-      // Private/authenticated areas — and the seller dashboard sections, while
-      // keeping public seller profiles (/seller/[username]) crawlable.
+      // Private/authenticated areas — and the seller dashboard sections. Public
+      // seller profiles (/seller/[username]) are retired (they now 404 for buyer
+      // anonymity), so there is nothing crawlable left under /seller to allow.
       disallow: [
         "/admin",
         "/buyer",

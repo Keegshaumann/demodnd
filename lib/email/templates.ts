@@ -206,6 +206,30 @@ function escapeHtml(s: string): string {
     .replace(/'/g, "&#39;");
 }
 
+export function disputeRaisedAdminEmail(args: {
+  orderShortId: string;
+  brand: string;
+  title: string;
+  buyerEmail: string;
+  reason: string;
+  reviewUrl: string;
+}): string {
+  return layout({
+    heading: "New dispute raised",
+    bodyHtml: `
+      ${paragraph("A buyer has raised a dispute on a delivered order. Review it in the disputes queue.")}
+      <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;border-top:1px solid #EFEFEF;border-bottom:1px solid #EFEFEF;margin:8px 0 20px;">
+        ${detailRow("Order", `#${args.orderShortId}`)}
+        ${detailRow("Brand", args.brand)}
+        ${detailRow("Item", args.title)}
+        ${detailRow("Buyer", args.buyerEmail)}
+      </table>
+      <div style="background:#F8F8F8;border:1px solid #E5E5E5;border-radius:3px;padding:16px 18px;margin:0 0 20px;color:#1A1A1A;font-size:14px;line-height:1.7;white-space:pre-wrap;">${escapeHtml(args.reason)}</div>
+      ${button("Open the disputes queue", args.reviewUrl)}
+    `,
+  });
+}
+
 export function conciergeMessageEmail(args: {
   name: string;
   email: string;
@@ -223,6 +247,90 @@ export function conciergeMessageEmail(args: {
         ${detailRow("Reason", args.reason)}
       </table>
       <div style="background:#F8F8F8;border:1px solid #E5E5E5;border-radius:3px;padding:16px 18px;color:#1A1A1A;font-size:14px;line-height:1.7;white-space:pre-wrap;">${escapeHtml(args.message)}</div>
+    `,
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Offers (structured, Vestiaire-style) — additive, append-only.
+// ---------------------------------------------------------------------------
+
+/** Seller is notified that a buyer made an offer on one of their pieces. */
+export function newOfferSellerEmail(args: {
+  brand: string;
+  title: string;
+  offerAmountCents: number;
+  priceCents: number;
+  dashboardUrl: string;
+}): string {
+  return layout({
+    heading: "You have a new offer",
+    bodyHtml: `
+      ${paragraph(`A buyer has made an offer on <strong>${escapeHtml(args.title)}</strong>. You can accept it, counter, or decline from your dashboard — the buyer has 48 hours for a response.`)}
+      <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;border-top:1px solid #EFEFEF;border-bottom:1px solid #EFEFEF;margin:8px 0 24px;">
+        ${detailRow("Brand", args.brand)}
+        ${detailRow("Item", args.title)}
+        ${detailRow("List price", formatZar(args.priceCents))}
+        ${detailRow("Offer", formatZar(args.offerAmountCents))}
+      </table>
+      ${button("Review the offer", args.dashboardUrl)}
+    `,
+  });
+}
+
+/** Buyer is told the seller accepted their offer and has 24h to pay the agreed price. */
+export function offerAcceptedBuyerEmail(args: {
+  brand: string;
+  title: string;
+  agreedAmountCents: number;
+  payUrl: string;
+}): string {
+  return layout({
+    heading: "Your offer was accepted",
+    bodyHtml: `
+      ${paragraph(`Good news — the seller accepted your offer on <strong>${escapeHtml(args.title)}</strong>. The piece is yours to secure at the agreed price if you pay within <strong>24 hours</strong>; after that the offer lapses and others can still buy at the full price.`)}
+      <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;border-top:1px solid #EFEFEF;border-bottom:1px solid #EFEFEF;margin:8px 0 24px;">
+        ${detailRow("Brand", args.brand)}
+        ${detailRow("Item", args.title)}
+        ${detailRow("Agreed price", formatZar(args.agreedAmountCents))}
+      </table>
+      ${button("Pay within 24 hours", args.payUrl)}
+    `,
+  });
+}
+
+/** Buyer is told the seller countered their offer with a new asking price. */
+export function offerCounteredBuyerEmail(args: {
+  brand: string;
+  title: string;
+  counterAmountCents: number;
+  offerUrl: string;
+}): string {
+  return layout({
+    heading: "The seller countered your offer",
+    bodyHtml: `
+      ${paragraph(`The seller has countered your offer on <strong>${escapeHtml(args.title)}</strong>. You can accept the counter — securing the piece for 24 hours to pay — or let it lapse. The counter is open for <strong>48 hours</strong>.`)}
+      <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;border-top:1px solid #EFEFEF;border-bottom:1px solid #EFEFEF;margin:8px 0 24px;">
+        ${detailRow("Brand", args.brand)}
+        ${detailRow("Item", args.title)}
+        ${detailRow("Seller's counter", formatZar(args.counterAmountCents))}
+      </table>
+      ${button("View the counter", args.offerUrl)}
+    `,
+  });
+}
+
+/** Buyer is told their offer was declined. */
+export function offerDeclinedBuyerEmail(args: {
+  brand: string;
+  title: string;
+  offerUrl: string;
+}): string {
+  return layout({
+    heading: "Your offer wasn't accepted",
+    bodyHtml: `
+      ${paragraph(`The seller has declined your offer on <strong>${escapeHtml(args.title)}</strong>. The piece is still available at its listed price, and you're welcome to make a new offer.`)}
+      ${button("View the piece", args.offerUrl)}
     `,
   });
 }

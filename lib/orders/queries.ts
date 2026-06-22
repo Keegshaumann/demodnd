@@ -13,7 +13,13 @@ export interface BuyerOrderDetail {
     condition: string;
     imageUrl: string | null;
   };
-  sellerName: string | null;
+  /**
+   * ANON: buyer-facing seller identity is never exposed. Buyers see only the
+   * "Verified Seller" / D&D authentication guarantee — no name, username,
+   * rating or profile. Kept as an always-`null` field so existing buyer-order
+   * consumers compile while the UI removes the now-dead "Sold by" surface.
+   */
+  sellerName: null;
 }
 
 /**
@@ -49,12 +55,8 @@ export async function getOrderForBuyer(
     .limit(1)
     .maybeSingle();
 
-  const { data: sellerProfile } = await db
-    .from("seller_public_profiles")
-    .select("display_name, username")
-    .eq("user_id", order.seller_id)
-    .maybeSingle();
-
+  // ANON: no seller_public_profiles lookup — buyers never see seller identity.
+  // The D&D authentication/evaluation guarantee carries trust instead.
   return {
     order,
     item: {
@@ -65,7 +67,7 @@ export async function getOrderForBuyer(
       condition: listing?.condition ?? "",
       imageUrl: image?.url ?? null,
     },
-    sellerName: sellerProfile?.display_name ?? sellerProfile?.username ?? null,
+    sellerName: null,
   };
 }
 

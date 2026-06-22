@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { requireRole } from "@/lib/auth/guards";
 import { createClient } from "@/lib/supabase/server";
 import { getSellerProfile } from "@/lib/seller/profile";
@@ -17,17 +16,8 @@ export default async function SellerProfilePage() {
       <header className="mb-8">
         <p className="eyebrow mb-3">Account</p>
         <h1 className="font-serif text-[34px]">Profile &amp; banking</h1>
-        {profile?.username && (
-          <p className="mt-2 text-sm text-ink-muted">
-            Your public page:{" "}
-            <Link
-              href={`/seller/${profile.username}`}
-              className="text-gold hover:underline"
-            >
-              /seller/{profile.username}
-            </Link>
-          </p>
-        )}
+        {/* ANON: public seller profiles are retired — buyers never see seller
+            identity, so there is no public page to link to here. */}
       </header>
 
       <ProfileForm

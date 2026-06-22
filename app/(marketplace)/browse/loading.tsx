@@ -10,29 +10,18 @@ export default function BrowseLoading() {
           <Skeleton className="h-4 w-1/2 max-w-lg" />
         </div>
       </header>
-      <div className="dnd-container">
-        <div className="grid grid-cols-1 items-start gap-10 py-12 lg:grid-cols-[270px_1fr] lg:gap-14 lg:py-14">
-          <aside className="hidden space-y-8 lg:block">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="space-y-3">
-                <Skeleton className="h-3 w-24" />
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-5/6" />
-                <Skeleton className="h-4 w-2/3" />
-              </div>
-            ))}
-          </aside>
-          <main className="min-w-0">
-            <div className="mb-9 flex items-center justify-between border-b border-border-soft pb-5">
-              <Skeleton className="h-4 w-20" />
-              <Skeleton className="h-9 w-48" />
-            </div>
-            <ListingGridSkeleton
-              count={6}
-              className="grid grid-cols-1 gap-9 sm:grid-cols-2 xl:grid-cols-3"
-            />
-          </main>
+      <div className="dnd-container py-12 lg:py-14">
+        {/* Horizontal filter bar skeleton (matches the new top-aligned facets) */}
+        <div className="mb-9 flex flex-wrap items-center gap-3 border-b border-border-soft pb-5">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Skeleton key={i} className="h-9 w-32" />
+          ))}
+          <Skeleton className="ml-auto h-9 w-48" />
         </div>
+        <ListingGridSkeleton
+          count={9}
+          className="grid grid-cols-1 gap-9 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+        />
       </div>
     </>
   );

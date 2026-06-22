@@ -20,11 +20,11 @@ export function FaqAccordion({ items }: { items: FaqItem[] }) {
               type="button"
               onClick={() => setOpen(isOpen ? null : i)}
               aria-expanded={isOpen}
-              className="flex w-full items-center justify-between gap-4 py-5 text-left font-serif text-[19px] text-ink"
+              className="flex w-full items-start justify-between gap-4 py-5 text-left font-serif text-[19px] text-ink"
             >
               {item.q}
               <span
-                className={`flex-shrink-0 text-xl text-gold transition-transform ${isOpen ? "rotate-45" : ""}`}
+                className={`mt-0.5 flex-shrink-0 text-xl text-gold transition-transform ${isOpen ? "rotate-45" : ""}`}
                 aria-hidden
               >
                 +

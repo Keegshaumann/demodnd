@@ -18,6 +18,7 @@ export interface PayfastItn {
   custom_str1?: string; // listing_id
   custom_str2?: string; // buyer_id
   custom_str3?: string; // seller_id
+  custom_str4?: string; // offer_id (accepted-offer checkout); blank for full-price
   name_first?: string;
   name_last?: string;
   [key: string]: string | undefined;
@@ -54,36 +55,74 @@ export async function fulfillPayfastPayment(itn: PayfastItn): Promise<void> {
   }
 
   const grossCents = Math.round(parseFloat(itn.amount_gross) * 100);
+  // Commission/payout are computed from the ACTUAL charged amount (grossCents),
+  // so an agreed-offer order is automatically split on the agreed price — no
+  // special-casing needed here. The RPC re-validates that grossCents matches the
+  // expected price (agreed amount for an offer, else the listing price).
   const { commissionCents, sellerPayoutCents } = splitCommission(
     grossCents,
     listing.fee_rate_bps,
   );
 
   // Delivery address captured in-app at checkout (PayFast doesn't collect one),
-  // keyed by m_payment_id. Fall back to the PayFast payer name if it's missing.
+  // keyed by m_payment_id. The intent also carries the accepted-offer link +
+  // frozen agreed amount (null for full-price checkouts), so the RPC can
+  // re-validate the offer under the row lock. Fall back to the PayFast payer
+  // name if the shipping name is missing.
   const { data: intent } = await db
     .from("checkout_intents")
-    .select("shipping_name, shipping_address")
+    .select("shipping_name, shipping_address, offer_id, amount_cents")
     .eq("m_payment_id", reference)
-    .maybeSingle();
+    .maybeSingle<{
+      shipping_name: string | null;
+      shipping_address: string | null;
+      offer_id: string | null;
+      amount_cents: number | null;
+    }>();
   const payerName =
     [itn.name_first, itn.name_last].filter(Boolean).join(" ") || null;
 
-  // Atomic: idempotency + amount check + active->sold claim + order insert.
-  const { data: outcome, error: rpcError } = await db.rpc(
-    "fulfill_payfast_order",
-    {
-      p_gateway_reference: reference,
-      p_listing_id: listing.id,
-      p_buyer_id: buyerId,
-      p_gross_cents: grossCents,
-      p_commission_cents: commissionCents,
-      p_payout_cents: sellerPayoutCents,
-      p_fee_rate_bps: listing.fee_rate_bps,
-      p_shipping_name: intent?.shipping_name ?? payerName,
-      p_shipping_address: intent?.shipping_address ?? null,
-    },
-  );
+  // Bind the agreed-offer payment to its offer. offer_id + amount_cents are
+  // written ATOMICALLY into the intent by the checkout action, so they are the
+  // authoritative pair (an offer id without its frozen agreed amount, or vice
+  // versa, would mislead the RPC's coalesce-based price check). custom_str4 (the
+  // offer id PayFast echoes back) must AGREE with the intent — if it doesn't, the
+  // ITN was tampered with, so we refuse the offer-priced path and fall through to
+  // the full-price anti-tamper check (which will reject a below-list amount).
+  const intentOfferId = intent?.offer_id ?? null;
+  const itnOfferId = itn.custom_str4 || null;
+  const offerBindingConsistent =
+    intentOfferId == null || itnOfferId == null || intentOfferId === itnOfferId;
+  const offerId = offerBindingConsistent ? intentOfferId : null;
+  const agreedCents = offerId != null ? (intent?.amount_cents ?? null) : null;
+  if (!offerBindingConsistent) {
+    console.error(
+      "payfast fulfil: offer id mismatch intent vs ITN — ignoring offer price",
+      reference,
+      intentOfferId,
+      itnOfferId,
+    );
+  }
+
+  // Atomic: idempotency + amount/offer check + active->sold claim + order insert.
+  // p_offer_id/p_agreed_cents default to null on the widened RPC, so the
+  // full-price path is unchanged. When p_offer_id is set the RPC re-validates the
+  // offer (buyer, listing, state='accepted', unexpired pay window, agreed==gross)
+  // under the row lock and refuses 'amount_mismatch' otherwise — the DB itself
+  // blocks a mispriced or hijacked offer order.
+  const { data: outcome, error: rpcError } = await db.rpc("fulfill_payfast_order", {
+    p_gateway_reference: reference,
+    p_listing_id: listing.id,
+    p_buyer_id: buyerId,
+    p_gross_cents: grossCents,
+    p_commission_cents: commissionCents,
+    p_payout_cents: sellerPayoutCents,
+    p_fee_rate_bps: listing.fee_rate_bps,
+    p_shipping_name: intent?.shipping_name ?? payerName,
+    p_shipping_address: intent?.shipping_address ?? null,
+    p_offer_id: offerId,
+    p_agreed_cents: agreedCents,
+  });
 
   if (rpcError) {
     // Transient/unexpected DB error — nothing committed (atomic). Re-raise so the

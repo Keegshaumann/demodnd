@@ -4,9 +4,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireRole } from "@/lib/auth/guards";
 import { getOrderForBuyer } from "@/lib/orders/queries";
+import { getDisputeForOrder } from "@/lib/disputes/queries";
+import { disputeWindowEndsAt } from "@/lib/disputes/window";
 import { formatZar } from "@/lib/money";
 import { categoryLabel } from "@/lib/marketplace/constants";
 import { ConfirmReceiptButton } from "@/components/buyer/ConfirmReceiptButton";
+import { RaiseDisputeForm } from "@/components/buyer/RaiseDisputeForm";
 import {
   CertificateIcon,
   ChevronRightIcon,
@@ -24,6 +27,16 @@ function fmtDate(iso: string | null): string {
     day: "numeric",
     month: "long",
     year: "numeric",
+  });
+}
+
+function fmtDateTime(d: Date): string {
+  return d.toLocaleString("en-ZA", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   });
 }
 
@@ -55,9 +68,18 @@ export default async function OrderDetailPage({
   const detail = await getOrderForBuyer(id, user.id);
   if (!detail) notFound();
 
-  const { order, item, sellerName } = detail;
+  const { order, item } = detail;
   const paidDone = !!order.paid_at;
   const deliveredDone = !!order.delivered_at;
+
+  // Dispute context for the help card. RLS only returns disputes this buyer
+  // raised — a seller-raised dispute falls back to the generic status branch.
+  const dispute = await getDisputeForOrder(order.id);
+  const windowEnd = order.delivered_at
+    ? disputeWindowEndsAt(order.delivered_at)
+    : null;
+  const withinWindow = !!windowEnd && Date.now() <= windowEnd.getTime();
+  const canRaise = order.status === "delivered" && withinWindow && !dispute;
 
   return (
     <div className="dnd-container py-12">
@@ -125,11 +147,11 @@ export default async function OrderDetailPage({
                 {categoryLabel(item.category)}
                 {item.condition && ` · ${item.condition}`}
               </div>
-              {sellerName && (
-                <div className="mt-2 text-[12.5px] text-ink-muted">
-                  Sold by {sellerName}
-                </div>
-              )}
+              {/* ANON: buyers never see seller identity — the D&D
+                  authentication/evaluation guarantee carries trust instead. */}
+              <div className="mt-2 text-[12.5px] text-ink-muted">
+                Sold by a Verified Seller via D&amp;D Luxury
+              </div>
             </div>
           </div>
 
@@ -211,13 +233,104 @@ export default async function OrderDetailPage({
             <h3 className="mb-2 flex items-center gap-2 font-serif text-xl">
               <ClockIcon width={16} height={16} className="text-gold" /> Need help?
             </h3>
-            <p className="mb-4 text-[13px] text-ink-muted">
-              Something wrong with your order? D&amp;D Luxury handles every issue
-              personally — including refunds where warranted.
-            </p>
-            <Link href="/concierge" className="btn btn-outline btn-sm btn-block">
-              Report a problem
-            </Link>
+            {dispute ? (
+              <>
+                <div className="rounded-[3px] border border-border-soft bg-bg p-3">
+                  {dispute.status === "resolved" ? (
+                    <>
+                      <div className="text-[10px] uppercase tracking-[0.16em] text-ink-dim">
+                        Resolution
+                      </div>
+                      <p className="mt-1 text-[13px] text-ink">
+                        {dispute.resolution ??
+                          "Our team has resolved this dispute."}
+                      </p>
+                      <p className="mt-1 text-[11px] text-ink-dim">
+                        Resolved {fmtDate(dispute.resolved_at)}
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <div className="text-[10px] uppercase tracking-[0.16em] text-ink-dim">
+                        Dispute open
+                      </div>
+                      <p className="mt-1 text-[13px] text-ink-muted">
+                        Raised {fmtDate(dispute.created_at)}. Our team is
+                        reviewing and will be in touch.
+                      </p>
+                    </>
+                  )}
+                </div>
+                <div className="mt-4">
+                  <Link
+                    href="/concierge"
+                    className="btn btn-outline btn-sm btn-block"
+                  >
+                    Speak to our concierge
+                  </Link>
+                </div>
+              </>
+            ) : order.status === "disputed" ? (
+              <>
+                <p className="mb-4 text-[13px] text-ink-muted">
+                  This order is in dispute. Our team is reviewing.
+                </p>
+                <Link
+                  href="/concierge"
+                  className="btn btn-outline btn-sm btn-block"
+                >
+                  Speak to our concierge
+                </Link>
+              </>
+            ) : canRaise && windowEnd ? (
+              <>
+                <p className="mb-3 text-[13px] text-ink-muted">
+                  Something wrong with your order? D&amp;D Luxury handles every
+                  issue personally — including refunds where warranted.
+                </p>
+                <p className="mb-4 text-[13px] text-ink-muted">
+                  You can raise a dispute within 48 hours of delivery — until{" "}
+                  {fmtDateTime(windowEnd)}.
+                </p>
+                <RaiseDisputeForm
+                  orderId={order.id}
+                  deadlineLabel={fmtDateTime(windowEnd)}
+                />
+                <p className="mt-3 text-center text-[12px] text-ink-dim">
+                  or{" "}
+                  <Link href="/concierge" className="hover:text-ink">
+                    speak to our concierge
+                  </Link>
+                </p>
+              </>
+            ) : order.status === "delivered" ? (
+              <>
+                <p className="mb-4 text-[13px] text-ink-muted">
+                  The 48-hour dispute window for this order closed
+                  {windowEnd ? ` on ${fmtDateTime(windowEnd)}` : ""}. Our
+                  concierge can still help with anything.
+                </p>
+                <Link
+                  href="/concierge"
+                  className="btn btn-outline btn-sm btn-block"
+                >
+                  Report a problem
+                </Link>
+              </>
+            ) : (
+              <>
+                <p className="mb-4 text-[13px] text-ink-muted">
+                  Something wrong with your order? D&amp;D Luxury handles every
+                  issue personally — including refunds where warranted.
+                </p>
+                <Link
+                  href="/concierge"
+                  className="btn btn-outline btn-sm btn-block"
+                >
+                  Report a problem
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </div>

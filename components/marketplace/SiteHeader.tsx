@@ -95,7 +95,7 @@ export function SiteHeader({ user = null }: { user?: NavUser | null }) {
           <button
             type="submit"
             aria-label="Search"
-            className="flex-shrink-0 px-3 py-2.5 text-ink-dim transition-colors hover:text-gold"
+            className="flex flex-shrink-0 items-center self-stretch px-3 py-2.5 text-ink-dim transition-colors hover:text-gold"
           >
             <SearchIcon width={16} height={16} />
           </button>

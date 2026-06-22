@@ -117,6 +117,11 @@ export default async function AdminListingsPage({
                     >
                       {l.status}
                     </span>
+                    {l.featured && (
+                      <span className="rounded-full border border-gold px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-[0.14em] text-gold">
+                        Featured
+                      </span>
+                    )}
                   </div>
                   <Link
                     href={`/listing/${l.id}`}
@@ -130,7 +135,12 @@ export default async function AdminListingsPage({
                   </div>
                 </div>
               </div>
-              <ListingActions id={l.id} status={l.status} priceCents={l.priceCents} />
+              <ListingActions
+                id={l.id}
+                status={l.status}
+                featured={l.featured}
+                priceCents={l.priceCents}
+              />
             </article>
           ))}
         </div>

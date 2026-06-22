@@ -58,6 +58,7 @@ export function BrowseToolbar() {
         className="field-input w-auto py-2.5 text-[13px]"
       >
         <option value="featured">Sort: Featured</option>
+        <option value="newest">Sort: Newest</option>
         <option value="price-asc">Price: low to high</option>
         <option value="price-desc">Price: high to low</option>
       </select>
