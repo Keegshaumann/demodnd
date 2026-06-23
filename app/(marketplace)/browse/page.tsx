@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { getActiveListingsPage, type BrowseFilters } from "@/lib/marketplace/listings";
 import { ListingCard } from "@/components/marketplace/ListingCard";
+import { QuickViewProvider } from "@/components/marketplace/QuickViewProvider";
+import { QuickViewModal } from "@/components/marketplace/QuickViewModal";
+import { NewInLink } from "@/components/marketplace/NewInLink";
 import {
   BrowseFilterBar,
   BrowseFilterDrawer,
@@ -12,6 +15,9 @@ import { SaveSearchButton } from "@/components/marketplace/SaveSearchButton";
 import { Pagination } from "@/components/marketplace/Pagination";
 import { Reveal } from "@/components/ui/Reveal";
 import { ChevronRightIcon, SearchIcon, ArrowRightIcon } from "@/components/ui/icons";
+import { getCurrentUser } from "@/lib/auth/guards";
+import { getSavedListingIds } from "@/lib/marketplace/saved";
+import { getSaveCounts } from "@/lib/marketplace/social";
 import type { AuthMethod } from "@/lib/supabase/database.types";
 
 export const metadata: Metadata = {
@@ -70,13 +76,30 @@ export default async function BrowsePage({
 
   const page = Math.max(1, Number(first(params.page)) || 1);
   const PAGE_SIZE = 24;
-  const {
-    items: listings,
-    total,
-    totalPages,
-    isFuzzyFallback,
-    query,
-  } = await getActiveListingsPage(filters, page, PAGE_SIZE);
+  const [
+    {
+      items: listings,
+      total,
+      totalPages,
+      isFuzzyFallback,
+      query,
+    },
+    user,
+  ] = await Promise.all([
+    getActiveListingsPage(filters, page, PAGE_SIZE),
+    getCurrentUser(),
+  ]);
+
+  // Hydrate per-card saved-state (mirrors the homepage / PDP) so the grid cards
+  // — and the QuickView modal opened from them — show the correct favourite
+  // state. Empty Set for guests. Save counts (a global, RLS-bypassing aggregate)
+  // back the "Trending" badge on cards that clear the threshold; view counts are
+  // skipped here since ListingCardData doesn't carry view_count (passing it would
+  // mean touching lib/marketplace/listings.ts, owned by no lane).
+  const [savedIds, saveCounts] = await Promise.all([
+    getSavedListingIds(user?.id ?? null),
+    getSaveCounts(listings.map((l) => l.id)),
+  ]);
 
   // Build page hrefs that preserve the active filters (everything but `page`).
   const baseQs = new URLSearchParams();
@@ -134,6 +157,9 @@ export default async function BrowsePage({
               </div>
               <SaveSearchButton />
             </div>
+            {/* Prominent New In entry point (feature 13) — links into the
+                existing newest-first sort so new arrivals reuse this grid. */}
+            <NewInLink />
           </div>
 
           <ActiveFilterChips />
@@ -167,13 +193,27 @@ export default async function BrowsePage({
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-1 gap-x-7 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {listings.map((l, i) => (
-                  <Reveal key={l.id} delay={Math.min(i, 6) * 45}>
-                    <ListingCard listing={l} priority={i < 3} />
-                  </Reveal>
-                ))}
-              </div>
+              {/* QuickViewProvider holds the open-listing state; cards in the
+                  grid open it via their own Quick-view trigger (feature 12). The
+                  modal lives inside the provider so the context is in scope. The
+                  card passes its own ListingCardData + isSaved to openQuickView,
+                  so the modal's FavouriteButton hydrates with the right state —
+                  hence saved-state is fetched on this page. */}
+              <QuickViewProvider>
+                <div className="grid grid-cols-1 gap-x-7 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                  {listings.map((l, i) => (
+                    <Reveal key={l.id} delay={Math.min(i, 6) * 45}>
+                      <ListingCard
+                        listing={l}
+                        priority={i < 3}
+                        isSaved={savedIds.has(l.id)}
+                        saveCount={saveCounts.get(l.id) ?? 0}
+                      />
+                    </Reveal>
+                  ))}
+                </div>
+                <QuickViewModal />
+              </QuickViewProvider>
               <Pagination page={page} totalPages={totalPages} hrefFor={hrefFor} />
             </>
           )}

@@ -7,6 +7,7 @@ import {
   relistListingAction,
   setListingFeaturedAction,
   setListingPriceAction,
+  setListingRetailAction,
   deleteListingAction,
   type AdminListingActionResult,
 } from "@/lib/admin/listings";
@@ -18,18 +19,24 @@ export function ListingActions({
   status,
   featured,
   priceCents,
+  retailPriceCents = null,
 }: {
   id: string;
   status: ListingStatus;
   featured: boolean;
   priceCents: number;
+  retailPriceCents?: number | null;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
+  const [editingRetail, setEditingRetail] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [rands, setRands] = useState(String(Math.round(priceCents / 100)));
+  const [retailRands, setRetailRands] = useState(
+    retailPriceCents !== null ? String(Math.round(retailPriceCents / 100)) : "",
+  );
 
   function run(fn: () => Promise<AdminListingActionResult>) {
     setError(null);
@@ -38,6 +45,7 @@ export function ListingActions({
       if (!res.ok) setError(res.error);
       else {
         setEditing(false);
+        setEditingRetail(false);
         setConfirmDelete(false);
         router.refresh();
       }
@@ -85,6 +93,75 @@ export function ListingActions({
             className="btn btn-outline btn-sm"
           >
             Edit price
+          </button>
+        )}
+
+        {/* Retail (resale anchor) — optional original MSRP. An empty input
+            clears it; "Clear" sets it to none directly. */}
+        {editingRetail ? (
+          <span className="inline-flex items-center gap-1.5">
+            <span className="text-[12px] text-ink-dim">R</span>
+            <input
+              type="number"
+              inputMode="numeric"
+              placeholder="none"
+              value={retailRands}
+              onChange={(e) => setRetailRands(e.target.value)}
+              className="field-input w-28 py-1.5 text-[13px]"
+            />
+            <button
+              type="button"
+              disabled={pending}
+              onClick={() =>
+                run(() =>
+                  setListingRetailAction(
+                    id,
+                    retailRands.trim() === ""
+                      ? null
+                      : randsToCents(Number(retailRands)),
+                  ),
+                )
+              }
+              className="btn btn-primary btn-sm"
+            >
+              Save
+            </button>
+            {retailPriceCents !== null ? (
+              <button
+                type="button"
+                disabled={pending}
+                onClick={() => run(() => setListingRetailAction(id, null))}
+                className="btn btn-outline btn-sm"
+              >
+                Clear
+              </button>
+            ) : null}
+            <button
+              type="button"
+              disabled={pending}
+              onClick={() => {
+                setRetailRands(
+                  retailPriceCents !== null
+                    ? String(Math.round(retailPriceCents / 100))
+                    : "",
+                );
+                setEditingRetail(false);
+              }}
+              className="btn btn-outline btn-sm"
+            >
+              Cancel
+            </button>
+          </span>
+        ) : (
+          <button
+            type="button"
+            disabled={pending}
+            onClick={() => setEditingRetail(true)}
+            className="btn btn-outline btn-sm"
+          >
+            {retailPriceCents !== null
+              ? `Edit retail (R ${Math.round(retailPriceCents / 100)})`
+              : "Edit retail"}
           </button>
         )}
 

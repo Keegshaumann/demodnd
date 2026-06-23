@@ -140,6 +140,7 @@ export default async function AdminListingsPage({
                 status={l.status}
                 featured={l.featured}
                 priceCents={l.priceCents}
+                retailPriceCents={l.retailPriceCents}
               />
             </article>
           ))}

@@ -60,6 +60,7 @@ export function SubmissionWizard({ userId }: { userId: string }) {
   const [model, setModel] = useState("");
   const [condition, setCondition] = useState<string>(CONDITIONS[0]);
   const [priceRands, setPriceRands] = useState("");
+  const [retailRands, setRetailRands] = useState("");
   const [year, setYear] = useState("");
   const [description, setDescription] = useState("");
 
@@ -215,6 +216,9 @@ export function SubmissionWizard({ userId }: { userId: string }) {
       description: description.trim(),
       condition,
       priceCents: Math.round(Number(priceRands) * 100),
+      retailPriceCents: retailRands.trim()
+        ? Math.round(Number(retailRands) * 100)
+        : undefined,
       year: year ? Number(year) : null,
       method,
       photoPaths: photos.filter((p) => !p.error && p.url).map((p) => p.path),
@@ -445,6 +449,19 @@ export function SubmissionWizard({ userId }: { userId: string }) {
                   </div>
                 )}
               </div>
+            </Field>
+            <Field label="Original retail (R)" full>
+              <input
+                type="number"
+                className="field-input"
+                value={retailRands}
+                onChange={(e) => setRetailRands(e.target.value)}
+                placeholder="e.g. 420000"
+                min={0}
+              />
+              <p className="mt-1.5 text-[12px] text-ink-dim">
+                What it cost new — shown as a discount on your listing. Optional.
+              </p>
             </Field>
             <Field label="Description" full>
               <textarea

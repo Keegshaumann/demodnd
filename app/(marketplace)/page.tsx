@@ -3,8 +3,15 @@ import Image from "next/image";
 import { CategoryRail } from "@/components/marketplace/CategoryRail";
 import { HeroSearch } from "@/components/marketplace/HeroSearch";
 import { ListingCard } from "@/components/marketplace/ListingCard";
+import { CollectionRail } from "@/components/marketplace/CollectionRail";
+import { SoldRail } from "@/components/marketplace/SoldRail";
+import { RecentlyViewedRail } from "@/components/marketplace/RecentlyViewedRail";
 import { Reveal } from "@/components/ui/Reveal";
 import { getActiveListingsPage } from "@/lib/marketplace/listings";
+import {
+  CURATED_COLLECTIONS,
+  getCollectionPreview,
+} from "@/lib/marketplace/collections";
 import { getCurrentUser } from "@/lib/auth/guards";
 import { getSavedListingIds } from "@/lib/marketplace/saved";
 import {
@@ -75,14 +82,25 @@ const STEPS = [
 ];
 
 export default async function HomePage() {
-  // Featured-first, newest after — fetch exactly the 8 cards the grid shows.
-  // getCurrentUser is React-cache'd, so hydrating per-card saved-state costs one
-  // cheap saved_listings read (empty Set for guests).
-  const [{ items: latest }, user] = await Promise.all([
-    getActiveListingsPage({ sort: "featured" }, 1, 8),
+  // A dedicated NEW IN (newest-first) grid (feature 13) + curated-collection
+  // previews (feature 10). All fetched in parallel; getCurrentUser is
+  // React-cache'd, so hydrating per-card saved-state costs one cheap
+  // saved_listings read (empty Set for guests).
+  const [{ items: newIn }, collectionItems, user] = await Promise.all([
+    getActiveListingsPage({ sort: "newest" }, 1, 8),
+    Promise.all(
+      CURATED_COLLECTIONS.map((c) => getCollectionPreview(c.filter, 4)),
+    ),
     getCurrentUser(),
   ]);
   const savedIds = await getSavedListingIds(user?.id ?? null);
+
+  // Only render an edit's rail when its preview returned stock — pair each
+  // collection with its (possibly empty) preview slice.
+  const collections = CURATED_COLLECTIONS.map((c, i) => ({
+    config: c,
+    items: collectionItems[i] ?? [],
+  })).filter((c) => c.items.length > 0);
 
   return (
     <>
@@ -209,23 +227,30 @@ export default async function HomePage() {
       {/* Category rail */}
       <CategoryRail />
 
-      {/* Latest pieces */}
-      {latest.length > 0 && (
+      {/* NEW IN (feature 13) — the prior "Latest pieces" grid, now an explicit
+          newest-first New In view with a prominent "/browse?sort=newest" entry
+          point. Featured-first hero grid logic is preserved; we simply show the
+          newest-first set here under the New In banner the brief calls for. */}
+      {newIn.length > 0 && (
         <section className="border-t border-border-soft" style={{ padding: "80px 0 100px" }}>
           <div className="dnd-container">
             <div className="mb-12 flex flex-wrap items-end justify-between gap-4">
               <div>
                 <div className="eyebrow mb-3">New in</div>
                 <h2 className="font-serif" style={{ fontSize: "clamp(28px,3.4vw,40px)" }}>
-                  Latest pieces.
+                  New this week.
                 </h2>
+                <p className="mt-3 max-w-[520px] text-pretty text-[14px] leading-relaxed text-ink-muted">
+                  The latest pieces to clear authentication and go live — freshest
+                  first.
+                </p>
               </div>
-              <Link href="/browse" className="btn btn-outline btn-sm">
-                View all <ArrowRightIcon width={16} height={16} />
+              <Link href="/browse?sort=newest" className="btn btn-outline btn-sm shrink-0">
+                See all new in <ArrowRightIcon width={16} height={16} />
               </Link>
             </div>
             <div className="grid grid-cols-1 gap-9 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {latest.map((l, i) => (
+              {newIn.map((l, i) => (
                 <Reveal key={l.id} delay={Math.min(i, 7) * 55}>
                   <ListingCard listing={l} isSaved={savedIds.has(l.id)} />
                 </Reveal>
@@ -234,6 +259,28 @@ export default async function HomePage() {
           </div>
         </section>
       )}
+
+      {/* CURATED COLLECTIONS / EDITS (feature 10) — config-driven titled rails,
+          each linking into /browse with its filter params. Empty edits are
+          already filtered out above, so every rail here has stock. */}
+      {collections.map(({ config, items }) => (
+        <CollectionRail
+          key={config.key}
+          title={config.title}
+          eyebrow={config.eyebrow}
+          href={config.href}
+          items={items}
+          savedIds={savedIds}
+        />
+      ))}
+
+      {/* RECENTLY VIEWED (feature 9) — client rail, hidden until the visitor's
+          localStorage history resolves at least one still-available piece. */}
+      <RecentlyViewedRail />
+
+      {/* RECENTLY SOLD (feature 6) — social proof that pieces move. Self-fetches
+          and hides itself when nothing has sold yet. */}
+      <SoldRail />
 
       {/* The D&D standard — deliberate onyx editorial band */}
       <section className="bg-onyx text-white" style={{ padding: "92px 0 96px" }}>

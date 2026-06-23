@@ -8,6 +8,9 @@ import {
 } from "@/lib/marketplace/constants";
 import { CertificateIcon, ArrowRightIcon } from "@/components/ui/icons";
 import { FavouriteButton } from "@/components/marketplace/FavouriteButton";
+import { QuickViewTrigger } from "@/components/marketplace/QuickViewProvider";
+import { isJustListed, isTrending } from "@/lib/marketplace/badges";
+import { retailDiscount } from "@/lib/marketplace/pricing";
 import type { ListingCardData } from "@/lib/marketplace/listings";
 
 /**
@@ -21,17 +24,43 @@ import type { ListingCardData } from "@/lib/marketplace/listings";
  * <Link>; the button stops propagation so a save never navigates). A `sold`
  * piece dims the photo, swaps the hover "View piece" affordance for a
  * monochrome "Sold" status pill, and is otherwise still a working link.
+ *
+ * `createdAt` / `saveCount` / `viewCount` are OPTIONAL merchandising inputs —
+ * passed by pages that have them to surface a single "Trending" (wins) or "Just
+ * listed" pill at the bottom-left of the photo. Absent → no badge, so every
+ * existing call site (which has none of these) renders exactly as before and
+ * lib/marketplace/listings.ts stays untouched. When a {@link QuickViewProvider}
+ * is mounted above the card, a "Quick view" affordance appears top-right and
+ * opens the preview modal instead of navigating; with no provider it renders
+ * nothing.
  */
 export function ListingCard({
   listing,
   priority = false,
   isSaved = false,
+  createdAt,
+  saveCount,
+  viewCount,
 }: {
   listing: ListingCardData;
   priority?: boolean;
   isSaved?: boolean;
+  createdAt?: string;
+  saveCount?: number;
+  viewCount?: number;
 }) {
   const sold = listing.status === "sold";
+
+  // Merchandising badge: never on sold cards, never both at once (Trending
+  // wins). Inputs are optional, so a card with none simply shows no badge.
+  const trending = !sold && isTrending({ saveCount, viewCount });
+  const justListed = !sold && !trending && isJustListed(createdAt);
+  const badgeLabel = trending ? "Trending" : justListed ? "Just listed" : null;
+
+  // Retail / resale-value anchor: non-null only when an original-retail price
+  // is present AND strictly higher than the asking price. When null, the price
+  // footer renders exactly as before (just the asking price).
+  const discount = retailDiscount(listing.priceCents, listing.retailCents);
 
   return (
     <Link
@@ -70,6 +99,18 @@ export function ListingCard({
           isSavedInitial={isSaved}
           variant="card"
         />
+
+        {/* Quick-view affordance — renders only when a QuickViewProvider is in
+            the tree (browse grid); a client island so the card stays an RSC. */}
+        <QuickViewTrigger listing={listing} isSaved={isSaved} />
+
+        {/* Merchandising badge (bottom-left). Suppressed on sold cards, where the
+            "Sold" status pill owns that slot. */}
+        {badgeLabel && (
+          <span className="pill pill-glass absolute bottom-4 left-4 z-[1]">
+            {badgeLabel}
+          </span>
+        )}
 
         {sold ? (
           /* Sold pieces can still be opened (provenance, "similar" rails) but
@@ -113,9 +154,21 @@ export function ListingCard({
           )}
         </div>
         <div className="flex items-end justify-between gap-3 border-t border-border-soft pt-[18px]">
-          <div className="price text-[23px] leading-none">
-            {formatZar(listing.priceCents)}
+          <div className="flex flex-col gap-1">
+            <div className="price text-[23px] leading-none">
+              {formatZar(listing.priceCents)}
+            </div>
+            {discount && (
+              <div className="text-[12px] leading-none tracking-wide text-ink-dim line-through">
+                {formatZar(discount.retailCents)}
+              </div>
+            )}
           </div>
+          {discount && (
+            <span className="inline-flex shrink-0 items-center rounded-full border border-border bg-card px-2.5 py-1 text-[9.5px] font-medium uppercase tracking-[0.16em] text-ink-dim">
+              {discount.pct}% below retail
+            </span>
+          )}
         </div>
       </div>
     </Link>

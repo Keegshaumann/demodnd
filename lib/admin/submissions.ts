@@ -121,6 +121,7 @@ export async function approveSubmissionAction(
       description: sub.description,
       condition: sub.condition,
       price_cents: sub.asking_price_cents,
+      retail_price_cents: sub.retail_price_cents,
       year: sub.year,
       status: "active",
       fee_rate_bps: feeBps,
@@ -173,6 +174,16 @@ export async function approveSubmissionAction(
     await notifyWishlistMatches(listing.id);
   } catch (err) {
     console.error("approve: wishlist match failed", err);
+  }
+
+  // Brand-follow fan-out: notify buyers who follow this brand that a new piece
+  // by it just went live. Independent of the wishlist fan-out above — a failure
+  // in one must not block the other.
+  try {
+    const { notifyBrandFollowers } = await import("@/lib/notifications/brand-follow");
+    await notifyBrandFollowers(listing.id);
+  } catch (err) {
+    console.error("approve: brand-follow notify failed", err);
   }
 
   revalidatePath("/admin/submissions");

@@ -8,20 +8,6 @@ import { ensureSellerProfile } from "@/lib/seller/profile";
 
 export type SellerActionResult = { ok: true } | { ok: false; error: string };
 
-/** Confirm the listing belongs to the current seller; returns its id or null. */
-async function ownListing(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  listingId: string,
-  sellerId: string,
-): Promise<boolean> {
-  const { data } = await supabase
-    .from("listings")
-    .select("seller_id")
-    .eq("id", listingId)
-    .maybeSingle();
-  return data?.seller_id === sellerId;
-}
-
 // ---------------------------------------------------------------------------
 // Edit listing price
 // ---------------------------------------------------------------------------
@@ -40,15 +26,36 @@ export async function updateListingPriceAction(
   }
 
   const supabase = await createClient();
-  if (!(await ownListing(supabase, listingId, user.id))) {
+  // Read the owner + current price in one go: confirm ownership AND capture the
+  // pre-edit price so we can detect a genuine drop after the update.
+  const { data: existing } = await supabase
+    .from("listings")
+    .select("seller_id, price_cents")
+    .eq("id", listingId)
+    .maybeSingle();
+  if (!existing || existing.seller_id !== user.id) {
     return { ok: false, error: "Listing not found." };
   }
+  const oldCents = existing.price_cents;
+  const newCents = Math.round(parsed.data * 100);
 
   const { error } = await supabase
     .from("listings")
-    .update({ price_cents: Math.round(parsed.data * 100) })
+    .update({ price_cents: newCents })
     .eq("id", listingId);
   if (error) return { ok: false, error: "Could not update the price." };
+
+  // Price-drop alerts: notify buyers who saved this piece on a genuine decrease.
+  // Dynamic import keeps the server-only notification module out of this action's
+  // static graph (same pattern as approveSubmissionAction → notifyWishlistMatches).
+  if (newCents < oldCents) {
+    try {
+      const { notifyPriceDrop } = await import("@/lib/notifications/price-drop");
+      await notifyPriceDrop(listingId, oldCents, newCents);
+    } catch (err) {
+      console.error("price-drop notify failed", err);
+    }
+  }
 
   revalidatePath("/seller/listings");
   revalidatePath(`/listing/${listingId}`);

@@ -5,8 +5,12 @@ import Image from "next/image";
 import { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { SearchIcon, MenuIcon, CloseIcon } from "@/components/ui/icons";
+import { NotificationBell } from "@/components/marketplace/NotificationBell";
+import type { NotificationItem } from "@/lib/notifications/queries";
 
 export interface NavUser {
+  /** Auth user id — used to hydrate the notification bell server-side. */
+  id: string;
   role: "buyer" | "seller" | "admin";
   email: string;
 }
@@ -29,8 +33,20 @@ function dashboardHref(role: NavUser["role"]): string {
 /**
  * Site navigation — mirrors `.nav` from the demo. Auth-aware: pass `user` to
  * show the dashboard link; signed-out shows Sign In. No rental anywhere.
+ *
+ * When signed in, the layouts also pass `unreadCount` + `recentNotifications`
+ * (fetched server-side) so we can render the notification bell with no client
+ * round-trip. The bell stays hidden for guests.
  */
-export function SiteHeader({ user = null }: { user?: NavUser | null }) {
+export function SiteHeader({
+  user = null,
+  unreadCount,
+  recentNotifications,
+}: {
+  user?: NavUser | null;
+  unreadCount?: number;
+  recentNotifications?: NotificationItem[];
+}) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [query, setQuery] = useState("");
   const pathname = usePathname();
@@ -102,6 +118,12 @@ export function SiteHeader({ user = null }: { user?: NavUser | null }) {
         </form>
 
         <div className="flex flex-shrink-0 items-center gap-2">
+          {user && unreadCount !== undefined && (
+            <NotificationBell
+              initialUnread={unreadCount}
+              initialItems={recentNotifications ?? []}
+            />
+          )}
           {user ? (
             <Link
               href={dashboardHref(user.role)}

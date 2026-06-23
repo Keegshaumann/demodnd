@@ -6,6 +6,7 @@ import { BuyerTabs } from "@/components/buyer/BuyerTabs";
 import { WishlistTabs, type WishlistTab } from "@/components/buyer/WishlistTabs";
 import { SavedPieces } from "@/components/buyer/SavedPieces";
 import { WishlistManager } from "@/components/buyer/WishlistManager";
+import { ShareWishlistButton } from "@/components/marketplace/ShareWishlistButton";
 
 export const metadata: Metadata = { title: "Wishlist" };
 
@@ -28,7 +29,10 @@ export default async function BuyerWishlistPage({
     <div>
       <header className="mb-2">
         <p className="eyebrow mb-3">My account</p>
-        <h1 className="font-serif text-[34px]">Wishlist</h1>
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <h1 className="font-serif text-[34px]">Wishlist</h1>
+          {tab === "saved" && <ShareWishlistButton />}
+        </div>
         <p className="mt-2 max-w-[620px] text-sm text-ink-muted">
           {tab === "saved"
             ? "Pieces you've saved, kept in one place. Tap the heart on any listing to add it here."

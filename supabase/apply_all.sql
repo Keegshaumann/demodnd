@@ -1411,6 +1411,171 @@ grant execute on function public.fulfill_payfast_order(
   text, uuid, uuid, integer, integer, integer, integer, text, text, uuid, integer
 ) to service_role;
 
+-- >>> migrations/20260622130000_engagement_retention.sql
+-- ============================================================================
+-- Engagement & retention (2026-06-22) — one additive, schema-owning migration
+-- for the whole batch of engagement/retention features. Mirrors the conventions
+-- in 20260616120000_stage1_favourites_richer_search.sql exactly: owner-scoped
+-- RLS, explicit grants to authenticated + service_role, and (where public reads
+-- are needed) anon. NOTHING here alters an existing table's existing columns or
+-- policies except ONE additive listings column. notifications needs NO change
+-- (confirmed: it already has owner SELECT/UPDATE/DELETE policies + service_role
+-- INSERT grant, and `type` is free-text — 'price_drop'/'brand_follow' are just
+-- new string values).
+--   (1) FOLLOW A DESIGNER  — followed_brands (mirrors saved_listings RLS/grants)
+--   (5) NEWSLETTER         — newsletter_subscribers (insert-only capture)
+--   (7) VIEW COUNTS        — listings.view_count column + increment RPC
+-- ============================================================================
+
+-- ----------------------------------------------------------------------------
+-- (1) FOLLOW A DESIGNER — followed_brands (mirrors saved_listings/wishlists RLS)
+-- ----------------------------------------------------------------------------
+create table public.followed_brands (
+  buyer_id   uuid not null references public.users (id) on delete cascade,
+  brand      text not null,
+  created_at timestamptz not null default now(),
+  primary key (buyer_id, brand)
+);
+create index followed_brands_buyer_idx on public.followed_brands (buyer_id, created_at desc);
+-- Brand fan-out on approval reads "who follows THIS brand" — index the brand col:
+create index followed_brands_brand_idx on public.followed_brands (brand);
+alter table public.followed_brands enable row level security;
+
+create policy "followed_brands: owner or admin read"
+  on public.followed_brands for select to authenticated
+  using ((select auth.uid()) = buyer_id or public.is_admin());
+create policy "followed_brands: owner insert"
+  on public.followed_brands for insert to authenticated
+  with check ((select auth.uid()) = buyer_id);
+create policy "followed_brands: owner or admin delete"
+  on public.followed_brands for delete to authenticated
+  using ((select auth.uid()) = buyer_id or public.is_admin());
+-- (no UPDATE policy/grant — a follow is insert/delete only, like saved_listings)
+
+grant select, insert, delete on public.followed_brands to authenticated;
+grant select, insert, update, delete on public.followed_brands to service_role;
+-- NOTE: NO grant to anon. A guest cannot follow; the FollowBrandButton routes
+-- guests to /signin (mirrors FavouriteButton). The approval fan-out reads
+-- followers via the SERVICE-ROLE client (createAdminClient, bypasses RLS),
+-- exactly like notifyWishlistMatches reads all wishlists.
+
+-- ----------------------------------------------------------------------------
+-- (5) NEWSLETTER — newsletter_subscribers (email unique; insert-only capture)
+-- ----------------------------------------------------------------------------
+create table public.newsletter_subscribers (
+  id         uuid primary key default gen_random_uuid(),
+  email      text not null unique,
+  created_at timestamptz not null default now()
+);
+-- citext is not enabled in this project; the subscribe action lowercases+trims
+-- the email before insert so the UNIQUE(email) constraint catches dups. The
+-- action distinguishes "already subscribed" by inspecting the unique-violation
+-- (Postgres code 23505) rather than racing a pre-SELECT.
+alter table public.newsletter_subscribers enable row level security;
+-- No public RLS policies: capture happens ONLY through the subscribe Server
+-- Action using the SERVICE-ROLE client (createAdminClient). There is no
+-- buyer/owner concept and we never want anon to read the subscriber list, so we
+-- grant nothing to anon/authenticated and leave RLS on with no policy
+-- (deny-all to those roles). service_role bypasses RLS:
+grant select, insert on public.newsletter_subscribers to service_role;
+
+-- ----------------------------------------------------------------------------
+-- (7) VIEW COUNTS — listings.view_count column + increment RPC
+-- ----------------------------------------------------------------------------
+alter table public.listings
+  add column view_count integer not null default 0;
+-- SELECT on listings is table-level (init.sql) so it already covers the new
+-- column — cards/PDP can read view_count with no new grant. We deliberately do
+-- NOT add view_count to the seller column-UPDATE grant: views are bumped ONLY
+-- through the security-definer RPC below, never by a seller's own UPDATE.
+
+-- Atomic increment. SECURITY DEFINER so an anonymous PDP visitor (who has no
+-- UPDATE grant on listings) can still bump the counter WITHOUT opening a general
+-- UPDATE path. Hard-scoped: only ever +1 on the single row id, only when
+-- active/sold (never resurrects a delisted/pending counter), returns nothing.
+-- search_path pinned (mirrors 20260602140000_harden_functions).
+create or replace function public.increment_listing_view(p_listing_id uuid)
+returns void
+language sql
+security definer
+set search_path = public
+as $$
+  update public.listings
+     set view_count = view_count + 1
+   where id = p_listing_id
+     and status in ('active','sold');
+$$;
+revoke all on function public.increment_listing_view(uuid) from public;
+grant execute on function public.increment_listing_view(uuid) to anon, authenticated;
+
+-- >>> migrations/20260623120000_retail_price_anchor.sql
+-- ============================================================================
+-- Retail / resale-value anchor (2026-06-23) — optional original-retail (MSRP)
+-- price per item. When a listing's retail price is HIGHER than the asking price,
+-- the UI struck-through the retail and shows an "X% below retail" deal tag; when
+-- absent (or not higher than asking) nothing extra renders. Additive only: two
+-- new nullable integer columns + one seller column-UPDATE grant re-issue that is
+-- a strict superset of the prior one. No existing column/policy is altered.
+--
+-- Conventions (match the rest of the schema):
+--   • Money is integer ZAR cents (matches listings.price_cents /
+--     auth_submissions.asking_price_cents). Never floats.
+--   • retail_price_cents is NULLABLE (the field is optional). The CHECK allows
+--     null OR a strictly-positive amount, mirroring the offers amount checks.
+-- ============================================================================
+
+-- ----------------------------------------------------------------------------
+-- (A) SUBMISSIONS — captured in the sell wizard (SubmissionWizard.tsx →
+--     createSubmissionAction). The seller may optionally state the item's
+--     original retail price alongside their asking price.
+-- ----------------------------------------------------------------------------
+alter table public.auth_submissions
+  add column retail_price_cents integer
+    check (retail_price_cents is null or retail_price_cents > 0);
+
+comment on column public.auth_submissions.retail_price_cents is
+  'Optional original retail (MSRP) price in ZAR cents. Null = not stated. When > asking_price_cents it carries through to the listing as a resale-value anchor.';
+
+-- GRANTS (auth_submissions):
+--   • INSERT is TABLE-LEVEL for authenticated (init.sql), so it already covers
+--     the new column — createSubmissionAction inserts via the seller's SESSION
+--     client (createClient, the `authenticated` role), so the new column is
+--     writable on insert with no grant change.
+--   • UPDATE is column-scoped (init.sql) and must be re-issued to include the
+--     new column so sellers can edit retail on their OWN submissions. Re-grant
+--     the full set (strict superset of init.sql's list + retail_price_cents):
+grant update (brand, category, title, model, description, condition,
+              asking_price_cents, retail_price_cents, year, method, photo_paths)
+  on public.auth_submissions to authenticated;
+
+-- ----------------------------------------------------------------------------
+-- (B) LISTINGS — carried through on approval (approveSubmissionAction creates
+--     the listing FROM the submission via the service-role client) and
+--     admin-editable (setListingPriceAction). Sellers must also be able to set
+--     it on their OWN listings.
+-- ----------------------------------------------------------------------------
+alter table public.listings
+  add column retail_price_cents integer
+    check (retail_price_cents is null or retail_price_cents > 0);
+
+comment on column public.listings.retail_price_cents is
+  'Optional original retail (MSRP) price in ZAR cents. Null = not stated. Rendered as a struck-through anchor + "X% below retail" tag ONLY when present AND > price_cents.';
+
+-- GRANTS (listings):
+--   • SELECT on listings is TABLE-LEVEL for anon/authenticated (init.sql), so it
+--     already covers the new column — cards/PDP read retail with no new grant.
+--   • UPDATE for authenticated is column-scoped (init.sql → SELL-1 → stage-1
+--     20260616120000) and must be re-issued to include retail_price_cents so a
+--     seller can set it on their OWN listing (the "listings: owner or admin
+--     update" row policy already scopes to the owner). Re-grant the full set,
+--     a strict superset of the prior re-issue + retail_price_cents:
+grant update (title, description, condition, model, year, price_cents, status,
+              condition_notes, measurements, inclusions, retail_price_cents)
+  on public.listings to authenticated;
+-- NOTE: `featured` and fee_rate_bps/seller_id/auth_method/view_count remain
+-- OMITTED (still admin/RPC-only). service_role already holds table-level ALL
+-- (20260603130000), so approval/admin writes need no further grant.
+
 -- >>> seed.sql
 -- ============================================================================
 -- Seed: subscription tiers (from PROJECT.md).

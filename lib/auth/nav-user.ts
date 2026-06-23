@@ -27,7 +27,7 @@ export async function getNavUser(): Promise<NavUser | null> {
       (user.user_metadata?.role as UserRole | undefined) ??
       "buyer";
 
-    return { role, email: profile?.email ?? user.email ?? "" };
+    return { id: user.id, role, email: profile?.email ?? user.email ?? "" };
   } catch {
     return null;
   }

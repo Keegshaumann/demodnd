@@ -16,6 +16,10 @@ export interface ListingCardData {
   condition: string;
   year: number | null;
   priceCents: number;
+  /** Optional original-retail (MSRP) anchor in ZAR cents. Null when unset.
+   *  The "X% below retail" deal treatment only renders when this is present
+   *  AND strictly greater than priceCents (see lib/marketplace/pricing.ts). */
+  retailCents: number | null;
   authMethod: AuthMethod;
   imageUrl: string | null;
   /** Drives the card's "Sold" treatment. Active for grid results, but seller /
@@ -81,6 +85,7 @@ export function toCardData(l: Listing, cover: Map<string, string>): ListingCardD
     condition: l.condition,
     year: l.year,
     priceCents: l.price_cents,
+    retailCents: l.retail_price_cents,
     authMethod: l.auth_method,
     imageUrl: cover.get(l.id) ?? null,
     status: l.status,
@@ -254,6 +259,9 @@ export async function getActiveListings(
 
 export interface ListingDetail extends Listing {
   images: ListingImage[];
+  /** Camel-cased mirror of `retail_price_cents` so the PDP shares the same
+   *  `retailCents` shape as {@link ListingCardData}. Null when unset. */
+  retailCents: number | null;
 }
 
 const UUID_RE =
@@ -285,7 +293,11 @@ export const getListingById = cache(
     if (error) throw new Error(`Failed to load listing: ${error.message}`);
     if (!listing) return null;
 
-    return { ...listing, images: images ?? [] };
+    return {
+      ...listing,
+      images: images ?? [],
+      retailCents: listing.retail_price_cents,
+    };
   },
 );
 

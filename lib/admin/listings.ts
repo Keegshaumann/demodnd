@@ -18,6 +18,7 @@ export interface AdminListingRow {
   brand: string;
   category: string;
   priceCents: number;
+  retailPriceCents: number | null;
   status: ListingStatus;
   featured: boolean;
   createdAt: string;
@@ -91,6 +92,7 @@ export async function getAdminListings(
       brand: l.brand,
       category: l.category,
       priceCents: l.price_cents,
+      retailPriceCents: l.retail_price_cents,
       status: l.status,
       featured: l.featured,
       createdAt: l.created_at,
@@ -194,14 +196,68 @@ export async function setListingPriceAction(
     return { ok: false, error: "Enter a valid price." };
   }
   const db = createAdminClient();
-  const status = await listingStatus(db, listingId);
-  if (!status) return { ok: false, error: "Listing not found." };
+  // Capture status AND the pre-edit price so we can detect a genuine drop.
+  const { data: existing } = await db
+    .from("listings")
+    .select("status, price_cents")
+    .eq("id", listingId)
+    .maybeSingle();
+  if (!existing) return { ok: false, error: "Listing not found." };
+  const oldCents = existing.price_cents;
   const { error } = await db
     .from("listings")
     .update({ price_cents: priceCents })
     .eq("id", listingId);
   if (error) return { ok: false, error: "Could not update the price." };
+
+  // Price-drop alerts: notify buyers who saved this piece on a genuine decrease.
+  // priceCents is already integer cents. Dynamic import keeps the server-only
+  // notification module out of this action's static graph.
+  if (priceCents < oldCents) {
+    try {
+      const { notifyPriceDrop } = await import("@/lib/notifications/price-drop");
+      await notifyPriceDrop(listingId, oldCents, priceCents);
+    } catch (err) {
+      console.error("price-drop notify failed", err);
+    }
+  }
+
   revalidatePath("/admin/listings");
+  revalidatePath(`/listing/${listingId}`);
+  return { ok: true };
+}
+
+/**
+ * Set (or clear) a listing's original-retail anchor. Pass `null` to clear it.
+ * Retail is optional whole ZAR cents — the resale anchor is only rendered when
+ * it's present and higher than the asking price, so we don't gate on that here:
+ * an admin may legitimately set a retail that is currently at/below asking.
+ */
+export async function setListingRetailAction(
+  listingId: string,
+  retailCents: number | null,
+): Promise<AdminListingActionResult> {
+  await requireRole("admin");
+  // null clears the anchor; otherwise it must be valid integer ZAR cents.
+  if (retailCents !== null) {
+    if (
+      !Number.isInteger(retailCents) ||
+      retailCents <= 0 ||
+      retailCents > 10_000_000_000
+    ) {
+      return { ok: false, error: "Enter a valid retail price." };
+    }
+  }
+  const db = createAdminClient();
+  const status = await listingStatus(db, listingId);
+  if (!status) return { ok: false, error: "Listing not found." };
+  const { error } = await db
+    .from("listings")
+    .update({ retail_price_cents: retailCents })
+    .eq("id", listingId);
+  if (error) return { ok: false, error: "Could not update the retail price." };
+  revalidatePath("/admin/listings");
+  revalidatePath("/browse");
   revalidatePath(`/listing/${listingId}`);
   return { ok: true };
 }

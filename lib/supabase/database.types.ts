@@ -209,6 +209,7 @@ export interface Database {
           description: string | null;
           condition: string;
           asking_price_cents: number;
+          retail_price_cents: number | null;
           year: number | null;
           photo_paths: string[];
           admin_notes: string | null;
@@ -228,6 +229,7 @@ export interface Database {
           description?: string | null;
           condition: string;
           asking_price_cents: number;
+          retail_price_cents?: number | null;
           year?: number | null;
           photo_paths?: string[];
           admin_notes?: string | null;
@@ -247,6 +249,7 @@ export interface Database {
           description?: string | null;
           condition?: string;
           asking_price_cents?: number;
+          retail_price_cents?: number | null;
           year?: number | null;
           photo_paths?: string[];
           admin_notes?: string | null;
@@ -268,12 +271,14 @@ export interface Database {
           description: string | null;
           condition: string;
           price_cents: number;
+          retail_price_cents: number | null;
           year: number | null;
           status: ListingStatus;
           featured: boolean;
           condition_notes: string | null;
           measurements: string | null;
           inclusions: string[] | null;
+          view_count: number;
           fee_rate_bps: number;
           auth_method: AuthMethod;
           created_at: string;
@@ -290,12 +295,14 @@ export interface Database {
           description?: string | null;
           condition: string;
           price_cents: number;
+          retail_price_cents?: number | null;
           year?: number | null;
           status?: ListingStatus;
           featured?: boolean;
           condition_notes?: string | null;
           measurements?: string | null;
           inclusions?: string[] | null;
+          view_count?: number;
           fee_rate_bps: number;
           auth_method: AuthMethod;
           created_at?: string;
@@ -312,12 +319,14 @@ export interface Database {
           description?: string | null;
           condition?: string;
           price_cents?: number;
+          retail_price_cents?: number | null;
           year?: number | null;
           status?: ListingStatus;
           featured?: boolean;
           condition_notes?: string | null;
           measurements?: string | null;
           inclusions?: string[] | null;
+          view_count?: number;
           fee_rate_bps?: number;
           auth_method?: AuthMethod;
           created_at?: string;
@@ -393,6 +402,42 @@ export interface Database {
         Update: {
           buyer_id?: string;
           listing_id?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      followed_brands: {
+        Row: {
+          buyer_id: string;
+          brand: string;
+          created_at: string;
+        };
+        Insert: {
+          buyer_id: string;
+          brand: string;
+          created_at?: string;
+        };
+        Update: {
+          buyer_id?: string;
+          brand?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      newsletter_subscribers: {
+        Row: {
+          id: string;
+          email: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          email: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          email?: string;
           created_at?: string;
         };
         Relationships: [];
@@ -697,6 +742,10 @@ export interface Database {
         };
         Returns: number;
       };
+      increment_listing_view: {
+        Args: { p_listing_id: string };
+        Returns: undefined;
+      };
     };
     Enums: Record<never, never>;
     CompositeTypes: Record<never, never>;
@@ -721,6 +770,8 @@ export type Listing = Tables<"listings">;
 export type ListingImage = Tables<"listing_images">;
 export type Wishlist = Tables<"wishlists">;
 export type Saved = Tables<"saved_listings">;
+export type FollowedBrand = Tables<"followed_brands">;
+export type NewsletterSubscriber = Tables<"newsletter_subscribers">;
 export type Order = Tables<"orders">;
 export type CheckoutIntent = Tables<"checkout_intents">;
 export type Offer = Tables<"offers">;

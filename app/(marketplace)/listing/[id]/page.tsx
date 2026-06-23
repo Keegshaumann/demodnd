@@ -8,9 +8,12 @@ import {
 } from "@/lib/marketplace/listings";
 import { getCurrentUser } from "@/lib/auth/guards";
 import { getSavedListingIds } from "@/lib/marketplace/saved";
+import { getSaveCounts } from "@/lib/marketplace/social";
+import { isFollowingBrand } from "@/lib/brands/queries";
 import { getOfferForPdp, type PdpOfferState } from "@/lib/offers/queries";
 import { offerFloorCents } from "@/lib/offers/expiry";
 import { roleCanAccess } from "@/lib/auth/roles";
+import { retailDiscount } from "@/lib/marketplace/pricing";
 import { formatZar } from "@/lib/money";
 import {
   brandedTitle,
@@ -20,6 +23,7 @@ import {
   processBadgeLabel,
   processNoun,
 } from "@/lib/marketplace/constants";
+import { brandToSlug } from "@/lib/brands/slug";
 import { ListingGallery } from "@/components/marketplace/ListingGallery";
 import { ListingCard } from "@/components/marketplace/ListingCard";
 import { FavouriteButton } from "@/components/marketplace/FavouriteButton";
@@ -29,6 +33,11 @@ import {
 } from "@/components/marketplace/MakeOfferButton";
 import { ConditionInfo } from "@/components/marketplace/ConditionInfo";
 import { MobileBuyBar } from "@/components/marketplace/MobileBuyBar";
+import { ViewTracker } from "@/components/marketplace/ViewTracker";
+import { RecentlyViewed } from "@/components/marketplace/RecentlyViewed";
+import { ShareButton } from "@/components/marketplace/ShareButton";
+import { FollowBrandButton } from "@/components/marketplace/FollowBrandButton";
+import { SocialProof } from "@/components/marketplace/SocialProof";
 import { Reveal } from "@/components/ui/Reveal";
 import { JsonLd } from "@/components/seo/JsonLd";
 
@@ -104,7 +113,26 @@ export default async function ListingPage({
   // Saved-state for this piece + the "similar" rail, in one cheap query (empty
   // Set for guests). FavouriteButton hydrates from it; the optimistic island
   // takes over from there.
-  const savedIds = await getSavedListingIds(user?.id ?? null);
+  //
+  // Alongside it, the social-proof inputs and PDP follow-state, in parallel:
+  //  - saveCount: global save count for THIS piece (service-role read inside
+  //    getSaveCounts, since saved_listings is owner-RLS) — quiet social proof.
+  //  - isFollowing: whether the viewer already follows this maison (false for
+  //    guests), to hydrate the FollowBrandButton on the brand line.
+  // view_count is read straight off the listing row (no extra query).
+  const [savedIds, saveCounts, isFollowing] = await Promise.all([
+    getSavedListingIds(user?.id ?? null),
+    getSaveCounts([id]),
+    isFollowingBrand(user?.id ?? null, listing.brand),
+  ]);
+  const saveCount = saveCounts.get(id) ?? 0;
+  const viewCount = listing.view_count ?? 0;
+
+  // Retail / resale-value anchor: only non-null when an original-retail (MSRP)
+  // price exists AND sits strictly above the asking price — then we strike it
+  // through and show "X% below retail" so the price reads as a deal. Otherwise
+  // null and the price renders exactly as before (no anchor, no tag).
+  const retail = retailDiscount(listing.price_cents, listing.retail_price_cents);
 
   const isOwner = user?.id === listing.seller_id;
   const isAdmin = user?.role === "admin";
@@ -202,7 +230,7 @@ export default async function ListingPage({
         "@type": "ListItem",
         position: 3,
         name: listing.brand,
-        item: `${SITE}/browse?brand=${encodeURIComponent(listing.brand)}`,
+        item: `${SITE}/designer/${brandToSlug(listing.brand)}`,
       },
       { "@type": "ListItem", position: 4, name: listing.title },
     ],
@@ -235,6 +263,12 @@ export default async function ListingPage({
       <JsonLd data={productLd} />
       <JsonLd data={breadcrumbLd} />
 
+      {/* Render-nothing islands: bump view_count once per real load (client-side
+          so RSC prefetch can't inflate it) and record this piece in the
+          visitor's recently-viewed history. */}
+      <ViewTracker listingId={listing.id} />
+      <RecentlyViewed listingId={listing.id} />
+
       <div className="dnd-container">
         <div className="grid grid-cols-1 items-start gap-10 py-10 lg:grid-cols-[1.1fr_minmax(380px,1fr)] lg:gap-16 lg:py-14">
           {/* Gallery */}
@@ -256,15 +290,21 @@ export default async function ListingPage({
               </Link>
               <ChevronRightIcon width={13} height={13} />
               <Link
-                href={`/browse?brand=${encodeURIComponent(listing.brand)}`}
+                href={`/designer/${brandToSlug(listing.brand)}`}
                 className="truncate hover:text-ink"
               >
                 {listing.brand}
               </Link>
             </nav>
 
-            <div className="mb-3 text-[11px] font-medium uppercase tracking-[0.28em] text-gold">
-              {listing.brand}
+            <div className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-2">
+              <span className="text-[11px] font-medium uppercase tracking-[0.28em] text-gold">
+                {listing.brand}
+              </span>
+              <FollowBrandButton
+                brand={listing.brand}
+                isFollowingInitial={isFollowing}
+              />
             </div>
             <h1
               className="text-balance"
@@ -287,16 +327,37 @@ export default async function ListingPage({
               )}
               <span aria-hidden className="text-border">·</span>
               <span>{categoryLabel(listing.category)}</span>
+              {/* Quiet social proof — only surfaces a metric once it clears the
+                  minimum (>= 3), else renders nothing (no anaemic "1 view"). */}
+              <SocialProof saveCount={saveCount} viewCount={viewCount} />
             </div>
 
-            <div className="mt-6 flex items-baseline gap-4">
-              <div className="price" style={{ fontSize: "clamp(34px,4.6vw,46px)", lineHeight: 1 }}>
-                {formatZar(listing.price_cents)}
+            <div className="mt-6">
+              <div className="flex items-baseline gap-4">
+                <div className="price" style={{ fontSize: "clamp(34px,4.6vw,46px)", lineHeight: 1 }}>
+                  {formatZar(listing.price_cents)}
+                </div>
+                {isSold && (
+                  <span className="rounded-full border border-border px-3 py-1 text-[10px] font-medium uppercase tracking-[0.16em] text-ink-dim">
+                    Sold
+                  </span>
+                )}
               </div>
-              {isSold && (
-                <span className="rounded-full border border-border px-3 py-1 text-[10px] font-medium uppercase tracking-[0.16em] text-ink-dim">
-                  Sold
-                </span>
+              {/* Retail / resale-value anchor — only when a higher original-retail
+                  (MSRP) price exists. The struck-through retail plus the "X% below
+                  retail" tag frame the asking price as a deal. Absent otherwise. */}
+              {retail && (
+                <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[13px]">
+                  <span className="text-ink-dim">
+                    Retail{" "}
+                    <span className="line-through decoration-from-font">
+                      {formatZar(retail.retailCents)}
+                    </span>
+                  </span>
+                  <span className="inline-flex items-center rounded-[3px] border border-gold/30 bg-gold/[0.04] px-2 py-1 text-[10.5px] font-medium uppercase tracking-[0.16em] text-gold">
+                    {retail.pct}% below retail
+                  </span>
+                </div>
               )}
             </div>
 
@@ -342,6 +403,14 @@ export default async function ListingPage({
                   </li>
                 ))}
               </ul>
+            </div>
+
+            {/* Share — copy link / WhatsApp / native share. No backend. */}
+            <div className="mt-5">
+              <ShareButton
+                url={`${SITE}/listing/${listing.id}`}
+                title={brandedTitle(listing)}
+              />
             </div>
 
             {/* Buyer-facing anonymity: D&D never reveals the seller. The

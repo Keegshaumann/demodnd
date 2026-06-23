@@ -1,11 +1,29 @@
 import Link from "next/link";
 import Image from "next/image";
+import { NewsletterForm } from "@/components/marketplace/NewsletterForm";
 
 /** Dark site footer — matches the final demo footer (#0D0D0D, light text). */
 export function SiteFooter() {
   return (
     <footer className="border-t border-white/10 bg-gold pb-10 pt-24">
       <div className="dnd-container">
+        {/* Newsletter / email capture — a quiet editorial strip above the link
+            columns. Styled for the dark footer (white/10 borders, light text). */}
+        <div className="mb-16 grid grid-cols-1 items-center gap-8 border-b border-white/10 pb-16 md:grid-cols-[1.4fr_1fr] md:gap-16">
+          <div>
+            <h4 className="font-serif text-[26px] leading-tight text-white">
+              Stay in the know.
+            </h4>
+            <p className="mt-3 max-w-[420px] text-sm leading-relaxed text-white/65">
+              Be first to see new arrivals and price drops on the maisons you
+              love. Considered, never crowded.
+            </p>
+          </div>
+          <div className="md:justify-self-end">
+            <NewsletterForm />
+          </div>
+        </div>
+
         <div className="mb-16 grid grid-cols-1 gap-12 md:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr] lg:gap-16">
           <div>
             <Link href="/" className="inline-flex items-center">

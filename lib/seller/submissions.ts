@@ -26,6 +26,12 @@ const submissionSchema = z.object({
     .int("Price must be a whole number of cents.")
     .positive("Enter an asking price.")
     .max(100_000_000_00), // R100m ceiling sanity check
+  retailPriceCents: z
+    .number()
+    .int("Retail price must be a whole number of cents.")
+    .positive("Enter a valid retail price.")
+    .max(100_000_000_00)
+    .optional(),
   year: z
     .number()
     .int()
@@ -110,6 +116,7 @@ export async function createSubmissionAction(
       description: data.description || null,
       condition: data.condition,
       asking_price_cents: data.priceCents,
+      retail_price_cents: data.retailPriceCents ?? null,
       year: data.year ?? null,
       photo_paths: data.photoPaths,
     })

@@ -2,10 +2,16 @@ import { AnnounceBar } from "@/components/marketplace/AnnounceBar";
 import { SiteHeader } from "@/components/marketplace/SiteHeader";
 import { SiteFooter } from "@/components/marketplace/SiteFooter";
 import { getNavUser } from "@/lib/auth/nav-user";
+import {
+  getRecentNotifications,
+  getUnreadCount,
+} from "@/lib/notifications/queries";
 
 /**
  * Public marketplace chrome: announcement bar, navigation, footer.
- * Reads the current user (if any) so the nav can show the right CTA.
+ * Reads the current user (if any) so the nav can show the right CTA, and (for
+ * signed-in users) the notification-bell badge + recent items so the header
+ * renders the bell with no client round-trip.
  */
 export default async function MarketplaceLayout({
   children,
@@ -13,6 +19,12 @@ export default async function MarketplaceLayout({
   children: React.ReactNode;
 }) {
   const user = await getNavUser();
+  const [unreadCount, recentNotifications] = user
+    ? await Promise.all([
+        getUnreadCount(user.id),
+        getRecentNotifications(user.id),
+      ])
+    : [undefined, undefined];
   return (
     <>
       <a
@@ -22,7 +34,11 @@ export default async function MarketplaceLayout({
         Skip to content
       </a>
       <AnnounceBar />
-      <SiteHeader user={user} />
+      <SiteHeader
+        user={user}
+        unreadCount={unreadCount}
+        recentNotifications={recentNotifications}
+      />
       <main id="main">{children}</main>
       <SiteFooter />
     </>
