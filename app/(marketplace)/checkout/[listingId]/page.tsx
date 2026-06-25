@@ -8,7 +8,7 @@ import { roleCanAccess } from "@/lib/auth/roles";
 import { payfast } from "@/lib/payfast/config";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { formatZar } from "@/lib/money";
-import { categoryLabel } from "@/lib/marketplace/constants";
+import { categoryLabel, processBadgeLabel } from "@/lib/marketplace/constants";
 import { CheckoutForm } from "@/components/marketplace/CheckoutForm";
 import {
   CertificateIcon,
@@ -171,6 +171,10 @@ export default async function CheckoutPage({
                 <div className="font-serif text-xl leading-tight">{listing.title}</div>
                 <div className="mt-1.5 text-[12px] text-ink-dim">
                   {categoryLabel(listing.category)} · {listing.condition}
+                </div>
+                <div className="mt-1.5 inline-flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.14em] text-gold">
+                  <CertificateIcon width={11} height={11} />
+                  {processBadgeLabel(listing.category)} by D&D
                 </div>
                 {isAgreedOffer ? (
                   <div className="mt-3 flex items-baseline gap-2">

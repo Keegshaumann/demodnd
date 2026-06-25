@@ -31,7 +31,7 @@ export default async function BuyerLayout({
         unreadCount={unreadCount}
         recentNotifications={recentNotifications}
       />
-      <main>{children}</main>
+      <main className="dnd-container py-12">{children}</main>
       <SiteFooter />
     </>
   );

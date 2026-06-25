@@ -7,7 +7,7 @@ import { getOrderForBuyer } from "@/lib/orders/queries";
 import { getDisputeForOrder } from "@/lib/disputes/queries";
 import { disputeWindowEndsAt } from "@/lib/disputes/window";
 import { formatZar } from "@/lib/money";
-import { categoryLabel } from "@/lib/marketplace/constants";
+import { categoryLabel, processBadgeLabel } from "@/lib/marketplace/constants";
 import { ConfirmReceiptButton } from "@/components/buyer/ConfirmReceiptButton";
 import { RaiseDisputeForm } from "@/components/buyer/RaiseDisputeForm";
 import {
@@ -82,7 +82,7 @@ export default async function OrderDetailPage({
   const canRaise = order.status === "delivered" && withinWindow && !dispute;
 
   return (
-    <div className="dnd-container py-12">
+    <div>
       <nav className="mb-8 flex items-center gap-2 text-[12px] text-ink-dim">
         <Link href="/buyer" className="hover:text-ink">
           My account
@@ -146,6 +146,10 @@ export default async function OrderDetailPage({
               <div className="mt-1 text-[12.5px] text-ink-dim">
                 {categoryLabel(item.category)}
                 {item.condition && ` · ${item.condition}`}
+              </div>
+              <div className="mt-1.5 inline-flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.14em] text-gold">
+                <CertificateIcon width={11} height={11} />
+                {processBadgeLabel(item.category)} by D&D
               </div>
               {/* ANON: buyers never see seller identity — the D&D
                   authentication/evaluation guarantee carries trust instead. */}

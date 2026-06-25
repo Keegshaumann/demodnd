@@ -115,7 +115,7 @@ export default async function BrowsePage({
 
   return (
     <>
-      <header className="border-b border-border-soft" style={{ padding: "64px 0 44px" }}>
+      <header className="border-b border-border-soft" style={{ padding: "72px 0 56px" }}>
         <div className="dnd-container">
           <nav className="mb-5 flex items-center gap-2 text-[12px] text-ink-dim">
             <Link href="/" className="hover:text-ink">

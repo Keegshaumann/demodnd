@@ -55,7 +55,7 @@ export default function HowItWorksPage() {
             <span className="text-ink-muted">How It Works</span>
           </nav>
           <div className="eyebrow mb-4">A members&apos; protocol</div>
-          <h1 style={{ fontSize: "clamp(34px,5vw,64px)", lineHeight: 1.05 }}>
+          <h1 style={{ fontSize: "clamp(34px,4.5vw,56px)", lineHeight: 1.05 }}>
             The quiet exchange,
             <br />
             end to end.

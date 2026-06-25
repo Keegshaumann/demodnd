@@ -54,6 +54,8 @@ export function SiteFooter() {
             title="Marketplace"
             links={[
               { href: "/how-it-works", label: "How it works" },
+              { href: "/authentication", label: "How we authenticate" },
+              { href: "/quote", label: "What's it worth?" },
               { href: "/sell", label: "Sell with us" },
               { href: "/concierge", label: "Concierge" },
             ]}

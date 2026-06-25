@@ -34,11 +34,13 @@ const QUICK_LINKS = [
   { href: "/browse?category=apparel", label: "Apparel" },
 ];
 
-// Large editorial hero image — already-whitelisted images.unsplash.com host
-// (next.config.ts). Reuses the same monochrome luxury photography palette as
-// CategoryRail; w=1600 for a crisp split-layout frame.
+// Two editorial hero images — Rebag-style split. Already-whitelisted
+// images.unsplash.com host (next.config.ts); same monochrome luxury palette as
+// CategoryRail. w=1200 each since they render side by side.
 const HERO_IMAGE =
-  "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=1600&q=80";
+  "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=1200&q=80";
+const HERO_IMAGE_2 =
+  "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=1200&q=80";
 
 const TRUST = [
   { icon: ShieldIcon, label: "100% Authenticated" },
@@ -104,83 +106,73 @@ export default async function HomePage() {
 
   return (
     <>
-      {/* Hero — bold editorial split: confident serif headline + SHOP NOW on the
-          left, a large luxury image on the right. Monochrome / Cormorant. */}
-      <header className="relative isolate overflow-hidden">
+      {/* Hero — full-bleed two-image split (Rebag-style) with the editorial
+          headline + CTAs overlaid and centred over a legibility scrim. */}
+      <header className="relative isolate flex min-h-[600px] items-center overflow-hidden lg:min-h-[680px]">
+        {/* Two images fill the whole hero, side by side */}
+        <div aria-hidden="true" className="absolute inset-0 -z-20 grid grid-cols-2">
+          {[HERO_IMAGE, HERO_IMAGE_2].map((src) => (
+            <div key={src} className="relative h-full w-full overflow-hidden">
+              <Image src={src} alt="" fill priority sizes="50vw" className="object-cover" />
+            </div>
+          ))}
+        </div>
+        {/* Scrim so the white overlay text stays legible over any photo */}
         <div
+          aria-hidden="true"
           className="absolute inset-0 -z-10"
           style={{
             background:
-              "radial-gradient(ellipse 70% 90% at 18% 30%, rgba(0,0,0,0.035), transparent 66%), linear-gradient(135deg, #F8F8F8 0%, #F0F0F0 62%, #F8F8F8 100%)",
+              "radial-gradient(ellipse 80% 75% at 50% 50%, rgba(13,13,13,0.55), transparent 75%), linear-gradient(180deg, rgba(13,13,13,0.42) 0%, rgba(13,13,13,0.40) 50%, rgba(13,13,13,0.66) 100%)",
           }}
         />
-        <div className="dnd-container">
-          <div className="grid grid-cols-1 items-center gap-12 py-16 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16 lg:py-24">
-            {/* Text column */}
-            <Reveal className="order-2 lg:order-1">
-              <span className="eyebrow mb-7">D&amp;D · All things luxury</span>
-              <h1
-                className="mb-7 max-w-[16ch] text-balance"
-                style={{
-                  fontSize: "clamp(40px, 6.4vw, 88px)",
-                  letterSpacing: "-0.022em",
-                  lineHeight: 1.03,
-                }}
+        <div className="dnd-container relative w-full py-16 text-center text-white lg:py-24">
+          <Reveal className="mx-auto flex max-w-[780px] flex-col items-center">
+            <span className="mb-7 inline-flex items-center gap-3 text-[11px] font-medium uppercase tracking-[0.28em] text-white/70">
+              <span className="h-px w-8 bg-white/40" />
+              D&amp;D · All things luxury
+            </span>
+            <h1
+              className="mb-7 text-balance text-white [&_em]:text-white [text-shadow:0_2px_30px_rgba(0,0,0,0.55)]"
+              style={{
+                fontSize: "clamp(40px, 6.4vw, 84px)",
+                letterSpacing: "-0.022em",
+                lineHeight: 1.04,
+              }}
+            >
+              Welcome to the largest luxury marketplace <em>in the world.</em>
+            </h1>
+            <p className="mb-9 max-w-[540px] text-pretty text-[17px] leading-relaxed text-white/90 [text-shadow:0_1px_18px_rgba(0,0,0,0.6)]">
+              Authenticated, evaluated and insured. Every piece examined by hand
+              before it ever reaches you — the counterfeit risk of private
+              resale, removed.
+            </p>
+            <div className="flex flex-wrap items-center justify-center gap-4">
+              <Link href="/browse" className="btn btn-lg bg-white text-ink hover:bg-white/90">
+                Shop now <ArrowRightIcon width={17} height={17} />
+              </Link>
+              <Link
+                href="/sell"
+                className="btn btn-lg border border-white/60 text-white hover:bg-white/10"
               >
-                Welcome to the largest luxury marketplace{" "}
-                <em>in the world.</em>
-              </h1>
-              <p className="mb-9 max-w-[520px] text-pretty text-[17px] leading-relaxed text-ink-muted">
-                Authenticated, evaluated and insured. Every piece examined by
-                hand before it ever reaches you — the counterfeit risk of private
-                resale, removed.
-              </p>
-              <div className="flex flex-wrap items-center gap-4">
-                <Link href="/browse" className="btn btn-primary btn-lg">
-                  Shop now <ArrowRightIcon width={17} height={17} />
+                Sell with D&amp;D
+              </Link>
+            </div>
+            <div className="mt-9 flex flex-wrap items-center justify-center gap-2">
+              <span className="mr-1 text-[11px] uppercase tracking-[0.14em] text-white/55">
+                Browse:
+              </span>
+              {QUICK_LINKS.map((l) => (
+                <Link
+                  key={l.href}
+                  href={l.href}
+                  className="rounded-full border border-white/35 px-3.5 py-1.5 text-[11.5px] uppercase tracking-[0.1em] text-white/80 transition-colors hover:border-white hover:text-white"
+                >
+                  {l.label}
                 </Link>
-                <Link href="/sell" className="btn btn-outline btn-lg">
-                  Sell with D&amp;D
-                </Link>
-              </div>
-              <div className="mt-9 flex flex-wrap items-center gap-2">
-                <span className="mr-1 text-[11px] uppercase tracking-[0.14em] text-ink-dim">
-                  Browse:
-                </span>
-                {QUICK_LINKS.map((l) => (
-                  <Link
-                    key={l.href}
-                    href={l.href}
-                    className="rounded-full border border-border px-3.5 py-1.5 text-[11.5px] uppercase tracking-[0.1em] text-ink-muted transition-colors hover:border-gold hover:text-gold"
-                  >
-                    {l.label}
-                  </Link>
-                ))}
-              </div>
-            </Reveal>
-
-            {/* Image column */}
-            <Reveal delay={120} className="order-1 lg:order-2">
-              <div className="relative aspect-[4/5] w-full overflow-hidden rounded-[3px] border border-border-soft bg-card shadow-[0_30px_60px_-32px_rgba(0,0,0,0.32)] sm:aspect-[5/5] lg:aspect-[4/5]">
-                <Image
-                  src={HERO_IMAGE}
-                  alt="A curated selection of authenticated luxury handbags from D&D Luxury"
-                  fill
-                  priority
-                  sizes="(max-width: 1024px) 100vw, 48vw"
-                  className="object-cover brightness-[0.97]"
-                />
-                <div
-                  aria-hidden="true"
-                  className="absolute inset-0"
-                  style={{
-                    background:
-                      "linear-gradient(180deg, transparent 55%, rgba(13,13,13,0.18) 100%)",
-                  }}
-                />
-              </div>
-            </Reveal>
-          </div>
+              ))}
+            </div>
+          </Reveal>
         </div>
       </header>
 

@@ -2,6 +2,7 @@
 
 import { z } from "zod";
 import { requireUser } from "@/lib/auth/guards";
+import { rateLimitByIp } from "@/lib/rate-limit";
 import { estimateValue, type Valuation } from "./estimate";
 
 /**
@@ -24,6 +25,25 @@ export async function estimatePriceAction(
   input: unknown,
 ): Promise<EstimateActionResult> {
   await requireUser();
+  const parsed = schema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: "Add the brand, category and condition first." };
+  }
+  const res = await estimateValue(parsed.data);
+  if (!res.ok) return { ok: false, error: res.reason };
+  return { ok: true, valuation: res.valuation };
+}
+
+/**
+ * Public "what's it worth?" quote — same engine, NO auth (anyone can value a
+ * piece before signing up), IP-rate-limited since it can hit the paid AI.
+ */
+export async function publicQuoteAction(
+  input: unknown,
+): Promise<EstimateActionResult> {
+  if (!(await rateLimitByIp("quote", 8, 600))) {
+    return { ok: false, error: "Too many quotes just now — try again in a few minutes." };
+  }
   const parsed = schema.safeParse(input);
   if (!parsed.success) {
     return { ok: false, error: "Add the brand, category and condition first." };

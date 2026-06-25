@@ -7,6 +7,8 @@ import { usePathname, useRouter } from "next/navigation";
 import { SearchIcon, MenuIcon, CloseIcon } from "@/components/ui/icons";
 import { NotificationBell } from "@/components/marketplace/NotificationBell";
 import type { NotificationItem } from "@/lib/notifications/queries";
+import { CATEGORIES, BRANDS } from "@/lib/marketplace/constants";
+import { brandToSlug } from "@/lib/brands/slug";
 
 export interface NavUser {
   /** Auth user id — used to hydrate the notification bell server-side. */
@@ -79,7 +81,10 @@ export function SiteHeader({
                 ? pathname === "/"
                 : pathname.startsWith(link.href);
             return (
-              <li key={link.href}>
+              <li
+                key={link.href}
+                className={link.label === "Shop" ? "group relative" : undefined}
+              >
                 <Link
                   href={link.href}
                   className={`relative py-2 text-xs font-medium uppercase tracking-[0.18em] transition-colors ${
@@ -90,6 +95,54 @@ export function SiteHeader({
                 >
                   {link.label}
                 </Link>
+                {link.label === "Shop" && (
+                  /* Hover mega-menu — pure CSS, exposes the full catalogue tree.
+                     Pure-CSS hover; the pt-3 bridges the gap to the link. */
+                  <div className="invisible absolute left-0 top-full z-[110] w-[600px] pt-3 opacity-0 transition-opacity duration-200 group-hover:visible group-hover:opacity-100">
+                    <div className="grid grid-cols-3 gap-8 rounded-[3px] border border-border-soft bg-bg p-8 shadow-xl">
+                      <div>
+                        <div className="mb-3.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-ink-dim">
+                          Category
+                        </div>
+                        <ul className="space-y-2.5">
+                          {CATEGORIES.map((c) => (
+                            <li key={c.value}>
+                              <Link
+                                href={`/browse?category=${c.value}`}
+                                className="text-[13px] text-ink-muted transition-colors hover:text-gold"
+                              >
+                                {c.label}
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div className="col-span-2">
+                        <div className="mb-3.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-ink-dim">
+                          Designers
+                        </div>
+                        <ul className="grid grid-cols-2 gap-x-6 gap-y-2.5">
+                          {BRANDS.slice(0, 10).map((b) => (
+                            <li key={b}>
+                              <Link
+                                href={`/designer/${brandToSlug(b)}`}
+                                className="text-[13px] text-ink-muted transition-colors hover:text-gold"
+                              >
+                                {b}
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
+                        <Link
+                          href="/authentication"
+                          className="mt-5 inline-flex text-[11px] uppercase tracking-[0.16em] text-gold hover:underline"
+                        >
+                          How we authenticate →
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </li>
             );
           })}
