@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ListingCard } from "@/components/marketplace/ListingCard";
-import { Reveal } from "@/components/ui/Reveal";
+import { Carousel } from "@/components/marketplace/Carousel";
 import { ArrowRightIcon } from "@/components/ui/icons";
 import type { ListingCardData } from "@/lib/marketplace/listings";
 
@@ -27,7 +27,7 @@ export function CollectionRail({
   title,
   eyebrow,
   href,
-  viewAllLabel = "View all",
+  viewAllLabel = "See all",
   items,
   savedIds,
 }: {
@@ -55,23 +55,13 @@ export function CollectionRail({
           </Link>
         </div>
 
-        {/*
-          Mobile: scroll-snap rail (overflow-x) with a peeking neighbour. The
-          negative inline margin + matching padding bleeds the rail to the
-          container edges while keeping the first/last card on the gutter.
-          640px+: 2-col grid; 1024px+: up to 4 equal cols.
-        */}
-        <div className="-mx-6 flex snap-x snap-mandatory scroll-pl-6 gap-7 overflow-x-auto px-6 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-7 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-4">
-          {items.map((l, i) => (
-            <Reveal
-              key={l.id}
-              delay={Math.min(i, 3) * 60}
-              className="min-w-0 shrink-0 basis-[82%] snap-start sm:basis-auto"
-            >
-              <ListingCard listing={l} isSaved={savedIds.has(l.id)} />
-            </Reveal>
+        {/* One tidy horizontal row (Vestiaire-style) — scroll via the arrows on
+            desktop, swipe on mobile. "See all" above opens the full edit. */}
+        <Carousel>
+          {items.map((l) => (
+            <ListingCard key={l.id} listing={l} isSaved={savedIds.has(l.id)} />
           ))}
-        </div>
+        </Carousel>
       </div>
     </section>
   );

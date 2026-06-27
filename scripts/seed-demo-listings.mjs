@@ -53,6 +53,25 @@ const IMAGE_CANDIDATES = {
   ].map(u),
 };
 
+// Gender for the demo catalogue (mirrors the migration backfill): all bags +
+// the Chanel slingback are women; loafers + sport/dress watches are men;
+// everything else (jewellery, sneakers, neutral watches) stays unisex.
+const MEN_TITLES = new Set([
+  "Prada Monolith Loafer",
+  "Gucci Horsebit 1953 Loafer",
+  "Patek Philippe Aquanaut",
+  "Audemars Piguet Royal Oak 15500ST",
+  "Rolex Cosmograph Daytona",
+  "Rolex GMT-Master II Pepsi",
+  "Patek Philippe Nautilus",
+]);
+const genderFor = (item) =>
+  item.category === "bags" || item.title === "Chanel Slingback Two-Tone"
+    ? "women"
+    : MEN_TITLES.has(item.title)
+      ? "men"
+      : "unisex";
+
 const NEW_LISTINGS = [
   // Watches
   { title: "Audemars Piguet Royal Oak 15500ST", brand: "Audemars Piguet", category: "watches", model: "15500ST.OO.1220ST.01", price: 88000000, year: 2021, condition: "Mint", method: "courier", description: "Blue 'Grande Tapisserie' dial, integrated bracelet. Box and papers, lightly worn." },
@@ -152,6 +171,7 @@ async function main() {
         title: item.title,
         brand: item.brand,
         category: item.category,
+        gender: genderFor(item),
         model: item.model,
         description: item.description,
         condition: item.condition ?? CONDITIONS[i % CONDITIONS.length],

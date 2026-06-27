@@ -25,6 +25,9 @@ export interface ListingCardData {
   /** Drives the card's "Sold" treatment. Active for grid results, but seller /
    *  homepage / "similar" rails can surface sold pieces, so the card needs it. */
   status: ListingStatus;
+  /** ISO created-at — lets the homepage label "New in" by the freshest truthful
+   *  window (this week → this month → latest) so the rail is never empty. */
+  createdAt: string;
 }
 
 export interface BrowseFilters {
@@ -33,6 +36,12 @@ export interface BrowseFilters {
   brands?: string[];
   conditions?: string[];
   methods?: AuthMethod[];
+  /** Women/Men shopping context. Matches the gender OR 'unisex'. */
+  gender?: "women" | "men";
+  /** Promoted ("Now Trending") placement — featured listings only. */
+  featured?: boolean;
+  /** Seasonal edit. Matches the season OR 'all'. */
+  season?: "spring" | "summer" | "autumn" | "winter";
   minCents?: number;
   maxCents?: number;
   sellerId?: string;
@@ -89,6 +98,7 @@ export function toCardData(l: Listing, cover: Map<string, string>): ListingCardD
     authMethod: l.auth_method,
     imageUrl: cover.get(l.id) ?? null,
     status: l.status,
+    createdAt: l.created_at,
   };
 }
 
@@ -147,6 +157,9 @@ export async function getActiveListingsPage(
   if (filters.sellerId) query = query.eq("seller_id", filters.sellerId);
   if (filters.categories?.length)
     query = query.in("category", filters.categories);
+  if (filters.gender) query = query.in("gender", [filters.gender, "unisex"]);
+  if (filters.featured) query = query.eq("featured", true);
+  if (filters.season) query = query.in("season", [filters.season, "all"]);
   if (filters.brands?.length) query = query.in("brand", filters.brands);
   if (filters.conditions?.length)
     query = query.in("condition", filters.conditions);
@@ -202,6 +215,9 @@ export async function getActiveListingsPage(
   // Pay the trigram scan only now. RLS (public reads active) still governs via
   // the SECURITY INVOKER RPC. Pass the same structured filters; empty arrays /
   // unset bounds become null so the RPC's `is null or …` guards skip them.
+  // ponytail: the fuzzy fallback (typo search with zero exact hits) ignores the
+  // gender filter — it shows closest matches across genders. Rare path; add
+  // p_gender to search_listings_fuzzy[_count] if it ever matters.
   const rpcArgs = {
     p_q: searchTerm,
     p_categories: filters.categories?.length ? filters.categories : null,

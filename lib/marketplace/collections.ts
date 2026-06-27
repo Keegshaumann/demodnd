@@ -41,6 +41,15 @@ export interface CuratedCollection {
 
 export const CURATED_COLLECTIONS: CuratedCollection[] = [
   {
+    // "Now Trending" — the promoted/paid placement. Backed by the `featured`
+    // flag (D&D's existing promotion mechanism), so it leads the edits.
+    key: "now-trending",
+    eyebrow: "Promoted",
+    title: "Now Trending",
+    href: "/browse?featured=1",
+    filter: { featured: true },
+  },
+  {
     key: "hermes-edit",
     eyebrow: "Maison edit",
     title: "The Hermès Edit",

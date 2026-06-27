@@ -1,6 +1,7 @@
 import { AnnounceBar } from "@/components/marketplace/AnnounceBar";
 import { SiteHeader } from "@/components/marketplace/SiteHeader";
 import { SiteFooter } from "@/components/marketplace/SiteFooter";
+import { GenderGate } from "@/components/marketplace/GenderGate";
 import { getNavUser } from "@/lib/auth/nav-user";
 import {
   getRecentNotifications,
@@ -41,6 +42,7 @@ export default async function MarketplaceLayout({
       />
       <main id="main">{children}</main>
       <SiteFooter />
+      <GenderGate />
     </>
   );
 }

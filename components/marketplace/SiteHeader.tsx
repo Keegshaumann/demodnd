@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { SearchIcon, MenuIcon, CloseIcon } from "@/components/ui/icons";
+import { SearchIcon, MenuIcon, CloseIcon, HeartIcon } from "@/components/ui/icons";
 import { NotificationBell } from "@/components/marketplace/NotificationBell";
 import type { NotificationItem } from "@/lib/notifications/queries";
 import { CATEGORIES, BRANDS } from "@/lib/marketplace/constants";
@@ -63,18 +63,86 @@ export function SiteHeader({
 
   return (
     <nav className="sticky top-0 z-[100] border-b border-border-soft bg-bg/95 backdrop-blur-xl">
-      <div className="mx-auto flex max-w-[1480px] items-center justify-between gap-6 px-6 py-4 md:px-10">
-        <Link href="/" className="flex flex-shrink-0 items-center">
-          <Image
-            src="/logo.svg"
-            alt="D&D Luxury"
-            width={42}
-            height={42}
-            priority
-          />
+      {/* Row 1 — search (left) · logo (centre) · actions (right), Vestiaire-style */}
+      <div className="mx-auto grid max-w-[1480px] grid-cols-[1fr_auto_1fr] items-center gap-4 px-6 py-4 md:px-10">
+        {/* Left: desktop search pill / mobile menu trigger */}
+        <div className="flex items-center">
+          <button
+            type="button"
+            aria-label="Menu"
+            aria-expanded={menuOpen}
+            aria-controls="mobile-menu"
+            onClick={() => setMenuOpen((v) => !v)}
+            className="rounded-[3px] border border-border p-2.5 text-ink lg:hidden"
+          >
+            {menuOpen ? (
+              <CloseIcon width={18} height={18} />
+            ) : (
+              <MenuIcon width={18} height={18} />
+            )}
+          </button>
+          <form
+            onSubmit={submitSearch}
+            className="hidden w-full max-w-[360px] items-center overflow-hidden rounded-full border border-border bg-surface transition-colors focus-within:border-gold lg:flex"
+          >
+            <span className="flex flex-shrink-0 items-center pl-4 text-ink-dim">
+              <SearchIcon width={16} height={16} />
+            </span>
+            <input
+              type="text"
+              name="q"
+              aria-label="Search pieces"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search by brand, piece..."
+              className="min-w-0 flex-1 bg-transparent px-3 py-2.5 text-[13px] text-ink outline-none placeholder:text-ink-dim"
+            />
+          </form>
+        </div>
+
+        {/* Centre: logo */}
+        <Link href="/" className="flex items-center justify-center">
+          <Image src="/logo.svg" alt="D&D Luxury" width={48} height={48} priority />
         </Link>
 
-        <ul className="hidden items-center gap-8 lg:flex">
+        {/* Right: actions */}
+        <div className="flex items-center justify-end gap-1.5">
+          {user && unreadCount !== undefined && (
+            <NotificationBell
+              initialUnread={unreadCount}
+              initialItems={recentNotifications ?? []}
+            />
+          )}
+          {user?.role === "buyer" && (
+            <Link
+              href="/buyer/wishlist"
+              aria-label="Wishlist"
+              className="hidden rounded-full p-2.5 text-ink-muted transition-colors hover:text-ink sm:inline-flex"
+            >
+              <HeartIcon width={18} height={18} />
+            </Link>
+          )}
+          {user ? (
+            <Link
+              href={dashboardHref(user.role)}
+              className="btn btn-ghost hidden sm:inline-flex"
+            >
+              Account
+            </Link>
+          ) : (
+            <Link href="/signin" className="btn btn-ghost hidden sm:inline-flex">
+              Sign In
+            </Link>
+          )}
+          <Link href="/sell" className="btn btn-primary btn-sm hidden sm:inline-flex">
+            Sell With Us
+          </Link>
+        </div>
+      </div>
+
+      {/* Row 2 — primary nav, centred under the logo (desktop only) */}
+      <div className="hidden border-t border-border-soft lg:block">
+        <ul className="mx-auto flex max-w-[1480px] items-center justify-center gap-9 px-6 py-3 md:px-10">
           {NAV_LINKS.map((link) => {
             const active =
               link.href === "/"
@@ -87,7 +155,7 @@ export function SiteHeader({
               >
                 <Link
                   href={link.href}
-                  className={`relative py-2 text-xs font-medium uppercase tracking-[0.18em] transition-colors ${
+                  className={`relative py-1.5 text-xs font-medium uppercase tracking-[0.18em] transition-colors ${
                     active
                       ? "text-gold after:absolute after:inset-x-0 after:bottom-0 after:h-px after:bg-gold"
                       : "text-ink-muted hover:text-ink"
@@ -97,8 +165,8 @@ export function SiteHeader({
                 </Link>
                 {link.label === "Shop" && (
                   /* Hover mega-menu — pure CSS, exposes the full catalogue tree.
-                     Pure-CSS hover; the pt-3 bridges the gap to the link. */
-                  <div className="invisible absolute left-0 top-full z-[110] w-[600px] pt-3 opacity-0 transition-opacity duration-200 group-hover:visible group-hover:opacity-100">
+                     The pt-3 bridges the gap to the link. */
+                  <div className="invisible absolute left-1/2 top-full z-[110] w-[600px] -translate-x-1/2 pt-3 opacity-0 transition-opacity duration-200 group-hover:visible group-hover:opacity-100">
                     <div className="grid grid-cols-3 gap-8 rounded-[3px] border border-border-soft bg-bg p-8 shadow-xl">
                       <div>
                         <div className="mb-3.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-ink-dim">
@@ -147,66 +215,6 @@ export function SiteHeader({
             );
           })}
         </ul>
-
-        <form
-          onSubmit={submitSearch}
-          className="hidden min-w-0 max-w-[340px] flex-1 items-center overflow-hidden rounded-[3px] border border-border bg-surface transition-colors focus-within:border-gold md:flex"
-        >
-          <input
-            type="text"
-            name="q"
-            aria-label="Search pieces"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search pieces..."
-            className="min-w-0 flex-1 bg-transparent px-3.5 py-2.5 text-[13px] text-ink outline-none placeholder:text-ink-dim"
-          />
-          <button
-            type="submit"
-            aria-label="Search"
-            className="flex flex-shrink-0 items-center self-stretch px-3 py-2.5 text-ink-dim transition-colors hover:text-gold"
-          >
-            <SearchIcon width={16} height={16} />
-          </button>
-        </form>
-
-        <div className="flex flex-shrink-0 items-center gap-2">
-          {user && unreadCount !== undefined && (
-            <NotificationBell
-              initialUnread={unreadCount}
-              initialItems={recentNotifications ?? []}
-            />
-          )}
-          {user ? (
-            <Link
-              href={dashboardHref(user.role)}
-              className="btn btn-ghost hidden sm:inline-flex"
-            >
-              Account
-            </Link>
-          ) : (
-            <Link href="/signin" className="btn btn-ghost hidden sm:inline-flex">
-              Sign In
-            </Link>
-          )}
-          <Link href="/sell" className="btn btn-primary btn-sm hidden sm:inline-flex">
-            Sell With Us
-          </Link>
-          <button
-            type="button"
-            aria-label="Menu"
-            aria-expanded={menuOpen}
-            aria-controls="mobile-menu"
-            onClick={() => setMenuOpen((v) => !v)}
-            className="rounded-[3px] border border-border p-2.5 text-ink lg:hidden"
-          >
-            {menuOpen ? (
-              <CloseIcon width={18} height={18} />
-            ) : (
-              <MenuIcon width={18} height={18} />
-            )}
-          </button>
-        </div>
       </div>
 
       {menuOpen && (

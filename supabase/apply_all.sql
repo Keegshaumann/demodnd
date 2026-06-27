@@ -1593,3 +1593,46 @@ select * from (values
   ('Elite',         99900,   0, null,  300, 'All methods + priority review',     12, 4, true)
 ) as t(name, monthly_fee_cents, per_item_fee_cents, max_listings, transaction_fee_bps, auth_included, courier_credits, sort_order, active)
 where not exists (select 1 from public.subscription_tiers);
+
+-- >>> migrations/20260627120000_gender_dimension.sql
+-- Gender dimension — Women / Men / Unisex shopping context (Vestiaire-style).
+-- Additive: one NOT-NULL text column (constant default → fast backfill) + CHECK
+-- + partial index. Filtered as (selected gender OR unisex) in listings.ts.
+alter table public.listings
+  add column if not exists gender text not null default 'unisex'
+    check (gender in ('women', 'men', 'unisex'));
+
+comment on column public.listings.gender is
+  'Shopping gender: women | men | unisex. Filtered as (selected OR unisex). Default unisex so untagged pieces surface in both views.';
+
+create index if not exists listings_active_gender_idx
+  on public.listings (gender)
+  where status = 'active';
+
+-- Demo backfill (no-op on a fresh DB; seed script sets gender at insert).
+update public.listings set gender = 'women'
+  where category = 'bags' or title = 'Chanel Slingback Two-Tone';
+update public.listings set gender = 'men'
+  where title in (
+    'Prada Monolith Loafer', 'Gucci Horsebit 1953 Loafer',
+    'Patek Philippe Aquanaut', 'Audemars Piguet Royal Oak 15500ST',
+    'Rolex Cosmograph Daytona', 'Rolex GMT-Master II Pepsi',
+    'Patek Philippe Nautilus'
+  );
+
+-- >>> migrations/20260627140000_seasonal_dimension.sql
+-- Seasonal dimension — optional per-item season tag (SH seasons + 'all').
+-- Filtered as (current season OR all). Sellers may tag at submission; default all.
+alter table public.listings
+  add column if not exists season text not null default 'all'
+    check (season in ('spring', 'summer', 'autumn', 'winter', 'all'));
+create index if not exists listings_active_season_idx
+  on public.listings (season) where status = 'active';
+alter table public.auth_submissions
+  add column if not exists season text not null default 'all'
+    check (season in ('spring', 'summer', 'autumn', 'winter', 'all'));
+update public.listings set season = 'summer'
+  where title in (
+    'Chanel Slingback Two-Tone', 'Gucci Jackie 1961 Small',
+    'Bottega Veneta Jodie Mini', 'Louis Vuitton Capucines MM'
+  );

@@ -1,8 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
 import { CategoryRail } from "@/components/marketplace/CategoryRail";
-import { HeroSearch } from "@/components/marketplace/HeroSearch";
-import { ListingCard } from "@/components/marketplace/ListingCard";
 import { CollectionRail } from "@/components/marketplace/CollectionRail";
 import { SoldRail } from "@/components/marketplace/SoldRail";
 import { RecentlyViewedRail } from "@/components/marketplace/RecentlyViewedRail";
@@ -11,9 +9,13 @@ import { getActiveListingsPage } from "@/lib/marketplace/listings";
 import {
   CURATED_COLLECTIONS,
   getCollectionPreview,
+  type CuratedCollection,
 } from "@/lib/marketplace/collections";
 import { getCurrentUser } from "@/lib/auth/guards";
 import { getSavedListingIds } from "@/lib/marketplace/saved";
+import { cookies } from "next/headers";
+import { GENDER_COOKIE, parseGender } from "@/lib/marketplace/gender";
+import { currentSeason, seasonLabel } from "@/lib/marketplace/season";
 import {
   ShieldIcon,
   LockIcon,
@@ -25,14 +27,6 @@ import {
   CertificateIcon,
 } from "@/components/ui/icons";
 
-const QUICK_LINKS = [
-  { href: "/browse?category=bags", label: "Bags" },
-  { href: "/browse?category=jewellery", label: "Jewellery" },
-  { href: "/browse?category=watches", label: "Watches" },
-  { href: "/browse?category=shoes", label: "Shoes" },
-  { href: "/browse?category=accessories", label: "Accessories" },
-  { href: "/browse?category=apparel", label: "Apparel" },
-];
 
 // Two editorial hero images — Rebag-style split. Already-whitelisted
 // images.unsplash.com host (next.config.ts); same monochrome luxury palette as
@@ -88,10 +82,29 @@ export default async function HomePage() {
   // previews (feature 10). All fetched in parallel; getCurrentUser is
   // React-cache'd, so hydrating per-card saved-state costs one cheap
   // saved_listings read (empty Set for guests).
+  const gender =
+    parseGender((await cookies()).get(GENDER_COOKIE)?.value) ?? undefined;
+  // "The {Season} Edit" — dynamic rail slotted right after Now Trending; filters
+  // to the current Southern-Hemisphere season OR 'all'.
+  const season = currentSeason();
+  const seasonalEdit: CuratedCollection = {
+    key: `season-${season}`,
+    eyebrow: "In season",
+    title: `The ${seasonLabel(season)} Edit`,
+    href: `/browse?season=${season}`,
+    filter: { season },
+  };
+  const collectionConfigs: CuratedCollection[] = [
+    ...CURATED_COLLECTIONS.slice(0, 1), // Now Trending stays first
+    seasonalEdit,
+    ...CURATED_COLLECTIONS.slice(1),
+  ];
   const [{ items: newIn }, collectionItems, user] = await Promise.all([
-    getActiveListingsPage({ sort: "newest" }, 1, 8),
+    getActiveListingsPage({ sort: "newest", gender }, 1, 16),
     Promise.all(
-      CURATED_COLLECTIONS.map((c) => getCollectionPreview(c.filter, 4)),
+      collectionConfigs.map((c) =>
+        getCollectionPreview({ ...c.filter, gender }, 12),
+      ),
     ),
     getCurrentUser(),
   ]);
@@ -99,10 +112,32 @@ export default async function HomePage() {
 
   // Only render an edit's rail when its preview returned stock — pair each
   // collection with its (possibly empty) preview slice.
-  const collections = CURATED_COLLECTIONS.map((c, i) => ({
-    config: c,
-    items: collectionItems[i] ?? [],
-  })).filter((c) => c.items.length > 0);
+  const collections = collectionConfigs
+    .map((c, i) => ({
+      config: c,
+      items: collectionItems[i] ?? [],
+    }))
+    .filter((c) => c.items.length > 0);
+  // Now Trending leads the page (above New In); the rest follow after it.
+  const nowTrending = collections.find((c) => c.config.key === "now-trending");
+  const restCollections = collections.filter(
+    (c) => c.config.key !== "now-trending",
+  );
+
+  // Honest "New in" heading: label by the freshest window that actually covers
+  // the items we show, widening when nothing's genuinely new — so the rail is
+  // never empty and never overclaims. (We always show the newest pieces.)
+  const NEW_IN_INITIAL = 8;
+  const oldestShown = newIn[Math.min(NEW_IN_INITIAL, newIn.length) - 1];
+  const oldestShownAgeDays = oldestShown
+    ? (Date.now() - new Date(oldestShown.createdAt).getTime()) / 86_400_000
+    : Infinity;
+  const newInHeading =
+    oldestShownAgeDays <= 7
+      ? "New this week."
+      : oldestShownAgeDays <= 31
+        ? "New this month."
+        : "Latest arrivals.";
 
   return (
     <>
@@ -117,7 +152,8 @@ export default async function HomePage() {
             </div>
           ))}
         </div>
-        {/* Scrim so the white overlay text stays legible over any photo */}
+        {/* Balanced scrim — darker through the centre so the centred headline
+            stays legible over either image. */}
         <div
           aria-hidden="true"
           className="absolute inset-0 -z-10"
@@ -133,16 +169,16 @@ export default async function HomePage() {
               D&amp;D · All things luxury
             </span>
             <h1
-              className="mb-7 text-balance text-white [&_em]:text-white [text-shadow:0_2px_30px_rgba(0,0,0,0.55)]"
+              className="mb-7 text-balance text-white [&_em]:text-white [text-shadow:0_2px_30px_rgba(0,0,0,0.5)]"
               style={{
-                fontSize: "clamp(40px, 6.4vw, 84px)",
+                fontSize: "clamp(40px, 6vw, 80px)",
                 letterSpacing: "-0.022em",
                 lineHeight: 1.04,
               }}
             >
               Welcome to the largest luxury marketplace <em>in the world.</em>
             </h1>
-            <p className="mb-9 max-w-[540px] text-pretty text-[17px] leading-relaxed text-white/90 [text-shadow:0_1px_18px_rgba(0,0,0,0.6)]">
+            <p className="mb-9 max-w-[520px] text-pretty text-[17px] leading-relaxed text-white/90 [text-shadow:0_1px_18px_rgba(0,0,0,0.55)]">
               Authenticated, evaluated and insured. Every piece examined by hand
               before it ever reaches you — the counterfeit risk of private
               resale, removed.
@@ -158,32 +194,9 @@ export default async function HomePage() {
                 Sell with D&amp;D
               </Link>
             </div>
-            <div className="mt-9 flex flex-wrap items-center justify-center gap-2">
-              <span className="mr-1 text-[11px] uppercase tracking-[0.14em] text-white/55">
-                Browse:
-              </span>
-              {QUICK_LINKS.map((l) => (
-                <Link
-                  key={l.href}
-                  href={l.href}
-                  className="rounded-full border border-white/35 px-3.5 py-1.5 text-[11.5px] uppercase tracking-[0.1em] text-white/80 transition-colors hover:border-white hover:text-white"
-                >
-                  {l.label}
-                </Link>
-              ))}
-            </div>
           </Reveal>
         </div>
       </header>
-
-      {/* Search band — kept reachable in its own slim bordered strip below the
-          hero, so the editorial headline stays uncrowded. Single top border;
-          the trust strip below provides the next divider. */}
-      <div className="border-t border-border bg-surface pb-2 pt-7">
-        <div className="dnd-container flex justify-center">
-          <HeroSearch />
-        </div>
-      </div>
 
       {/* Trust strip */}
       <div className="border-y border-border bg-surface py-6">
@@ -219,43 +232,32 @@ export default async function HomePage() {
       {/* Category rail */}
       <CategoryRail />
 
-      {/* NEW IN (feature 13) — the prior "Latest pieces" grid, now an explicit
-          newest-first New In view with a prominent "/browse?sort=newest" entry
-          point. Featured-first hero grid logic is preserved; we simply show the
-          newest-first set here under the New In banner the brief calls for. */}
-      {newIn.length > 0 && (
-        <section className="border-t border-border-soft" style={{ padding: "80px 0 100px" }}>
-          <div className="dnd-container">
-            <div className="mb-12 flex flex-wrap items-end justify-between gap-4">
-              <div>
-                <div className="eyebrow mb-3">New in</div>
-                <h2 className="font-serif" style={{ fontSize: "clamp(28px,3.4vw,40px)" }}>
-                  New this week.
-                </h2>
-                <p className="mt-3 max-w-[520px] text-pretty text-[14px] leading-relaxed text-ink-muted">
-                  The latest pieces to clear authentication and go live — freshest
-                  first.
-                </p>
-              </div>
-              <Link href="/browse?sort=newest" className="btn btn-outline btn-sm shrink-0">
-                See all new in <ArrowRightIcon width={16} height={16} />
-              </Link>
-            </div>
-            <div className="grid grid-cols-1 gap-9 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {newIn.map((l, i) => (
-                <Reveal key={l.id} delay={Math.min(i, 7) * 55}>
-                  <ListingCard listing={l} isSaved={savedIds.has(l.id)} />
-                </Reveal>
-              ))}
-            </div>
-          </div>
-        </section>
+      {/* NOW TRENDING (promoted) — leads the rails, above New In. */}
+      {nowTrending && (
+        <CollectionRail
+          title={nowTrending.config.title}
+          eyebrow={nowTrending.config.eyebrow}
+          href={nowTrending.config.href}
+          items={nowTrending.items}
+          savedIds={savedIds}
+        />
       )}
 
-      {/* CURATED COLLECTIONS / EDITS (feature 10) — config-driven titled rails,
-          each linking into /browse with its filter params. Empty edits are
-          already filtered out above, so every rail here has stock. */}
-      {collections.map(({ config, items }) => (
+      {/* NEW IN (feature 13) — newest-first, now a single scrollable carousel
+          (same rail treatment as the edits). Adaptive heading + "See all". */}
+      {newIn.length > 0 && (
+        <CollectionRail
+          eyebrow="New in"
+          title={newInHeading}
+          href="/browse?sort=newest"
+          viewAllLabel="See all new in"
+          items={newIn}
+          savedIds={savedIds}
+        />
+      )}
+
+      {/* CURATED COLLECTIONS / EDITS (feature 10) — the remaining titled rails. */}
+      {restCollections.map(({ config, items }) => (
         <CollectionRail
           key={config.key}
           title={config.title}

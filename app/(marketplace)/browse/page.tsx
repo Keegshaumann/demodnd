@@ -19,6 +19,9 @@ import { getCurrentUser } from "@/lib/auth/guards";
 import { getSavedListingIds } from "@/lib/marketplace/saved";
 import { getSaveCounts } from "@/lib/marketplace/social";
 import type { AuthMethod } from "@/lib/supabase/database.types";
+import { cookies } from "next/headers";
+import { GENDER_COOKIE, parseGender } from "@/lib/marketplace/gender";
+import { parseSeason } from "@/lib/marketplace/season";
 
 export const metadata: Metadata = {
   title: "Shop the Collection",
@@ -56,8 +59,19 @@ export default async function BrowsePage({
   const maxRands = Number(first(params.max));
   const sortParam = first(params.sort);
 
+  // Gender scope: an explicit ?gender= (incl. "all" → no filter) wins, otherwise
+  // fall back to the gate's cookie. Lets the toggle override a saved preference.
+  const genderParam = first(params.gender);
+  const gender =
+    genderParam !== undefined
+      ? (parseGender(genderParam) ?? undefined)
+      : (parseGender((await cookies()).get(GENDER_COOKIE)?.value) ?? undefined);
+
   const filters: BrowseFilters = {
     q: first(params.q),
+    gender,
+    featured: first(params.featured) === "1" || undefined,
+    season: parseSeason(first(params.season)) ?? undefined,
     categories: asArray(params.category),
     brands: asArray(params.brand),
     conditions: asArray(params.condition),
@@ -112,6 +126,14 @@ export default async function BrowsePage({
     sp.set("page", String(p));
     return `/browse?${sp.toString()}`;
   };
+  // Gender-toggle hrefs: preserve other filters, reset paging. null = Everything.
+  const genderHref = (g: "women" | "men" | null) => {
+    const sp = new URLSearchParams(baseQs);
+    sp.delete("gender");
+    if (g) sp.set("gender", g);
+    const qs = sp.toString();
+    return qs ? `/browse?${qs}` : "/browse";
+  };
 
   return (
     <>
@@ -137,6 +159,32 @@ export default async function BrowsePage({
 
       <div className="dnd-container">
         <main className="min-w-0 py-12 lg:py-14">
+          {/* Gender scope — Women / Men / Everything (Vestiaire-style), reads
+              left-to-right and drives the whole grid via ?gender=. */}
+          <div className="mb-7 flex items-center gap-2">
+            {(
+              [
+                { v: "women", l: "Women" },
+                { v: "men", l: "Men" },
+                { v: null, l: "Everything" },
+              ] as const
+            ).map((o) => {
+              const active = (o.v ?? undefined) === gender;
+              return (
+                <Link
+                  key={o.l}
+                  href={genderHref(o.v)}
+                  className={`rounded-full border px-5 py-2 text-[12px] font-medium uppercase tracking-[0.12em] transition-colors ${
+                    active
+                      ? "border-gold bg-gold text-white"
+                      : "border-border text-ink-muted hover:border-gold hover:text-ink"
+                  }`}
+                >
+                  {o.l}
+                </Link>
+              );
+            })}
+          </div>
           {/* Horizontal filter bar (rebag-style) — facet dropdowns on the left
               (drawer trigger below lg), search + sort on the right. */}
           <div className="mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-border-soft pb-6 lg:flex-nowrap">

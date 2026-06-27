@@ -204,6 +204,7 @@ export interface Database {
           status: SubmissionStatus;
           brand: string;
           category: string;
+          season: string;
           title: string;
           model: string | null;
           description: string | null;
@@ -267,6 +268,7 @@ export interface Database {
           title: string;
           brand: string;
           category: string;
+          gender: string;
           model: string | null;
           description: string | null;
           condition: string;
@@ -291,6 +293,7 @@ export interface Database {
           title: string;
           brand: string;
           category: string;
+          gender?: string;
           model?: string | null;
           description?: string | null;
           condition: string;
@@ -315,6 +318,7 @@ export interface Database {
           title?: string;
           brand?: string;
           category?: string;
+          gender?: string;
           model?: string | null;
           description?: string | null;
           condition?: string;

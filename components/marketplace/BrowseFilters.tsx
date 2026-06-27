@@ -12,6 +12,7 @@ import {
   categoryLabel,
 } from "@/lib/marketplace/constants";
 import type { AuthMethod } from "@/lib/supabase/database.types";
+import { SEASONS, seasonLabel } from "@/lib/marketplace/season";
 import { SlidersIcon, CloseIcon, ChevronDownIcon } from "@/components/ui/icons";
 
 /* ---------------------------------------------------------------------------
@@ -89,6 +90,17 @@ function useFilters() {
   const checked = (key: string, value: string) =>
     searchParams.getAll(key).includes(value);
 
+  // Single-value facet (e.g. season): set one value, click again to clear.
+  function selectOne(key: string, value: string) {
+    const next = currentParams();
+    if (next.get(key) === value) next.delete(key);
+    else next.set(key, value);
+    next.delete("page");
+    pushParams(next);
+  }
+  const isSelected = (key: string, value: string) =>
+    searchParams.get(key) === value;
+
   return {
     searchParams,
     currentParams,
@@ -97,6 +109,8 @@ function useFilters() {
     removeOne,
     clearAll,
     checked,
+    selectOne,
+    isSelected,
   };
 }
 
@@ -106,6 +120,7 @@ function countActive(searchParams: URLSearchParams): number {
     n += searchParams.getAll(k).length;
   if (searchParams.get("min")) n += 1;
   if (searchParams.get("max")) n += 1;
+  if (searchParams.get("season")) n += 1;
   return n;
 }
 
@@ -113,8 +128,16 @@ function countActive(searchParams: URLSearchParams): number {
    The filter panel itself — reused inside both the desktop aside and the drawer.
 --------------------------------------------------------------------------- */
 function FilterPanel() {
-  const { searchParams, currentParams, pushParams, toggle, clearAll, checked } =
-    useFilters();
+  const {
+    searchParams,
+    currentParams,
+    pushParams,
+    toggle,
+    clearAll,
+    checked,
+    selectOne,
+    isSelected,
+  } = useFilters();
   const [minR, setMinR] = useState(searchParams.get("min") ?? "");
   const [maxR, setMaxR] = useState(searchParams.get("max") ?? "");
 
@@ -188,6 +211,17 @@ function FilterPanel() {
             className="w-full min-w-0 rounded-[3px] border border-border bg-card px-3.5 py-2.5 text-[13px] outline-none focus:border-gold"
           />
         </div>
+      </FilterGroup>
+
+      <FilterGroup title="Season">
+        {SEASONS.map((s) => (
+          <CheckRow
+            key={s.value}
+            label={s.label}
+            checked={isSelected("season", s.value)}
+            onChange={() => selectOne("season", s.value)}
+          />
+        ))}
       </FilterGroup>
 
       <FilterGroup title="Maison">
@@ -380,12 +414,13 @@ function PriceFacet({ align = "left" }: { align?: "left" | "right" }) {
  *  Each dropdown reuses the same CheckRow list + useFilters() mutators as the
  *  sidebar/drawer panel, so all filter logic and URL behaviour is identical. */
 export function BrowseFilterBar() {
-  const { searchParams, toggle, checked } = useFilters();
+  const { searchParams, toggle, checked, selectOne, isSelected } = useFilters();
 
   const catCount = searchParams.getAll("category").length;
   const brandCount = searchParams.getAll("brand").length;
   const condCount = searchParams.getAll("condition").length;
   const methodCount = searchParams.getAll("method").length;
+  const seasonCount = searchParams.get("season") ? 1 : 0;
 
   return (
     <div className="hidden flex-wrap items-center gap-2.5 lg:flex">
@@ -416,6 +451,19 @@ export function BrowseFilterBar() {
       </FacetDropdown>
 
       <PriceFacet />
+
+      <FacetDropdown label="Season" count={seasonCount}>
+        <div className="flex flex-col gap-3">
+          {SEASONS.map((s) => (
+            <CheckRow
+              key={s.value}
+              label={s.label}
+              checked={isSelected("season", s.value)}
+              onChange={() => selectOne("season", s.value)}
+            />
+          ))}
+        </div>
+      </FacetDropdown>
 
       <FacetDropdown label="Condition" count={condCount}>
         <div className="mb-3 flex items-center justify-between">
@@ -565,6 +613,9 @@ export function ActiveFilterChips() {
       label: AUTH_METHOD_LABELS[v as AuthMethod] ?? v,
     }),
   );
+  const season = searchParams.get("season");
+  if (season)
+    chips.push({ key: "season", value: season, label: seasonLabel(season) });
   const min = searchParams.get("min");
   const max = searchParams.get("max");
   if (min) chips.push({ key: "min", value: min, label: `From R${min}` });
