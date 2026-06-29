@@ -160,14 +160,14 @@ export default async function ListingPage({
   // is *evaluated* (appraisal), everything else *authenticated*. Drives the
   // gallery/inline badge label and the provenance/trust copy below.
   const badgeLabel = processBadgeLabel(listing.category);
-  const isEvaluated = categoryProcess(listing.category) === "evaluated";
+  const isDouble = categoryProcess(listing.category) === "double";
   const processNounWord = processNoun(listing.category);
   const features = [
     {
       icon: CertificateIcon,
-      text: isEvaluated
-        ? "Evaluated by D&D Luxury"
-        : "Authenticated by D&D Luxury",
+      text: isDouble
+        ? "Double-authenticated by D&D specialists"
+        : "Verified online via Entrupy",
     },
     ...FEATURES_REST,
   ];
@@ -253,7 +253,7 @@ export default async function ListingPage({
       : []),
     ...(listing.year ? [{ label: "Year", value: String(listing.year) }] : []),
     {
-      label: isEvaluated ? "Evaluation" : "Authentication",
+      label: isDouble ? "Authentication" : "Verification",
       value: AUTH_METHOD_LABELS[listing.auth_method],
     },
   ];
@@ -423,8 +423,8 @@ export default async function ListingPage({
                 <div className="text-[13.5px] font-medium text-ink">Verified Seller</div>
                 <p className="mt-1 text-[12.5px] leading-relaxed text-ink-muted">
                   Sellers stay anonymous. Every piece is{" "}
-                  {isEvaluated ? "evaluated" : "authenticated"} and held in custody
-                  by D&amp;D Luxury — you transact only with us.
+                  {isDouble ? "double-authenticated" : "Entrupy-verified"} and held
+                  in custody by D&amp;D Luxury — you transact only with us.
                 </p>
               </div>
             </div>
@@ -446,8 +446,8 @@ export default async function ListingPage({
               ) : (
                 <p className="max-w-[60ch] text-[15.5px] leading-[1.85] text-ink-dim">
                   A considered piece from {listing.brand},{" "}
-                  {isEvaluated ? "evaluated" : "authenticated"} and prepared for
-                  sale by D&amp;D Luxury.
+                  {isDouble ? "double-authenticated" : "Entrupy-verified"} and
+                  prepared for sale by D&amp;D Luxury.
                 </p>
               )}
 
@@ -473,11 +473,15 @@ export default async function ListingPage({
               <div className="mt-10 max-w-[60ch] divide-y divide-border-soft border-y border-border-soft">
                 <Disclosure
                   title={
-                    isEvaluated
-                      ? "Evaluation & provenance"
-                      : "Authentication & provenance"
+                    isDouble
+                      ? "Authentication & provenance"
+                      : "Verification & provenance"
                   }
-                  body={`Examined in person by D&D specialists and listed only after passing ${processNounWord} (${AUTH_METHOD_LABELS[listing.auth_method]}). Each sale carries a D&D Certificate of ${isEvaluated ? "Evaluation" : "Authenticity"}. We take custody of every piece, so you never transact with an unverified stranger.`}
+                  body={
+                    isDouble
+                      ? `Examined in person by D&D specialists and listed only after passing ${processNounWord}. Each sale carries a D&D Certificate of Authenticity. We take custody of every piece, so you never transact with an unverified stranger.`
+                      : `Verified online through Entrupy — our AI authentication partner — and listed only after passing ${processNounWord}. Each sale carries a Certificate of Authenticity. We take custody of every piece, so you never transact with an unverified stranger.`
+                  }
                   defaultOpen
                 />
                 <Disclosure
@@ -512,12 +516,12 @@ export default async function ListingPage({
                 <CertificateIcon width={22} height={22} className="mt-0.5 flex-shrink-0 text-white/85" />
                 <div>
                   <div className="text-[13.5px] font-medium">
-                    {isEvaluated
-                      ? "Certificate of Evaluation"
-                      : "Certificate of Authenticity"}
+                    Certificate of Authenticity
                   </div>
                   <p className="mt-1 text-[12.5px] leading-relaxed text-white/60">
-                    Issued by D&amp;D Luxury and included with this piece.
+                    {isDouble
+                      ? "Issued by D&D Luxury and included with this piece."
+                      : "Verified via Entrupy and issued with this piece."}
                   </p>
                 </div>
               </div>

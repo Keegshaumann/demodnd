@@ -13,34 +13,44 @@ export const CATEGORIES = [
 export const CATEGORY_VALUES = CATEGORIES.map((c) => c.value);
 
 /**
- * Process distinction — single source of truth for the authenticate-vs-evaluate
- * trust model. Jewellery is *evaluated* (appraisal/valuation), everything else
- * is *authenticated*. Every buyer- and seller-facing surface (card/PDP badges,
- * sell-flow trust copy, category tiles) derives its label from these helpers so
- * the distinction stays consistent everywhere.
+ * Process distinction — single source of truth for the trust model. Watches &
+ * jewellery are *double-authenticated* in-house by D&D specialists; everything
+ * else (bags, shoes, accessories, apparel) is *verified online via Entrupy*,
+ * our AI authentication partner (Entrupy doesn't cover watches/jewellery).
+ * Every buyer- and seller-facing surface (card/PDP badges, sell-flow copy,
+ * category tiles) derives its label from these helpers so the distinction
+ * stays consistent everywhere.
  */
-export type ItemProcess = "authenticated" | "evaluated";
+export type ItemProcess = "double" | "entrupy";
 
-const EVALUATED_CATEGORIES = new Set<string>(["jewellery"]);
+const DOUBLE_AUTH_CATEGORIES = new Set<string>(["watches", "jewellery"]);
 
-/** Which guarantee a category falls under: 'authenticated' | 'evaluated'. */
+/** Which track a category falls under: 'double' (in-house) | 'entrupy' (online). */
 export function categoryProcess(category: string): ItemProcess {
-  return EVALUATED_CATEGORIES.has(category) ? "evaluated" : "authenticated";
+  return DOUBLE_AUTH_CATEGORIES.has(category) ? "double" : "entrupy";
 }
 
-/** Badge/trust label for a category: 'Authenticated' | 'Evaluated'. */
-export function processBadgeLabel(category: string): "Authenticated" | "Evaluated" {
-  return categoryProcess(category) === "evaluated" ? "Evaluated" : "Authenticated";
+/** Badge/trust label: 'Double-authenticated' | 'Entrupy verified'. */
+export function processBadgeLabel(
+  category: string,
+): "Double-authenticated" | "Entrupy verified" {
+  return categoryProcess(category) === "double"
+    ? "Double-authenticated"
+    : "Entrupy verified";
 }
 
-/** Trust-copy verb for a category: 'evaluated'/'appraised' vs 'authenticated'. */
+/** Trust-copy verb: 'double-authenticated' vs 'Entrupy-verified'. */
 export function processVerb(category: string): string {
-  return categoryProcess(category) === "evaluated" ? "appraised" : "authenticated";
+  return categoryProcess(category) === "double"
+    ? "double-authenticated"
+    : "Entrupy-verified";
 }
 
-/** Trust-copy noun for a category: 'appraisal' vs 'authentication'. */
+/** Trust-copy noun: 'double authentication' vs 'Entrupy verification'. */
 export function processNoun(category: string): string {
-  return categoryProcess(category) === "evaluated" ? "appraisal" : "authentication";
+  return categoryProcess(category) === "double"
+    ? "double authentication"
+    : "Entrupy verification";
 }
 
 /** Condition grades (from the demo). */

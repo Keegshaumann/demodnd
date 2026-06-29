@@ -179,9 +179,8 @@ export default async function HomePage() {
               Welcome to the largest luxury marketplace <em>in the world.</em>
             </h1>
             <p className="mb-9 max-w-[520px] text-pretty text-[17px] leading-relaxed text-white/90 [text-shadow:0_1px_18px_rgba(0,0,0,0.55)]">
-              Authenticated, evaluated and insured. Every piece examined by hand
-              before it ever reaches you — the counterfeit risk of private
-              resale, removed.
+              Authenticated, verified and insured. Every piece checked before it
+              ever reaches you — the counterfeit risk of private resale, removed.
             </p>
             <div className="flex flex-wrap items-center justify-center gap-4">
               <Link href="/browse" className="btn btn-lg bg-white text-ink hover:bg-white/90">

@@ -155,10 +155,10 @@ export function SiteHeader({
               >
                 <Link
                   href={link.href}
-                  className={`relative py-1.5 text-xs font-medium uppercase tracking-[0.18em] transition-colors ${
+                  className={`relative py-1.5 text-xs font-medium uppercase tracking-[0.18em] transition-colors after:absolute after:inset-x-0 after:bottom-0 after:h-px after:bg-gold after:transition-transform after:duration-300 after:ease-out-soft ${
                     active
-                      ? "text-gold after:absolute after:inset-x-0 after:bottom-0 after:h-px after:bg-gold"
-                      : "text-ink-muted hover:text-ink"
+                      ? "text-gold after:scale-x-100"
+                      : "text-ink-muted after:origin-left after:scale-x-0 hover:text-ink hover:after:scale-x-100"
                   }`}
                 >
                   {link.label}
@@ -166,7 +166,7 @@ export function SiteHeader({
                 {link.label === "Shop" && (
                   /* Hover mega-menu — pure CSS, exposes the full catalogue tree.
                      The pt-3 bridges the gap to the link. */
-                  <div className="invisible absolute left-1/2 top-full z-[110] w-[600px] -translate-x-1/2 pt-3 opacity-0 transition-opacity duration-200 group-hover:visible group-hover:opacity-100">
+                  <div className="invisible absolute left-1/2 top-full z-[110] w-[600px] -translate-x-1/2 translate-y-1 pt-3 opacity-0 transition-[opacity,transform] duration-200 ease-out-soft group-hover:visible group-hover:translate-y-0 group-hover:opacity-100">
                     <div className="grid grid-cols-3 gap-8 rounded-[3px] border border-border-soft bg-bg p-8 shadow-xl">
                       <div>
                         <div className="mb-3.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-ink-dim">

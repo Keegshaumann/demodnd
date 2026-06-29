@@ -149,7 +149,7 @@ export default async function OrderDetailPage({
               </div>
               <div className="mt-1.5 inline-flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.14em] text-gold">
                 <CertificateIcon width={11} height={11} />
-                {processBadgeLabel(item.category)} by D&D
+                {processBadgeLabel(item.category)}
               </div>
               {/* ANON: buyers never see seller identity — the D&D
                   authentication/evaluation guarantee carries trust instead. */}

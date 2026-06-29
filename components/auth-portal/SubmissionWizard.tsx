@@ -12,7 +12,6 @@ import {
   CONDITIONS,
   AUTH_METHODS,
   categoryProcess,
-  processNoun,
   processVerb,
 } from "@/lib/marketplace/constants";
 import type { AuthMethod } from "@/lib/supabase/database.types";
@@ -98,7 +97,7 @@ export function SubmissionWizard({ userId }: { userId: string }) {
   // Process-aware trust copy: jewellery is *evaluated* (appraisal), everything
   // else is *authenticated*. Derived from the single source of truth so the
   // method step, review row and success state all stay consistent.
-  const isEvaluated = category ? categoryProcess(category) === "evaluated" : false;
+  const isDouble = category ? categoryProcess(category) === "double" : false;
 
   async function handleFiles(files: FileList | null) {
     if (!files) return;
@@ -182,9 +181,9 @@ export function SubmissionWizard({ userId }: { userId: string }) {
     }
     if (step === 3 && !method) {
       setStepError(
-        isEvaluated
-          ? "Select an evaluation method."
-          : "Select an authentication method.",
+        isDouble
+          ? "Select an authentication method."
+          : "Select a verification method.",
       );
       return false;
     }
@@ -236,7 +235,7 @@ export function SubmissionWizard({ userId }: { userId: string }) {
         <h3 className="mb-3 font-serif text-[28px]">Submission received.</h3>
         <p className="mx-auto mb-6 max-w-[440px] text-[15px] text-ink-muted">
           Your piece has been submitted as <strong>pending review</strong>. Our{" "}
-          {isEvaluated ? "evaluation" : "authentication"} team has been notified
+          {isDouble ? "authentication" : "verification"} team has been notified
           and will respond within 3 working days.
         </p>
         <div className="mb-7 inline-block rounded-[3px] border border-border-soft bg-bg px-5 py-3 text-sm">
@@ -328,11 +327,12 @@ export function SubmissionWizard({ userId }: { userId: string }) {
                 ))}
               </select>
               {category && (
-                // Process-aware hint: jewellery is appraised, the rest authenticated.
+                // Process-aware hint: watches/jewellery double-authed in-house,
+                // the rest verified online via Entrupy.
                 <p className="mt-2 text-[12px] text-ink-dim">
-                  {isEvaluated
-                    ? `Jewellery is independently ${processVerb(category)} by D&D — an expert ${processNoun(category)}, not authentication.`
-                    : `This piece will be ${processVerb(category)} by D&D before it goes live.`}
+                  {isDouble
+                    ? `Watches and jewellery are ${processVerb(category)} in-house by D&D specialists.`
+                    : `This piece will be verified online through Entrupy, our authentication partner, before it goes live.`}
                 </p>
               )}
             </Field>
@@ -553,12 +553,12 @@ export function SubmissionWizard({ userId }: { userId: string }) {
       {step === 3 && (
         <div className="animate-fadeIn">
           <h3 className="form-section-title">
-            {isEvaluated ? "Evaluation method" : "Authentication method"}
+            {isDouble ? "Authentication method" : "Verification method"}
           </h3>
           <p className="mb-5 text-sm text-ink-muted">
-            {isEvaluated
-              ? "Every piece is appraised by D&D before it goes live. Choose how you’d like yours evaluated."
-              : "Every piece is authenticated by D&D before it goes live. Choose how you’d like yours verified."}
+            {isDouble
+              ? "Watches and jewellery are double-authenticated in-house by D&D specialists. Choose how you’d like to get yours to us."
+              : "This piece is verified online through Entrupy, our authentication partner. Choose how you’d like to get it to us."}
           </p>
           <div className="space-y-3">
             {AUTH_METHODS.map((m) => (
@@ -613,7 +613,7 @@ export function SubmissionWizard({ userId }: { userId: string }) {
             {year && <Row label="Year" value={year} />}
             <Row label="Photos" value={`${photos.filter((p) => p.url).length} uploaded`} />
             <Row
-              label={isEvaluated ? "Evaluation" : "Authentication"}
+              label={isDouble ? "Authentication" : "Verification"}
               value={AUTH_METHODS.find((m) => m.value === method)?.label ?? "—"}
             />
           </dl>
@@ -630,7 +630,7 @@ export function SubmissionWizard({ userId }: { userId: string }) {
               <a href="/terms" target="_blank" className="text-gold underline">
                 Seller Terms
               </a>{" "}
-              and {isEvaluated ? "appraisal" : "authentication"} protocol.
+              and {isDouble ? "authentication" : "verification"} protocol.
             </span>
           </label>
         </div>

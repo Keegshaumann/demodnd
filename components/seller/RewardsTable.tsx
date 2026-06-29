@@ -38,7 +38,7 @@ const TIERS: Tier[] = [
 
 const PERKS: Perk[] = [
   { label: "Consignment payouts", included: [true, true, true, true] },
-  { label: "Free authentication & evaluation", included: [true, true, true, true] },
+  { label: "Free authentication & Entrupy verification", included: [true, true, true, true] },
   { label: "Loyalty bonus on net sales", included: [false, true, true, true] },
   { label: "Priority listing review", included: [false, true, true, true] },
   { label: "Complimentary collection & pickup", included: [false, false, true, true] },

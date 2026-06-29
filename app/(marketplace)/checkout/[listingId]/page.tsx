@@ -174,7 +174,7 @@ export default async function CheckoutPage({
                 </div>
                 <div className="mt-1.5 inline-flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.14em] text-gold">
                   <CertificateIcon width={11} height={11} />
-                  {processBadgeLabel(listing.category)} by D&D
+                  {processBadgeLabel(listing.category)}
                 </div>
                 {isAgreedOffer ? (
                   <div className="mt-3 flex items-baseline gap-2">

@@ -19,7 +19,7 @@ export function Carousel({ children }: { children: ReactNode }) {
   };
 
   return (
-    <div className="relative">
+    <div className="group/rail relative">
       <div
         ref={ref}
         className="-mx-6 flex snap-x snap-mandatory scroll-pl-6 gap-6 overflow-x-auto px-6 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:scroll-pl-0 sm:px-0"
@@ -36,7 +36,7 @@ export function Carousel({ children }: { children: ReactNode }) {
         type="button"
         aria-label="Scroll left"
         onClick={() => nudge(-1)}
-        className="absolute -left-4 top-1/2 hidden -translate-y-1/2 rounded-full border border-border bg-bg p-3 text-ink shadow-md transition-colors hover:border-gold lg:flex"
+        className="absolute -left-4 top-1/2 hidden -translate-y-1/2 rounded-full border border-border bg-bg/90 p-3 text-ink opacity-0 shadow-md backdrop-blur transition-[opacity,border-color,transform] duration-300 ease-out-soft hover:border-gold focus-visible:opacity-100 group-hover/rail:opacity-100 lg:flex"
       >
         <ChevronRightIcon width={18} height={18} className="rotate-180" />
       </button>
@@ -44,7 +44,7 @@ export function Carousel({ children }: { children: ReactNode }) {
         type="button"
         aria-label="Scroll right"
         onClick={() => nudge(1)}
-        className="absolute -right-4 top-1/2 hidden -translate-y-1/2 rounded-full border border-border bg-bg p-3 text-ink shadow-md transition-colors hover:border-gold lg:flex"
+        className="absolute -right-4 top-1/2 hidden -translate-y-1/2 rounded-full border border-border bg-bg/90 p-3 text-ink opacity-0 shadow-md backdrop-blur transition-[opacity,border-color,transform] duration-300 ease-out-soft hover:border-gold focus-visible:opacity-100 group-hover/rail:opacity-100 lg:flex"
       >
         <ChevronRightIcon width={18} height={18} />
       </button>

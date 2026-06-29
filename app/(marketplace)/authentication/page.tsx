@@ -13,7 +13,7 @@ import {
 export const metadata: Metadata = {
   title: "How we authenticate",
   description:
-    "Every piece on D&D Luxury is examined by hand and authenticated — or, for jewellery, independently evaluated — before it goes live. Insured to R500,000, with a Certificate of Authenticity on every item.",
+    "Watches and jewellery are double-authenticated in-house by D&D specialists; bags, shoes, accessories and apparel are verified online via Entrupy, our authentication partner. Insured to R500,000, with a Certificate of Authenticity on every piece.",
 };
 
 // The real process, told plainly. No invented statistics — only promises D&D
@@ -26,8 +26,8 @@ const STEPS = [
   },
   {
     icon: CertificateIcon,
-    title: "Examined by hand",
-    body: "A specialist inspects the piece against the maison's known construction — stitching, hardware, stamps, serials, materials — for the marks a counterfeit can't fake. Jewellery is independently evaluated and appraised rather than authenticated.",
+    title: "Authenticated two ways",
+    body: "Watches and jewellery are double-authenticated in-house — a specialist inspects construction, hallmarks, serials and movement for the marks a counterfeit can't fake. Bags, shoes, accessories and apparel are verified online through Entrupy, the AI authentication partner trusted across the industry.",
   },
   {
     icon: LockIcon,
@@ -37,7 +37,7 @@ const STEPS = [
 ];
 
 const PROMISES = [
-  { icon: CertificateIcon, label: "Authenticated or evaluated", note: "Every live piece, before it sells." },
+  { icon: CertificateIcon, label: "Double-authenticated or Entrupy-verified", note: "Every live piece, before it sells." },
   { icon: LockIcon, label: "Insured to R500,000", note: "Every transaction, every transit." },
   { icon: RotateIcon, label: "14-day returns", note: "Not as described? Send it back." },
   { icon: TruckIcon, label: "White-glove delivery", note: "Hand-delivered, nationwide." },
@@ -57,12 +57,13 @@ export default function AuthenticationPage() {
           </nav>
           <div className="eyebrow mb-4">The D&D promise</div>
           <h1 className="text-balance" style={{ fontSize: "clamp(34px,4.5vw,56px)", lineHeight: 1.08 }}>
-            Examined by hand, <em>before it ever reaches you.</em>
+            Proven real, <em>before it ever reaches you.</em>
           </h1>
           <p className="mt-6 max-w-[560px] text-[16px] leading-relaxed text-ink-muted">
             The single risk in buying pre-owned luxury is the fake. We remove it.
-            Every piece is authenticated — or, for jewellery, independently
-            evaluated — by a specialist, in person, before it is ever listed.
+            Watches and jewellery are double-authenticated in-house by our
+            specialists; everything else is verified online through Entrupy — our
+            authentication partner — before any piece is ever listed.
           </p>
         </div>
       </header>
