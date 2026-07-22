@@ -10,6 +10,7 @@ import {
 } from "@/lib/seller/actions";
 import { updateListingDetailsAction } from "@/lib/seller/listing-details";
 import { formatZar, formatBps } from "@/lib/money";
+import { CashOutButton } from "@/components/seller/CashOutButton";
 import { CertificateIcon } from "@/components/ui/icons";
 import type { SellerListingRow } from "@/lib/seller/dashboard";
 import type { ListingStatus } from "@/lib/supabase/database.types";
@@ -204,6 +205,10 @@ export function ListingManager({ listing }: { listing: SellerListingRow }) {
                 >
                   Relist
                 </button>
+              )}
+              {(listing.status === "active" ||
+                listing.status === "delisted") && (
+                <CashOutButton listingId={listing.id} />
               )}
             </>
           )}

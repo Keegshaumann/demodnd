@@ -1,13 +1,19 @@
 import "server-only";
 import { headers } from "next/headers";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { pickClientIp } from "@/lib/net/client-ip";
 
-/** Best-effort client IP from proxy headers (Vercel sets x-forwarded-for). */
+/**
+ * Client IP from proxy headers, used as the per-caller rate-limit bucket key.
+ *
+ * SECURITY: this MUST use the rightmost (proxy-appended) X-Forwarded-For entry,
+ * not the leftmost — the leftmost is client-controlled, so reading it lets an
+ * attacker spoof a new IP per request and bypass the brute-force limits on the
+ * credential endpoints. Shared with the PayFast ITN IP check via pickClientIp.
+ */
 export async function clientIp(): Promise<string> {
   const h = await headers();
-  const fwd = h.get("x-forwarded-for");
-  if (fwd) return fwd.split(",")[0]?.trim() || "unknown";
-  return h.get("x-real-ip") ?? "unknown";
+  return pickClientIp(h.get("x-forwarded-for"), h.get("x-real-ip")) ?? "unknown";
 }
 
 /**

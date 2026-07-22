@@ -11,6 +11,7 @@ const LINKS = [
   { href: "/admin/reviews", label: "Reviews" },
   { href: "/admin/orders", label: "Sales Ledger" },
   { href: "/admin/disputes", label: "Disputes" },
+  { href: "/admin/cash-outs", label: "Cash Outs" },
   { href: "/admin/tiers", label: "Tiers" },
 ];
 

@@ -47,8 +47,10 @@ After applying, copy the project URL + keys into `.env.local` (see `.env.example
 - **Roles**: `handle_new_user` mirrors `auth.users` → `public.users` on signup
   and coerces the role to `buyer`/`seller` only. **Admin is assigned manually**
   (e.g. `update public.users set role='admin' where email='…';`).
-- **Storage**: `item-photos` (public read, owner-scoped writes) and
-  `certificates` (public read, admin writes).
+- **Storage**: `item-photos` — public bucket for serving approved listing
+  images via the public object route, but the authenticated Storage API
+  (list/search) is restricted to owner-or-admin so pending/declined submission
+  photos can't be enumerated. `certificates` (public read, admin writes).
 
 ## Verifying locally (optional)
 

@@ -33,8 +33,25 @@ export type OrderStatus =
   | "delivered"
   | "refunded"
   | "disputed";
+/** Logistics status from the courier — independent of OrderStatus (never merge). */
+export type CourierStatus =
+  | "booked"
+  | "collected"
+  | "in_transit"
+  | "out_for_delivery"
+  | "delivered"
+  | "failed";
+/** Mirror of the escrow provider's transaction state. */
+export type EscrowStatus =
+  | "created"
+  | "funded"
+  | "released"
+  | "refunded"
+  | "disputed"
+  | "cancelled";
 export type SubscriptionStatus = "active" | "cancelled" | "past_due";
 export type DisputeStatus = "open" | "resolved";
+export type CashOutStatus = "open" | "contacted" | "closed";
 export type OfferState =
   | "pending"
   | "countered"
@@ -280,6 +297,10 @@ export interface Database {
           condition_notes: string | null;
           measurements: string | null;
           inclusions: string[] | null;
+          weight_grams: number | null;
+          length_mm: number | null;
+          width_mm: number | null;
+          height_mm: number | null;
           view_count: number;
           fee_rate_bps: number;
           auth_method: AuthMethod;
@@ -305,6 +326,10 @@ export interface Database {
           condition_notes?: string | null;
           measurements?: string | null;
           inclusions?: string[] | null;
+          weight_grams?: number | null;
+          length_mm?: number | null;
+          width_mm?: number | null;
+          height_mm?: number | null;
           view_count?: number;
           fee_rate_bps: number;
           auth_method: AuthMethod;
@@ -330,6 +355,10 @@ export interface Database {
           condition_notes?: string | null;
           measurements?: string | null;
           inclusions?: string[] | null;
+          weight_grams?: number | null;
+          length_mm?: number | null;
+          width_mm?: number | null;
+          height_mm?: number | null;
           view_count?: number;
           fee_rate_bps?: number;
           auth_method?: AuthMethod;
@@ -460,6 +489,28 @@ export interface Database {
           status: OrderStatus;
           shipping_name: string | null;
           shipping_address: string | null;
+          ship_recipient: string | null;
+          ship_line1: string | null;
+          ship_line2: string | null;
+          ship_suburb: string | null;
+          ship_city: string | null;
+          ship_province: string | null;
+          ship_postal_code: string | null;
+          ship_phone: string | null;
+          courier: string | null;
+          courier_service: string | null;
+          waybill_number: string | null;
+          tracking_number: string | null;
+          tracking_url: string | null;
+          pp_quoteno: string | null;
+          shipping_amount_cents: number;
+          dispatched_at: string | null;
+          courier_status: CourierStatus | null;
+          escrow_provider: string | null;
+          escrow_id: string | null;
+          escrow_status: EscrowStatus | null;
+          escrow_funded_at: string | null;
+          escrow_released_at: string | null;
           created_at: string;
           paid_at: string | null;
           delivered_at: string | null;
@@ -477,6 +528,28 @@ export interface Database {
           status?: OrderStatus;
           shipping_name?: string | null;
           shipping_address?: string | null;
+          ship_recipient?: string | null;
+          ship_line1?: string | null;
+          ship_line2?: string | null;
+          ship_suburb?: string | null;
+          ship_city?: string | null;
+          ship_province?: string | null;
+          ship_postal_code?: string | null;
+          ship_phone?: string | null;
+          courier?: string | null;
+          courier_service?: string | null;
+          waybill_number?: string | null;
+          tracking_number?: string | null;
+          tracking_url?: string | null;
+          pp_quoteno?: string | null;
+          shipping_amount_cents?: number;
+          dispatched_at?: string | null;
+          courier_status?: CourierStatus | null;
+          escrow_provider?: string | null;
+          escrow_id?: string | null;
+          escrow_status?: EscrowStatus | null;
+          escrow_funded_at?: string | null;
+          escrow_released_at?: string | null;
           created_at?: string;
           paid_at?: string | null;
           delivered_at?: string | null;
@@ -494,6 +567,28 @@ export interface Database {
           status?: OrderStatus;
           shipping_name?: string | null;
           shipping_address?: string | null;
+          ship_recipient?: string | null;
+          ship_line1?: string | null;
+          ship_line2?: string | null;
+          ship_suburb?: string | null;
+          ship_city?: string | null;
+          ship_province?: string | null;
+          ship_postal_code?: string | null;
+          ship_phone?: string | null;
+          courier?: string | null;
+          courier_service?: string | null;
+          waybill_number?: string | null;
+          tracking_number?: string | null;
+          tracking_url?: string | null;
+          pp_quoteno?: string | null;
+          shipping_amount_cents?: number;
+          dispatched_at?: string | null;
+          courier_status?: CourierStatus | null;
+          escrow_provider?: string | null;
+          escrow_id?: string | null;
+          escrow_status?: EscrowStatus | null;
+          escrow_funded_at?: string | null;
+          escrow_released_at?: string | null;
           created_at?: string;
           paid_at?: string | null;
           delivered_at?: string | null;
@@ -510,6 +605,16 @@ export interface Database {
           created_at: string;
           offer_id: string | null;
           amount_cents: number | null;
+          ship_recipient: string | null;
+          ship_line1: string | null;
+          ship_line2: string | null;
+          ship_suburb: string | null;
+          ship_city: string | null;
+          ship_province: string | null;
+          ship_postal_code: string | null;
+          ship_phone: string | null;
+          pp_quoteno: string | null;
+          shipping_amount_cents: number | null;
         };
         Insert: {
           m_payment_id: string;
@@ -520,6 +625,16 @@ export interface Database {
           created_at?: string;
           offer_id?: string | null;
           amount_cents?: number | null;
+          ship_recipient?: string | null;
+          ship_line1?: string | null;
+          ship_line2?: string | null;
+          ship_suburb?: string | null;
+          ship_city?: string | null;
+          ship_province?: string | null;
+          ship_postal_code?: string | null;
+          ship_phone?: string | null;
+          pp_quoteno?: string | null;
+          shipping_amount_cents?: number | null;
         };
         Update: {
           m_payment_id?: string;
@@ -530,6 +645,16 @@ export interface Database {
           created_at?: string;
           offer_id?: string | null;
           amount_cents?: number | null;
+          ship_recipient?: string | null;
+          ship_line1?: string | null;
+          ship_line2?: string | null;
+          ship_suburb?: string | null;
+          ship_city?: string | null;
+          ship_province?: string | null;
+          ship_postal_code?: string | null;
+          ship_phone?: string | null;
+          pp_quoteno?: string | null;
+          shipping_amount_cents?: number | null;
         };
         Relationships: [];
       };
@@ -610,6 +735,39 @@ export interface Database {
           status?: DisputeStatus;
           resolution?: string | null;
           resolved_at?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      cash_out_requests: {
+        Row: {
+          id: string;
+          listing_id: string;
+          seller_id: string;
+          status: CashOutStatus;
+          admin_notes: string | null;
+          handled_by: string | null;
+          handled_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          listing_id: string;
+          seller_id: string;
+          status?: CashOutStatus;
+          admin_notes?: string | null;
+          handled_by?: string | null;
+          handled_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          listing_id?: string;
+          seller_id?: string;
+          status?: CashOutStatus;
+          admin_notes?: string | null;
+          handled_by?: string | null;
+          handled_at?: string | null;
           created_at?: string;
         };
         Relationships: [];
@@ -711,6 +869,26 @@ export interface Database {
           p_fee_rate_bps: number;
           p_shipping_name: string | null;
           p_shipping_address: string | null;
+          p_offer_id?: string | null;
+          p_agreed_cents?: number | null;
+        };
+        Returns: string;
+      };
+      fulfill_escrow_order: {
+        Args: {
+          p_escrow_id: string;
+          p_escrow_provider: string;
+          p_listing_id: string;
+          p_buyer_id: string;
+          p_gross_cents: number;
+          p_commission_cents: number;
+          p_payout_cents: number;
+          p_shipping_cents: number;
+          p_fee_rate_bps: number;
+          p_pp_quoteno: string | null;
+          p_shipping_name: string | null;
+          p_shipping_address: string | null;
+          p_ship?: Json;
           p_offer_id?: string | null;
           p_agreed_cents?: number | null;
         };

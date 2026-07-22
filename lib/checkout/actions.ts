@@ -1,63 +1,23 @@
 "use server";
 
-import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth/guards";
 import { roleCanAccess } from "@/lib/auth/roles";
 import { getListingById } from "@/lib/marketplace/listings";
 import { buildPayfastCheckout } from "@/lib/payfast/checkout";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { rateLimit } from "@/lib/rate-limit";
-import { SA_PROVINCES } from "@/lib/marketplace/constants";
+import {
+  addressSchema,
+  formatShippingAddress,
+  type CheckoutStartInput,
+} from "@/lib/checkout/address";
 import type { TablesInsert } from "@/lib/supabase/database.types";
 
-const addressSchema = z.object({
-  listingId: z.string().uuid(),
-  // Pay for an accepted offer at the agreed price (optional). When present, the
-  // checkout is bound to the offer and the charged amount is the agreed amount —
-  // validated server-side below and again, under a row lock, in fulfilment.
-  offerId: z.string().uuid().optional(),
-  recipient: z.string().trim().min(2, "Enter the recipient's full name.").max(120),
-  line1: z.string().trim().min(3, "Enter a street address.").max(160),
-  line2: z.string().trim().max(160).optional().default(""),
-  suburb: z.string().trim().min(2, "Enter a suburb.").max(80),
-  city: z.string().trim().min(2, "Enter a city/town.").max(80),
-  province: z.enum(SA_PROVINCES),
-  postalCode: z
-    .string()
-    .trim()
-    .regex(/^\d{4}$/, "Enter a valid 4-digit postal code."),
-  phone: z
-    .string()
-    .trim()
-    .regex(/^[0-9+()\-\s]{7,20}$/, "Enter a valid contact number."),
-});
-
-export type CheckoutStartInput = z.input<typeof addressSchema>;
+export type { CheckoutStartInput };
 
 export type CheckoutStartResult =
   | { ok: true; processUrl: string; fields: { name: string; value: string }[] }
   | { ok: false; error: string };
-
-/** Compose the validated parts into the single text address stored on the order. */
-function formatShippingAddress(a: {
-  line1: string;
-  line2: string;
-  suburb: string;
-  city: string;
-  province: string;
-  postalCode: string;
-  phone: string;
-}): string {
-  const street = [a.line1, a.line2].filter(Boolean).join(", ");
-  return [
-    street,
-    a.suburb,
-    `${a.city}, ${a.province} ${a.postalCode}`,
-    `Tel: ${a.phone}`,
-  ]
-    .filter(Boolean)
-    .join("\n");
-}
 
 /**
  * Start a PayFast checkout: validate the buyer's delivery address, persist it

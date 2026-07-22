@@ -3,6 +3,7 @@ import dns from "node:dns/promises";
 import type { NextRequest } from "next/server";
 import { payfast } from "./config";
 import { payfastSignature } from "./signature";
+import { pickClientIp } from "@/lib/net/client-ip";
 import type { PayfastItn } from "./fulfill";
 
 export type ItnResult =
@@ -10,15 +11,12 @@ export type ItnResult =
   | { ok: false; retry: boolean; reason: string };
 
 function clientIp(req: NextRequest): string | null {
-  const fwd = req.headers.get("x-forwarded-for");
-  if (fwd) {
-    // Take the RIGHTMOST entry — the address the closest trusted proxy actually
-    // saw. A client can only prepend (spoof) leftmost entries; it can't forge
-    // the one the proxy appends.
-    const ips = fwd.split(",").map((s) => s.trim()).filter(Boolean);
-    return ips[ips.length - 1] ?? null;
-  }
-  return req.headers.get("x-real-ip");
+  // Rightmost (proxy-appended) X-Forwarded-For entry — the address the closest
+  // trusted proxy actually saw; a client can only spoof leftmost entries.
+  return pickClientIp(
+    req.headers.get("x-forwarded-for"),
+    req.headers.get("x-real-ip"),
+  );
 }
 
 async function ipIsPayfast(ip: string): Promise<boolean | null> {

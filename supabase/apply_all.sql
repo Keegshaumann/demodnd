@@ -1636,3 +1636,390 @@ update public.listings set season = 'summer'
     'Chanel Slingback Two-Tone', 'Gucci Jackie 1961 Small',
     'Bottega Veneta Jodie Mini', 'Louis Vuitton Capucines MM'
   );
+
+-- >>> migrations/20260702120000_item_photos_read_lockdown.sql
+-- Security fix — restrict item-photos SELECT to owner/admin (stop enumeration).
+-- The blanket anon+authenticated SELECT let anyone enumerate the bucket and read
+-- pending/declined submission photos. Approved listing images are served via the
+-- PUBLIC object route (RLS-exempt), so this does not affect public display.
+drop policy if exists "item-photos: public read" on storage.objects;
+
+create policy "item-photos: owner or admin read"
+  on storage.objects for select to authenticated
+  using (
+    bucket_id = 'item-photos'
+    and (
+      (storage.foldername(name))[1] = (select auth.uid())::text
+      or public.is_admin()
+    )
+  );
+
+-- >>> migrations/20260702120010_harden_increment_listing_view_search_path.sql
+-- Hardening — pin increment_listing_view to an EMPTY search_path (was `public`),
+-- matching every other SECURITY DEFINER function. Body is fully-qualified so safe.
+create or replace function public.increment_listing_view(p_listing_id uuid)
+returns void
+language sql
+security definer
+set search_path = ''
+as $$
+  update public.listings
+     set view_count = view_count + 1
+   where id = p_listing_id
+     and status in ('active','sold');
+$$;
+revoke all on function public.increment_listing_view(uuid) from public;
+grant execute on function public.increment_listing_view(uuid) to anon, authenticated;
+
+-- >>> migrations/20260703120000_cash_out_requests.sql
+-- cash_out_requests — a seller asks D&D to make them an offer to BUY a piece
+-- outright (instant liquidity). Lead/request only — no money moves, no order.
+-- open -> contacted -> closed (admin-driven), same shape as a dispute.
+create table public.cash_out_requests (
+  id           uuid primary key default gen_random_uuid(),
+  listing_id   uuid not null references public.listings (id) on delete cascade,
+  seller_id    uuid not null references public.users (id) on delete cascade,
+  status       text not null default 'open'
+                 check (status in ('open', 'contacted', 'closed')),
+  admin_notes  text,
+  handled_by   uuid references public.users (id),
+  handled_at   timestamptz,
+  created_at   timestamptz not null default now()
+);
+
+create index cash_out_requests_status_idx
+  on public.cash_out_requests (status, created_at desc);
+create unique index cash_out_requests_one_open_per_listing
+  on public.cash_out_requests (listing_id) where status = 'open';
+
+alter table public.cash_out_requests enable row level security;
+
+create policy "cash_out: seller or admin read"
+  on public.cash_out_requests for select to authenticated
+  using ((select auth.uid()) = seller_id or public.is_admin());
+
+create policy "cash_out: owner insert for own unsold listing"
+  on public.cash_out_requests for insert to authenticated
+  with check (
+    (select auth.uid()) = seller_id
+    and exists (
+      select 1 from public.listings l
+      where l.id = listing_id
+        and l.seller_id = (select auth.uid())
+        and l.status <> 'sold'
+    )
+  );
+
+create policy "cash_out: admin update"
+  on public.cash_out_requests for update to authenticated
+  using (public.is_admin()) with check (public.is_admin());
+
+grant select, insert on public.cash_out_requests to authenticated;
+
+-- >>> migrations/20260716120000_structured_shipping_address.sql
+-- ============================================================================
+-- structured shipping address (2026-07-16) — Phase 0 of the escrow + courier
+-- build (ESCROW-COURIER-SPEC.md §6.1): discrete destination fields.
+-- ============================================================================
+-- The courier "to" address and the escrow record must not depend on parsing
+-- the single free-text blob built by formatShippingAddress. Capture the
+-- discrete fields the checkout address form already validates (addressSchema)
+-- on BOTH the checkout intent (written pre-payment) and the order (copied at
+-- fulfilment), mirroring how the blob flows today.
+--
+-- All columns are NULLABLE and nothing populates them yet — this migration is
+-- schema foundation only (no behaviour change). The existing shipping_name /
+-- shipping_address blob stays for display + backward compatibility; later
+-- phases populate both.
+--
+-- GRANTS/RLS unchanged:
+--   • checkout_intents stays RLS-on with NO policies and NO Data API grants —
+--     only the service-role client (server) reads/writes it, so buyer
+--     addresses still never reach the Data API.
+--   • orders SELECT is table-level (init.sql), so the buyer/seller/admin who
+--     can already read an order's shipping_address blob can read the discrete
+--     fields of the SAME row — no new exposure. There is still no
+--     INSERT/UPDATE grant to `authenticated`; orders are written server-side.
+-- ============================================================================
+alter table public.checkout_intents
+  add column ship_recipient   text,
+  add column ship_line1       text,
+  add column ship_line2       text,
+  add column ship_suburb      text,
+  add column ship_city        text,
+  add column ship_province    text,
+  add column ship_postal_code text,
+  add column ship_phone       text;
+
+alter table public.orders
+  add column ship_recipient   text,
+  add column ship_line1       text,
+  add column ship_line2       text,
+  add column ship_suburb      text,
+  add column ship_city        text,
+  add column ship_province    text,
+  add column ship_postal_code text,
+  add column ship_phone       text;
+
+-- >>> migrations/20260716120010_orders_courier_tracking.sql
+-- ============================================================================
+-- courier / tracking columns (2026-07-16) — Phase 0 of the escrow + courier
+-- build (ESCROW-COURIER-SPEC.md §6.2): JKJ Express (Parcel Perfect) fields.
+-- ============================================================================
+-- Logistics state is DELIBERATELY separate from the financial lifecycle:
+-- orders.status keeps its CHECK from init.sql untouched ('delivered' still
+-- means "buyer/admin confirmed receipt"), and courier movement lives in
+-- courier_status instead, so the exhaustive Record<OrderStatus,...> maps and
+-- the ledger payable math do not break (spec §11).
+--
+-- shipping_amount_cents is the courier charge folded into the buyer's total
+-- (integer ZAR cents, like every other money column). NOT NULL DEFAULT 0 on
+-- orders so ledger arithmetic never meets a null; existing PayFast-era rows
+-- backfill to 0 (shipping was never charged separately before).
+--
+-- The checkout intent also carries the quote (pp_quoteno +
+-- shipping_amount_cents): the quote is taken at checkout, pre-funding (spec
+-- §7.2/§8.2), persisted on the intent, and copied onto the order at
+-- fulfilment — exactly like the address. Nullable on the intent (null = not
+-- quoted yet), mirroring the nullable amount_cents added for offers.
+--
+-- Naming (spec §11): orders.courier is the DELIVERY courier (e.g. 'JKJ').
+-- It is unrelated to auth_method='courier' (how an item reaches D&D for
+-- authentication) and to subscription_tiers.courier_credits (a seller perk).
+--
+-- GRANTS/RLS unchanged: these are written server-side only (service-role
+-- client); order parties read their own rows via the existing table-level
+-- SELECT, and the intent stays invisible to the Data API.
+-- ============================================================================
+alter table public.orders
+  add column courier               text,
+  add column courier_service       text,
+  add column waybill_number        text,
+  add column tracking_number       text,
+  add column tracking_url          text,
+  add column pp_quoteno            text,
+  add column shipping_amount_cents integer not null default 0
+               check (shipping_amount_cents >= 0),
+  add column dispatched_at         timestamptz,
+  add column courier_status        text
+               check (courier_status in
+                 ('booked', 'collected', 'in_transit',
+                  'out_for_delivery', 'delivered', 'failed'));
+
+comment on column public.orders.courier is
+  'Delivery courier code (e.g. JKJ). NOT listings.auth_method=''courier'' (authentication intake) and NOT subscription_tiers.courier_credits (seller perk).';
+comment on column public.orders.courier_status is
+  'Logistics status from the courier (null until booked). Independent of orders.status: ''delivered'' here is the courier POD signal, while orders.status=''delivered'' remains buyer/admin-confirmed receipt.';
+
+alter table public.checkout_intents
+  add column pp_quoteno            text,
+  add column shipping_amount_cents integer
+               check (shipping_amount_cents >= 0);
+
+-- >>> migrations/20260716120020_orders_escrow.sql
+-- ============================================================================
+-- escrow columns (2026-07-16) — Phase 0 of the escrow + courier build
+-- (ESCROW-COURIER-SPEC.md §6.3): mirror of the provider's transaction state.
+-- ============================================================================
+-- The escrow PROVIDER is the source of truth for funds; these columns only
+-- mirror its state — no bespoke ledger beyond them (spec §13). Once escrow is
+-- live:
+--   • orders.status='paid' means "funds secured in escrow".
+--   • The actual payout to the seller is the ESCROW RELEASE event, tracked by
+--     escrow_status + escrow_released_at — never inferred from orders.status.
+--
+-- escrow_id is UNIQUE: it is the idempotency key for the funded webhook (a
+-- provider retry must not double-create orders — spec §11). A nullable unique
+-- column is fine in Postgres (all existing PayFast-era rows stay null).
+--
+-- GRANTS/RLS unchanged: written server-side only (service-role client).
+-- ============================================================================
+alter table public.orders
+  add column escrow_provider    text,
+  add column escrow_id          text unique,
+  add column escrow_status      text
+               check (escrow_status in
+                 ('created', 'funded', 'released',
+                  'refunded', 'disputed', 'cancelled')),
+  add column escrow_funded_at   timestamptz,
+  add column escrow_released_at timestamptz;
+
+comment on column public.orders.escrow_status is
+  'Mirror of the escrow provider''s transaction state. ''released'' (+ escrow_released_at) is the seller-payout event; do not infer payout from orders.status.';
+
+-- >>> migrations/20260716120030_listing_parcel_dimensions.sql
+-- ============================================================================
+-- listing parcel dimensions (2026-07-16) — Phase 0 of the escrow + courier
+-- build (ESCROW-COURIER-SPEC.md §6.4): structured weight/dims for quoting.
+-- ============================================================================
+-- Parcel Perfect's requestQuote takes contents with actmass (kg) and
+-- dim1/dim2/dim3 (cm), and at least one item must have actmass > 0 or no rate
+-- is returned. Store metric INTEGERS (grams / millimetres) — integers only,
+-- like money — and convert at the API boundary.
+--
+-- All NULLABLE: weight/dims are measured at the DEPOT by admin at
+-- authentication/intake (the hub holds the item), never by the seller. When
+-- null, quoting falls back to a category default parcel
+-- (lib/courier/jkj/parcels.ts, later phase). The CHECKs allow null-or-positive
+-- only: a zero actmass silently returns no rates from Parcel Perfect, so
+-- reject it at the DB.
+--
+-- GRANTS: the seller column-scoped UPDATE grant on listings is deliberately
+-- NOT extended to these columns — capture is admin-only via the service-role
+-- client (which already holds full access), so `authenticated` sellers cannot
+-- write them. SELECT on listings is table-level (init.sql), so the new
+-- columns are readable wherever the listing row already is.
+-- ============================================================================
+alter table public.listings
+  add column weight_grams integer check (weight_grams > 0),
+  add column length_mm    integer check (length_mm > 0),
+  add column width_mm     integer check (width_mm > 0),
+  add column height_mm    integer check (height_mm > 0);
+
+-- >>> migrations/20260722120000_fulfill_escrow_order_fn.sql
+-- ============================================================================
+-- fulfill_escrow_order (2026-07-22) — atomic escrow order fulfilment
+-- ============================================================================
+-- Phase 1 of the escrow + courier build (ESCROW-COURIER-SPEC.md §7.3). The
+-- escrow equivalent of fulfill_payfast_order: does the idempotency check, the
+-- anti-tamper amount check, the active->sold claim, and the order insert in ONE
+-- transaction under the listing row lock. Any failure rolls back everything; the
+-- caller re-raises so the webhook route returns 5xx and the provider retries
+-- cleanly. No "funds secured but no order" half-state.
+--
+-- Differences from fulfill_payfast_order:
+--   • Idempotency key is ESCROW_ID (the provider transaction id), not
+--     gateway_reference. orders.escrow_id is UNIQUE (Phase 0), a hard backstop.
+--   • Anti-tamper expects gross = item + shipping. Building the RPC shipping-aware
+--     NOW (shipping defaults to 0 in Phase 1) means Phase 4 only starts PASSING a
+--     non-zero p_shipping_cents — the guardrail in §11 ("teach the RPC to expect
+--     item + shipping the moment shipping is folded in") is satisfied up front,
+--     with no risky later change to the anti-tamper check.
+--   • Sets the escrow + structured-address + courier columns added in Phase 0.
+--     Commission is on the ITEM only (passed in by the caller); shipping is a
+--     pass-through, so it is stored on shipping_amount_cents, never commissioned.
+--   • Logistics/escrow state is SEPARATE from orders.status: the order is born
+--     status='paid' (funds secured in escrow) + escrow_status='funded'. Release to
+--     the seller is a later escrow_status='released' event, NOT a status change.
+--
+-- p_ship is the discrete address as jsonb {recipient,line1,line2,suburb,city,
+-- province,postal_code,phone} — copied onto the order's ship_* columns (§6.1) so
+-- the courier "to" address does not depend on parsing the flattened blob.
+--
+-- Returns one of:
+--   'created'         — order inserted, listing claimed
+--   'duplicate'       — this escrow was already fulfilled (idempotent no-op)
+--   'already_sold'    — a DIFFERENT payment claimed the piece (double sale)
+--   'amount_mismatch' — charged != item(+agreed) + shipping, or offer re-validation failed
+--   'listing_missing' — listing vanished
+-- ============================================================================
+create or replace function public.fulfill_escrow_order(
+  p_escrow_id        text,
+  p_escrow_provider  text,
+  p_listing_id       uuid,
+  p_buyer_id         uuid,
+  p_gross_cents      integer,
+  p_commission_cents integer,
+  p_payout_cents     integer,
+  p_shipping_cents   integer,
+  p_fee_rate_bps     integer,
+  p_pp_quoteno       text,
+  p_shipping_name    text,
+  p_shipping_address text,
+  p_ship             jsonb default '{}'::jsonb,
+  p_offer_id         uuid default null,
+  p_agreed_cents     integer default null
+)
+returns text
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_listing  public.listings%rowtype;
+  v_offer    public.offers%rowtype;
+  v_expected integer;
+begin
+  -- Lock the listing row: concurrent webhooks for the same piece serialize here.
+  select * into v_listing from public.listings where id = p_listing_id for update;
+  if not found then
+    return 'listing_missing';
+  end if;
+
+  -- Idempotency (re-checked under the lock): a duplicate webhook for THIS escrow.
+  if exists (
+    select 1 from public.orders where escrow_id = p_escrow_id
+  ) then
+    return 'duplicate';
+  end if;
+
+  -- Anti-tamper: charged amount must equal the EXPECTED price — the frozen agreed
+  -- amount when paying an accepted offer, else the listing price, PLUS shipping.
+  v_expected := coalesce(p_agreed_cents, v_listing.price_cents)
+                + coalesce(p_shipping_cents, 0);
+  if v_expected <> p_gross_cents then
+    return 'amount_mismatch';
+  end if;
+
+  -- Accepted-offer order: re-validate the offer UNDER THE LISTING LOCK. The offer
+  -- must be the offering buyer's, for THIS listing, still 'accepted', within its
+  -- pay window, with the frozen agreed amount equal to the ITEM charge (gross less
+  -- shipping) — so the DB itself refuses a mispriced or hijacked offer order.
+  if p_offer_id is not null then
+    select * into v_offer from public.offers where id = p_offer_id for update;
+    if not found
+       or v_offer.buyer_id <> p_buyer_id
+       or v_offer.listing_id <> p_listing_id
+       or v_offer.state <> 'accepted'
+       or v_offer.agreed_amount_cents is distinct from (p_gross_cents - coalesce(p_shipping_cents, 0))
+       or v_offer.pay_deadline_at is null
+       or now() > v_offer.pay_deadline_at
+    then
+      return 'amount_mismatch';
+    end if;
+  end if;
+
+  -- A different payment already claimed this one-of-a-kind piece -> double sale.
+  if v_listing.status <> 'active' then
+    return 'already_sold';
+  end if;
+
+  -- Claim + create the order atomically. status='paid' means funds secured in
+  -- escrow; escrow_status='funded' mirrors the provider. Logistics stays null.
+  update public.listings set status = 'sold' where id = p_listing_id;
+
+  insert into public.orders (
+    buyer_id, listing_id, seller_id,
+    gross_amount_cents, commission_amount_cents, seller_payout_amount_cents,
+    fee_rate_bps, status,
+    shipping_name, shipping_address,
+    ship_recipient, ship_line1, ship_line2, ship_suburb, ship_city,
+    ship_province, ship_postal_code, ship_phone,
+    shipping_amount_cents, pp_quoteno,
+    escrow_provider, escrow_id, escrow_status, escrow_funded_at,
+    paid_at
+  ) values (
+    p_buyer_id, p_listing_id, v_listing.seller_id,
+    p_gross_cents, p_commission_cents, p_payout_cents,
+    p_fee_rate_bps, 'paid',
+    p_shipping_name, p_shipping_address,
+    p_ship->>'recipient', p_ship->>'line1', p_ship->>'line2', p_ship->>'suburb', p_ship->>'city',
+    p_ship->>'province', p_ship->>'postal_code', p_ship->>'phone',
+    coalesce(p_shipping_cents, 0), p_pp_quoteno,
+    p_escrow_provider, p_escrow_id, 'funded', now(),
+    now()
+  );
+
+  return 'created';
+end;
+$$;
+
+-- Only the service role (webhook handler via the admin client) may call this.
+revoke all on function public.fulfill_escrow_order(
+  text, text, uuid, uuid, integer, integer, integer, integer, integer,
+  text, text, text, jsonb, uuid, integer
+) from public;
+grant execute on function public.fulfill_escrow_order(
+  text, text, uuid, uuid, integer, integer, integer, integer, integer,
+  text, text, text, jsonb, uuid, integer
+) to service_role;

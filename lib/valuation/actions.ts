@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import { requireUser } from "@/lib/auth/guards";
-import { rateLimitByIp } from "@/lib/rate-limit";
+import { rateLimit, rateLimitByIp } from "@/lib/rate-limit";
 import { estimateValue, type Valuation } from "./estimate";
 
 /**
@@ -24,7 +24,16 @@ const schema = z.object({
 export async function estimatePriceAction(
   input: unknown,
 ): Promise<EstimateActionResult> {
-  await requireUser();
+  const user = await requireUser();
+  // Per-user throttle: estimateValue() can hit the paid Anthropic API, so an
+  // authenticated caller must be limited just like the public quote path — a
+  // bare requireUser() (any signed-in buyer) otherwise allows unbounded spend.
+  if (!(await rateLimit(`estimate:${user.id}`, 8, 600))) {
+    return {
+      ok: false,
+      error: "Too many estimates just now — try again in a few minutes.",
+    };
+  }
   const parsed = schema.safeParse(input);
   if (!parsed.success) {
     return { ok: false, error: "Add the brand, category and condition first." };

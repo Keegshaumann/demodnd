@@ -6,7 +6,7 @@
 
 ## Executive summary
 
-The codebase has a **strong secure-by-default posture**. Authorization is enforced server-side before every privileged action, the RLS-bound vs service-role Supabase client boundary is respected, inputs are Zod-validated, the Stripe webhook verifies signatures against the raw body, redirects are allowlisted to internal paths, and security headers + CSP are in place.
+The codebase has a **strong secure-by-default posture**. Authorization is enforced server-side before every privileged action, the RLS-bound vs service-role Supabase client boundary is respected, inputs are Zod-validated, the PayFast ITN webhook verifies the signature over the raw body (plus a merchant-id check, source-IP check, and an authoritative server-to-server validation postback), redirects are allowlisted to internal paths, and security headers + CSP are in place.
 
 The audit produced **one confirmed finding (Medium)** and **one low-confidence hardening note**. **Both have been fixed** in this pass. No High or Critical issues were found. (Two prior adversarial review passes had already closed a buyer-PII RLS leak, a double-sale race, and a ledger-totals bug.)
 
@@ -41,7 +41,7 @@ The audit produced **one confirmed finding (Medium)** and **one low-confidence h
 | NEXT-SSRF-001 — outbound fetch | ✅ no user-influenced server-side `fetch` |
 | NEXT-REDIRECT-001 — open redirect | ✅ `safeRedirect` rejects `//` and non-internal targets |
 | NEXT-SECRETS-001/002 — client/server boundary | ✅ `server-only` on secret modules; no secrets under `NEXT_PUBLIC_` |
-| NEXT-WEBHOOK-001 — webhook raw-body verify | ✅ Stripe webhook verifies signature on the raw body, nodejs runtime |
+| NEXT-WEBHOOK-001 — webhook raw-body verify | ✅ PayFast ITN webhook verifies the signature on the raw body (nodejs runtime), then merchant-id, source-IP, and a server-to-server validation postback before fulfilling |
 | NEXT-CACHE-001 — per-user cache leaks | ✅ user data fetched dynamically (cookies), not statically cached |
 | NEXT-SUPPLY-001 — version currency | ✅ `next` 15.5.19 (patched for react2shell) |
 | NEXT-XSS-001 — React DOM | ✅ no `dangerouslySetInnerHTML` in any component |
@@ -50,9 +50,9 @@ The audit produced **one confirmed finding (Medium)** and **one low-confidence h
 
 ## Known / accepted limitations (not findings)
 
-- **CSP uses `'unsafe-inline'` for scripts** — required for Next.js inline hydration without a nonce pipeline. A nonce-based CSP is a future hardening step; the important `script-src` allowlist (self + Stripe) is present.
+- **CSP uses `'unsafe-inline'` for scripts** — required for Next.js inline hydration without a nonce pipeline. A nonce-based CSP is a future hardening step; `script-src` is restricted to `'self'` (no third-party script origins), and PayFast's hosted checkout is reached only via a top-level `form-action` POST (not framed or fetched).
 - **2 moderate `npm audit` items** — transitive `postcss` inside Next's own build tooling; not exploitable in our usage and not fixable without breaking Next (clears on the next Next release).
-- **Go-live items** (already on the HANDOFF checklist): enable Supabase "Leaked password protection", verify the Resend domain, switch Stripe to live keys + a production webhook, and have a SA attorney review the Terms/Privacy drafts.
+- **Go-live items** (already on the HANDOFF checklist): enable Supabase "Leaked password protection", verify the Resend domain, switch PayFast to live (`PAYFAST_MODE=live` with the real merchant id/key/passphrase and the production ITN endpoint), and have a SA attorney review the Terms/Privacy drafts.
 
 ---
 

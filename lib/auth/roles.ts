@@ -22,6 +22,7 @@ export const PROTECTED_PREFIXES: { prefix: string; role: UserRole }[] = [
 
 /** The seller dashboard sections (everything else under /seller is public). */
 const SELLER_DASHBOARD_SECTIONS = [
+  "/seller/earnings",
   "/seller/listings",
   "/seller/sales",
   "/seller/offers",

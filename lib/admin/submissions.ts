@@ -280,7 +280,7 @@ export async function declineSubmissionAction(
 
   const { data: sub } = await db
     .from("auth_submissions")
-    .select("id, seller_id, brand, title, status")
+    .select("id, seller_id, brand, title, status, photo_paths")
     .eq("id", submissionId)
     .maybeSingle();
   if (!sub) return { ok: false, error: "Submission not found." };
@@ -311,6 +311,19 @@ export async function declineSubmissionAction(
   }
   if (!updated || updated.length === 0) {
     return { ok: false, error: "This submission was already actioned." };
+  }
+
+  // A declined piece never becomes a public listing, so purge its uploaded
+  // photos from storage rather than leave them in the bucket indefinitely
+  // (they may show a suspected counterfeit). Best-effort — never fail the
+  // decline on a storage hiccup.
+  const photoPaths = sub.photo_paths ?? [];
+  if (photoPaths.length > 0) {
+    try {
+      await db.storage.from("item-photos").remove(photoPaths);
+    } catch (err) {
+      console.error("decline: photo cleanup failed", err);
+    }
   }
 
   const email = await sellerEmail(db, sub.seller_id);

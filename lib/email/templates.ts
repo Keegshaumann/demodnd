@@ -230,6 +230,28 @@ export function disputeRaisedAdminEmail(args: {
   });
 }
 
+export function cashOutRequestAdminEmail(args: {
+  brand: string;
+  title: string;
+  listPriceCents: number;
+  sellerEmail: string;
+  reviewUrl: string;
+}): string {
+  return layout({
+    heading: "New cash-out request",
+    bodyHtml: `
+      ${paragraph("A seller has asked D&amp;D to make them an offer to buy a piece outright. Review it in the cash-out queue and reach out to make an offer.")}
+      <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;border-top:1px solid #EFEFEF;border-bottom:1px solid #EFEFEF;margin:8px 0 20px;">
+        ${detailRow("Brand", args.brand)}
+        ${detailRow("Item", args.title)}
+        ${detailRow("List price", formatZar(args.listPriceCents))}
+        ${detailRow("Seller", args.sellerEmail)}
+      </table>
+      ${button("Open the cash-out queue", args.reviewUrl)}
+    `,
+  });
+}
+
 export function conciergeMessageEmail(args: {
   name: string;
   email: string;
